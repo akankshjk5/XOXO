@@ -1,0 +1,16 @@
+{
+  "desktop": {
+    "webm": "intro.webm",
+    "mp4": "intro.mp4"
+  },
+  "mobile": {
+    "webm": "intro-mobile.webm",
+    "mp4": "intro-mobile.mp4"
+  },
+  "poster": [
+    "intro-poster.webp",
+    "intro-poster.jpg",
+    "intro-poster.png",
+    "intro-poster.svg"
+  ]
+}

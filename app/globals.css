@@ -1,0 +1,394 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Dancing+Script:wght@700&display=swap');
+
+@layer base {
+  :root {
+    /* PickYourTrail palette */
+    --green-dark: #0D3D2E;
+    --green-mid: #0F4A38;
+    --green-bright: #4ADE80;
+    --green-neon: #22C55E;
+    --black-nav: #111111;
+    --white: #FFFFFF;
+    --off-white: #F9F9F9;
+    --text-dark: #1A1A2E;
+    --text-grey: #666666;
+    --border-light: #EBEBEB;
+    --hero-gradient: linear-gradient(160deg, #2D1B0E 0%, #1A3A2A 40%, #0D3D2E 100%);
+    --card-overlay: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+    --shadow-search: 0 0 20px rgba(74, 222, 128, 0.4), 0 0 40px rgba(74, 222, 128, 0.15);
+    --shadow-search-sm: 0 0 0 3px rgba(74, 222, 128, 0.2);
+    --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-premium-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
+    --shadow-elevated: 0 22px 48px rgba(0, 0, 0, 0.12);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --radius-pill: 9999px;
+    --radius-card: 1rem;
+    --radius-card-lg: 1.25rem;
+    --space-section: 4rem;
+    --space-section-lg: 5.5rem;
+    --touch-min: 44px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-dark);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Hero typography */
+  .hero-heading {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(32px, 5vw, 60px);
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 0 60px rgba(74, 222, 128, 0.15);
+  }
+
+  .cinematic-logo {
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 40px rgba(0, 0, 0, 0.4), 0 0 80px rgba(74, 222, 128, 0.2);
+  }
+
+  .glass-premium {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .script-text {
+    font-family: 'Dancing Script', cursive;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--green-bright);
+  }
+
+  .section-heading {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: clamp(18px, 3vw, 28px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dark);
+  }
+
+  /* Glowing search pill — hero size */
+  .pyt-search-glow {
+    width: 100%;
+    max-width: 520px;
+    background: var(--white);
+    border-radius: var(--radius-pill);
+    border: 2.5px solid var(--green-bright);
+    box-shadow: var(--shadow-search);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Sticky nav search — compact */
+  .pyt-search-glow-sm {
+    background: var(--white);
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--green-bright);
+    box-shadow: var(--shadow-search-sm);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 480px;
+  }
+
+  .pyt-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: var(--text-dark);
+  }
+
+  .pyt-search-input::placeholder {
+    color: var(--text-grey);
+  }
+
+  .nav-link-white {
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .nav-link-white:hover {
+    opacity: 0.8;
+  }
+
+  .btn-login-outline {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 20px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--white);
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .btn-login-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .card-dark-overlay {
+    background: var(--card-overlay);
+  }
+
+  .dashed-frame {
+    border-top: 2px dashed rgba(255, 255, 255, 0.2);
+    border-left: 2px dashed rgba(255, 255, 255, 0.2);
+    border-right: 2px dashed rgba(255, 255, 255, 0.2);
+  }
+
+  .ticker-wrap {
+    overflow: hidden;
+    background: var(--green-bright);
+    height: 40px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ticker-content {
+    display: flex;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  .ticker-content span {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #000;
+  }
+
+  .container-x {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-x { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+
+  .section { padding-top: var(--space-section); padding-bottom: var(--space-section); }
+  @media (min-width: 768px) {
+    .section { padding-top: var(--space-section-lg); padding-bottom: var(--space-section-lg); }
+  }
+
+  .pill-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid var(--border-light);
+    color: var(--text-grey);
+    background: white;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    min-height: var(--touch-min);
+  }
+  .pill-filter:hover { border-color: var(--green-dark); color: var(--green-dark); }
+  .pill-filter-active {
+    background: var(--green-dark);
+    color: white;
+    border-color: var(--green-dark);
+    box-shadow: 0 2px 12px rgba(13, 61, 46, 0.2);
+  }
+
+  .carousel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-min);
+    height: var(--touch-min);
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: white;
+    color: var(--text-dark);
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    box-shadow: var(--shadow-premium);
+  }
+  .carousel-btn:hover {
+    border-color: var(--green-dark);
+    background: var(--off-white);
+    transform: scale(1.04);
+  }
+  .carousel-btn:active { transform: scale(0.96); }
+
+  .touch-target { min-height: var(--touch-min); min-width: var(--touch-min); }
+
+  .card-premium {
+    border-radius: var(--radius-card-lg);
+    border: 1px solid var(--border-light);
+    background: white;
+    box-shadow: var(--shadow-premium);
+  }
+  .hero-gradient { background: var(--hero-gradient); }
+  .shadow-premium { box-shadow: var(--shadow-premium); }
+  .shadow-premium-lg { box-shadow: var(--shadow-premium-lg); }
+  .shadow-elevated { box-shadow: var(--shadow-elevated); }
+  .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elevated);
+  }
+  .bg-surface { background: var(--off-white); }
+  .text-text-primary { color: var(--text-dark); }
+  .text-text-secondary { color: var(--text-grey); }
+  .text-navy { color: var(--green-dark); }
+  .border-border { border-color: var(--border-light); }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(6px); opacity: 0.5; }
+}
+
+/* ── Kinetic motion utilities ── */
+@keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1.5%); }
+}
+.animate-kenburns {
+  animation: kenburns 18s ease-out forwards alternate;
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float {
+  animation: float-y 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55), 0 12px 30px rgba(0,0,0,0.35); }
+  50% { box-shadow: 0 0 0 14px rgba(74, 222, 128, 0), 0 12px 30px rgba(0,0,0,0.35); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2.6s ease-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.text-shimmer {
+  background: linear-gradient(90deg, #4ADE80 0%, #ffffff 50%, #4ADE80 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Magnetic / tactile transition baseline (JS adds the translate) */
+.magnetic {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Smooth tactile card lift — refined for launch */
+.card-lift {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+.card-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(74, 222, 128, 0.18);
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns,
+  .animate-float,
+  .animate-pulse-glow,
+  .text-shimmer,
+  .animate-fade-up,
+  .animate-marquee,
+  .animate-scroll-bounce,
+  .animate-drawer-in,
+  .ticker-content { animation: none !important; }
+  .card-lift:hover,
+  .hover-lift:hover { transform: none; }
+  html { scroll-behavior: auto; }
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-scroll-bounce {
+  animation: scroll-bounce 1.8s ease-in-out infinite;
+}
+
+.animate-drawer-in {
+  animation: drawer-in 0.28s ease-out forwards;
+}

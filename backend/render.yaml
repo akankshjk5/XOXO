@@ -1,0 +1,24 @@
+# Render Blueprint — XOXO Travels API
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: xoxo-travels-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      # Set remaining secrets in Render Dashboard (sync from .env.production.example):
+      # MONGODB_URI, JWT_SECRET, REFRESH_TOKEN_SECRET, CLIENT_URL, ALLOWED_ORIGINS,
+      # AMADEUS_*, GOOGLE_MAPS_API_KEY, ANTHROPIC_API_KEY, RAZORPAY_*, RESEND_API_KEY, CLOUDINARY_*
