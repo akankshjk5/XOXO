@@ -7,7 +7,7 @@ const bookingSchema = new mongoose.Schema(
     guide: { type: mongoose.Schema.Types.ObjectId, ref: "Guide" },
     bookingType: {
       type: String,
-      enum: ["package", "flight", "hotel", "activity", "guide"],
+      enum: ["package", "flight", "hotel", "activity", "guide", "transport"],
       default: "package",
     },
     status: {

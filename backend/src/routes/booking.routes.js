@@ -5,6 +5,7 @@ const { protect, adminOnly } = require("../middleware/auth.middleware");
 
 router.use(protect);
 
+router.post("/transport", ctrl.createTransport);
 router.post("/", ctrl.create);
 router.get("/my", ctrl.getMy);
 router.get("/", adminOnly, ctrl.getAll);

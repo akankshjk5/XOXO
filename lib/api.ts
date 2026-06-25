@@ -147,9 +147,17 @@ export const searchAPI = {
 
 export const bookingsAPI = {
   create: (data: AnyObj) => api.post("/bookings", data),
+  createTransport: (data: AnyObj) => api.post("/bookings/transport", data),
   getMy: () => api.get("/bookings/my"),
   getById: (id: string) => api.get(`/bookings/${id}`),
   cancel: (id: string) => api.put(`/bookings/${id}/cancel`),
+};
+
+export const transportAPI = {
+  status: () => api.get("/transport/status"),
+  modes: () => api.get("/transport/modes"),
+  search: (params: AnyObj) => api.get("/transport/search", { params }),
+  recommendations: (params: AnyObj) => api.get("/transport/recommendations", { params }),
 };
 
 export const paymentsAPI = {

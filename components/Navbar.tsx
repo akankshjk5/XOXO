@@ -105,6 +105,9 @@ export default function Navbar() {
             <Link href="/packages" className="nav-link-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
               Packages
             </Link>
+            <Link href="/transport" className="nav-link-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+              Transport
+            </Link>
             <Link href="/concierge" className="nav-link-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
               Concierge
             </Link>
@@ -233,6 +236,7 @@ export default function Navbar() {
             { label: "Get Verified", href: "/verify" },
             { label: "Local Guides", href: "/guides" },
             { label: "Messages", href: "/chat" },
+            { label: "Transport Hub", href: "/transport" },
             { label: "AI Concierge", href: "/concierge" },
             { label: "Visa Assistant", href: "/visa" },
           ].map((link) => (

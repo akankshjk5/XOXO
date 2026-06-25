@@ -50,6 +50,50 @@ exports.create = async (req, res, next) => {
   }
 };
 
+// POST /api/bookings/transport — unified transport offer booking
+exports.createTransport = async (req, res, next) => {
+  try {
+    const {
+      offer,
+      travelDate,
+      returnDate,
+      numTravelers = 1,
+      travelers = [],
+      specialRequests,
+    } = req.body;
+
+    if (!offer?.id || !offer?.mode || offer.price == null) {
+      return res.status(400).json({
+        success: false,
+        message: "offer (id, mode, price) is required",
+      });
+    }
+
+    const totalAmount = Number(offer.price);
+
+    const booking = await Booking.create({
+      user: req.user._id,
+      bookingType: "transport",
+      travelDate: travelDate || offer.departureAt,
+      returnDate,
+      numTravelers,
+      travelers,
+      totalAmount,
+      inventoryMeta: {
+        offer,
+        hub: "transport",
+        bookedAt: new Date().toISOString(),
+      },
+      specialRequests,
+      bookingRef: genRef(),
+    });
+
+    res.status(201).json({ success: true, data: booking });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/bookings/my
 exports.getMy = async (req, res, next) => {
   try {

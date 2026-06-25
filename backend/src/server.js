@@ -72,6 +72,7 @@ app.use("/api/auth", authLimiter, require("./routes/auth.routes"));
 app.use("/api/packages", require("./routes/package.routes"));
 app.use("/api/destinations", require("./routes/destination.routes"));
 app.use("/api/inventory", require("./routes/inventory.routes"));
+app.use("/api/transport", require("./routes/transport.routes"));
 app.use("/api/ai", aiLimiter, require("./routes/ai.routes"));
 app.use("/api/concierge", aiLimiter, require("./routes/concierge.routes"));
 app.use("/api/search", require("./routes/search.routes"));

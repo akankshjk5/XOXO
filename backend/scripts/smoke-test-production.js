@@ -163,6 +163,29 @@ async function run() {
     }
   }
 
+  // 12c. Transport Hub
+  const tStatus = await req("GET", "/api/transport/status");
+  ok("Transport status", tStatus.status === 200 && Array.isArray(tStatus.data.data?.modes));
+
+  const tModes = await req("GET", "/api/transport/modes");
+  ok("Transport modes", tModes.status === 200 && tModes.data.data?.length > 0);
+
+  const tSearch = await req(
+    "GET",
+    "/api/transport/search?origin=DEL&destination=MUM&departureDate=2026-09-01&passengers=1"
+  );
+  ok(
+    "Transport search",
+    tSearch.status === 200 && tSearch.data.offers?.length > 0,
+    `count=${tSearch.data.offers?.length}`
+  );
+  ok(
+    "Transport recommendations",
+    tSearch.data.recommendations?.cheapest != null,
+    "cheapest present"
+  );
+  ok("Transport grouped results", Array.isArray(tSearch.data.grouped));
+
   // 13. Booking flow (demo payment)
   const pkgId = pkgs.data.data?.[0]?._id;
   if (pkgId && token) {

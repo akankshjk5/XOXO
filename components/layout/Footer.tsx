@@ -9,6 +9,7 @@ import { clearIntroSeen, requestIntroReplay } from "@/lib/intro-storage";
 const LINKS = [
   { label: "Packages", href: "/packages" },
   { label: "Destinations", href: "/destinations" },
+  { label: "Transport Hub", href: "/transport" },
   { label: "AI Concierge", href: "/concierge" },
   { label: "Community", href: "/community" },
   { label: "Visa", href: "/visa" },

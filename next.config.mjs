@@ -13,7 +13,7 @@ const nextConfig = {
       { source: "/itinerary", destination: "/concierge", permanent: true },
       { source: "/itinerary/:path*", destination: "/concierge", permanent: true },
       { source: "/solo-match", destination: "/match", permanent: true },
-      { source: "/flights", destination: "/packages", permanent: false },
+      { source: "/flights", destination: "/transport", permanent: false },
       { source: "/hotels", destination: "/packages", permanent: false },
       { source: "/activities", destination: "/packages", permanent: false },
       { source: "/insurance", destination: "/packages", permanent: false },
