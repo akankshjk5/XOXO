@@ -11,6 +11,7 @@ const { validateEnv } = require("./config/env");
 const { buildCorsOptions, getSocketCorsOrigins } = require("./config/cors");
 const logger = require("./config/logger");
 const connectDB = require("./config/db");
+const { seedDatabase } = require("./services/seedDatabase");
 const socketSetup = require("./config/socket");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const requestId = require("./middleware/requestId");
@@ -93,6 +94,7 @@ app.use("/api/verification", require("./routes/verification.routes"));
 app.use("/api/groups", require("./routes/group.routes"));
 app.use("/api/posts", require("./routes/post.routes"));
 app.use("/api/friends", require("./routes/friend.routes"));
+app.use("/api/admin", require("./routes/admin.routes"));
 
 app.use(notFound);
 app.use(errorHandler);
@@ -107,6 +109,22 @@ const PORT = env.port;
 
 const start = async () => {
   await connectDB();
+
+  const Destination = require("./models/Destination");
+  const destCount = await Destination.countDocuments();
+  const autoSeed =
+    process.env.SEED_IF_EMPTY !== "false" &&
+    (destCount === 0 || process.env.SEED_ON_BOOT === "true");
+
+  if (autoSeed && destCount === 0) {
+    try {
+      const stats = await seedDatabase({ force: false });
+      logger.info("Auto-seeded empty database", stats);
+    } catch (err) {
+      logger.error("Auto-seed failed", { error: err.message });
+    }
+  }
+
   server.listen(PORT, () => {
     logger.info(`XOXO Travels API listening on port ${PORT}`, {
       environment: env.nodeEnv,
