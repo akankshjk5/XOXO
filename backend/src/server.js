@@ -20,7 +20,20 @@ const paymentCtrl = require("./controllers/payment.controller");
 const { INVOICE_DIR } = require("./utils/invoice");
 const mongoose = require("mongoose");
 
-const env = validateEnv();
+let env;
+try {
+  env = validateEnv();
+} catch (err) {
+  logger.error(`Environment validation failed: ${err.message}`);
+  env = {
+    nodeEnv: process.env.NODE_ENV || "development",
+    isProduction: process.env.NODE_ENV === "production",
+    port: Number(process.env.PORT) || 5000,
+    clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
+    trustProxy: process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production",
+  };
+}
+
 const app = express();
 const server = http.createServer(app);
 
@@ -56,18 +69,23 @@ app.use(standardLimiter);
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 app.use("/invoices", express.static(INVOICE_DIR));
 
-app.get("/api/health", async (req, res) => {
+/** Railway liveness — always 200 once HTTP server is up (DB may still be connecting). */
+function healthHandler(req, res) {
   const dbState = mongoose.connection.readyState;
-  const dbOk = dbState === 1;
-  res.status(dbOk ? 200 : 503).json({
-    success: dbOk,
+  const dbLabels = { 0: "disconnected", 1: "connected", 2: "connecting", 3: "disconnecting" };
+  res.status(200).json({
+    success: true,
     message: "XOXO Travels API",
     time: new Date().toISOString(),
     environment: env.nodeEnv,
-    database: dbOk ? "connected" : "disconnected",
+    database: dbLabels[dbState] || "unknown",
+    ready: dbState === 1,
     version: process.env.npm_package_version || "1.0.0",
   });
-});
+}
+
+app.get("/api/health", healthHandler);
+app.get("/health", healthHandler);
 
 app.use("/api/auth", authLimiter, require("./routes/auth.routes"));
 app.use("/api/packages", require("./routes/package.routes"));
@@ -105,35 +123,56 @@ const io = new Server(server, {
 app.set("io", io);
 socketSetup(io);
 
-const PORT = env.port;
+const PORT = Number(process.env.PORT) || 5000;
+const HOST = process.env.HOST || "0.0.0.0";
 
-const start = async () => {
-  await connectDB();
+async function maybeAutoSeed() {
+  if (process.env.SEED_IF_EMPTY === "false") return;
 
   const Destination = require("./models/Destination");
   const destCount = await Destination.countDocuments();
-  const autoSeed =
-    process.env.SEED_IF_EMPTY !== "false" &&
-    (destCount === 0 || process.env.SEED_ON_BOOT === "true");
+  if (destCount > 0 && process.env.SEED_ON_BOOT !== "true") return;
 
-  if (autoSeed && destCount === 0) {
-    try {
-      const stats = await seedDatabase({ force: false });
-      logger.info("Auto-seeded empty database", stats);
-    } catch (err) {
-      logger.error("Auto-seed failed", { error: err.message });
-    }
+  try {
+    const stats = await seedDatabase({ force: false });
+    logger.info("Auto-seeded empty database", stats);
+  } catch (err) {
+    logger.error("Auto-seed failed", { error: err.message, stack: err.stack });
   }
+}
 
-  server.listen(PORT, () => {
-    logger.info(`XOXO Travels API listening on port ${PORT}`, {
+async function bootstrapDatabase() {
+  try {
+    await connectDB({ exitOnFail: false });
+    if (mongoose.connection.readyState === 1) {
+      await maybeAutoSeed();
+    } else {
+      logger.warn("MongoDB not ready after connect — skipping auto-seed");
+    }
+  } catch (err) {
+    logger.error("Database bootstrap failed — API up, retrying DB in background", {
+      error: err.message,
+    });
+    setTimeout(bootstrapDatabase, 5000);
+  }
+}
+
+const start = () => {
+  server.listen(PORT, HOST, () => {
+    logger.info(`XOXO Travels API listening on ${HOST}:${PORT}`, {
       environment: env.nodeEnv,
       clientUrl: env.clientUrl,
     });
+    bootstrapDatabase();
   });
 };
 
 start();
+
+server.on("error", (err) => {
+  logger.error("HTTP server error", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
 
 process.on("unhandledRejection", (err) => {
   logger.error("Unhandled rejection", { error: err.message, stack: err.stack });

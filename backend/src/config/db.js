@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const logger = require("./logger");
 
-const connectDB = async () => {
+const connectDB = async ({ exitOnFail = true } = {}) => {
   try {
     const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/xoxo-travels";
     const conn = await mongoose.connect(uri);
@@ -9,7 +9,8 @@ const connectDB = async () => {
     return conn;
   } catch (err) {
     logger.error(`MongoDB connection error: ${err.message}`);
-    process.exit(1);
+    if (exitOnFail) process.exit(1);
+    throw err;
   }
 };
 module.exports = connectDB;
