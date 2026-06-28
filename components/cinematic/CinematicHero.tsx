@@ -245,7 +245,7 @@ export function CinematicHero() {
             </motion.div>
 
             <motion.h1
-              className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white mb-3 transform-gpu"
+              className="brand-name cinematic-logo text-4xl sm:text-6xl md:text-7xl tracking-tight text-white mb-3 transform-gpu"
               initial={{ opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: EASE_OUT, delay: T.logo + 0.1 }}

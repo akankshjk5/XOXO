@@ -17,7 +17,7 @@ function Logo() {
       <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-bright text-green-dark font-black text-xs">
         X&gt;
       </div>
-      <span className="text-[17px] font-bold text-white tracking-tight">
+      <span className="brand-name text-[17px] text-white tracking-tight">
         xoxo<span className="font-normal text-white/90">travels</span>
       </span>
     </Link>

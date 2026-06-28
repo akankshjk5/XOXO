@@ -37,7 +37,7 @@ export function Footer() {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-bright text-green-dark font-black text-sm shadow-[0_0_24px_rgba(74,222,128,0.35)] group-hover:shadow-[0_0_32px_rgba(74,222,128,0.5)] transition-shadow">
                 X&gt;
               </div>
-              <span className="text-2xl font-black tracking-tight">
+              <span className="brand-name text-2xl tracking-tight">
                 xoxo<span className="font-normal opacity-80">travels</span>
               </span>
             </Link>

@@ -19,8 +19,10 @@ const config: Config = {
         "text-grey": "#666666",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        script: ["Dancing Script", "cursive"],
+        sans: ["var(--font-secondary)"],
+        primary: ["var(--font-primary)"],
+        main: ["var(--font-main)"],
+        secondary: ["var(--font-secondary)"],
       },
     },
   },
