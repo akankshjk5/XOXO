@@ -32,7 +32,8 @@ interface Dest {
 }
 
 export function DestinationDetail() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
   const [dest, setDest] = useState<Dest | null>(null);
   const [loading, setLoading] = useState(true);
   const reduced = useReducedMotion();

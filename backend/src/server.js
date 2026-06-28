@@ -153,29 +153,43 @@ async function bootstrapDatabase() {
     logger.error("Database bootstrap failed — API up, retrying DB in background", {
       error: err.message,
     });
-    setTimeout(bootstrapDatabase, 5000);
+    if (!(process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS)) {
+      setTimeout(bootstrapDatabase, 5000);
+    } else {
+      throw err;
+    }
   }
 }
 
-const start = () => {
-  server.listen(PORT, HOST, () => {
-    logger.info(`XOXO Travels API listening on ${HOST}:${PORT}`, {
-      environment: env.nodeEnv,
-      clientUrl: env.clientUrl,
-    });
-    bootstrapDatabase();
-  });
-};
+const startPromise = (async () => {
+  if (process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS) {
+    logger.info("Serverless database connection initializing...");
+    await bootstrapDatabase();
+    logger.info("Serverless database connection initialized successfully.");
+    return;
+  }
 
-start();
+  return new Promise((resolve) => {
+    server.listen(PORT, HOST, () => {
+      logger.info(`XOXO Travels API listening on ${HOST}:${PORT}`, {
+        environment: env.nodeEnv,
+        clientUrl: env.clientUrl,
+      });
+      bootstrapDatabase();
+      resolve();
+    });
+  });
+})();
 
 server.on("error", (err) => {
   logger.error("HTTP server error", { error: err.message, stack: err.stack });
-  process.exit(1);
+  if (!(process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS)) {
+    process.exit(1);
+  }
 });
 
 process.on("unhandledRejection", (err) => {
   logger.error("Unhandled rejection", { error: err.message, stack: err.stack });
 });
 
-module.exports = { app, server, io };
+module.exports = { app, server, io, startPromise };

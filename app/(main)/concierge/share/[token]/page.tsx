@@ -9,7 +9,7 @@ import type { ConciergePlan } from "@/lib/concierge-types";
 
 export default function ConciergeSharePage() {
   const params = useParams();
-  const token = params.token as string;
+  const token = params ? (params.token as string) : "";
   const [plan, setPlan] = useState<ConciergePlan | null>(null);
   const [title, setTitle] = useState("Shared trip");
 

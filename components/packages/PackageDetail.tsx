@@ -51,7 +51,8 @@ interface PackageFull {
 const TABS = ["Itinerary", "Inclusions", "Reviews"] as const;
 
 export function PackageDetail() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const [pkg, setPkg] = useState<PackageFull | null>(null);
@@ -74,6 +75,7 @@ export function PackageDetail() {
   }, [user, id]);
 
   const toggleWishlist = async () => {
+    if (!id) return;
     if (!user) {
       toast.error("Please log in to save to wishlist.");
       return;

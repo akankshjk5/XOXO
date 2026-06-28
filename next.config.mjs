@@ -20,6 +20,18 @@ const nextConfig = {
       { source: "/ai-planner", destination: "/concierge", permanent: false },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/invoices/:path*",
+        destination: "/api/invoices/:path*",
+      },
+      {
+        source: "/uploads/:path*",
+        destination: "/api/uploads/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

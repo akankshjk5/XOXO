@@ -15,7 +15,8 @@ interface Group { _id: string; title: string; destination: string; departureDate
 interface GMsg { _id?: string; sender: { _id: string; name: string; avatar?: string }; content: string; createdAt?: string }
 
 export function GroupDetail() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const [group, setGroup] = useState<Group | null>(null);
@@ -58,6 +59,7 @@ export function GroupDetail() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const join = async () => {
+    if (!id) return;
     try {
       await groupsAPI.join(id);
       const { data } = await groupsAPI.getById(id);
@@ -69,13 +71,14 @@ export function GroupDetail() {
   };
 
   const leave = async () => {
+    if (!id) return;
     await groupsAPI.leave(id);
     toast.success("Left group");
     router.push("/groups");
   };
 
   const send = async () => {
-    if (!text.trim()) return;
+    if (!id || !text.trim()) return;
     const content = text.trim();
     setText("");
     try {
@@ -87,6 +90,7 @@ export function GroupDetail() {
   };
 
   const removeMember = async (userId: string) => {
+    if (!id) return;
     const { data } = await groupsAPI.removeMember(id, userId);
     setGroup(data.data);
     toast.success("Member removed");

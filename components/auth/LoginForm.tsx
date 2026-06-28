@@ -32,7 +32,7 @@ export function LoginForm() {
     try {
       const user = await login(data.email, data.password);
       toast.success(`Welcome back, ${user.name.split(" ")[0]}! 👋`);
-      const redirect = searchParams.get("redirect") || "/dashboard";
+      const redirect = searchParams?.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (err: unknown) {
       const msg =

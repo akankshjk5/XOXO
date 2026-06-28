@@ -54,8 +54,8 @@ const SORTS = [
 
 export function PackagesBrowser() {
   const searchParams = useSearchParams();
-  const initialType = searchParams.get("type") || "all";
-  const initialSearch = searchParams.get("search") || searchParams.get("q") || "";
+  const initialType = searchParams ? (searchParams.get("type") || "all") : "all";
+  const initialSearch = searchParams ? (searchParams.get("search") || searchParams.get("q") || "") : "";
 
   const [items, setItems] = useState<ApiPackage[]>([]);
   const [loading, setLoading] = useState(true);

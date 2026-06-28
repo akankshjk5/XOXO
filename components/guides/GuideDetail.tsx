@@ -28,7 +28,8 @@ interface Guide {
 }
 
 export function GuideDetail() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const [guide, setGuide] = useState<Guide | null>(null);
@@ -57,6 +58,10 @@ export function GuideDetail() {
     mode === "hour" ? (guide?.hourlyRate || 0) * qty : (guide?.dailyRate || 0) * qty;
 
   const book = async () => {
+    if (!id) {
+      toast.error("Invalid guide request.");
+      return;
+    }
     if (!user) {
       toast.error("Please log in to book a guide.");
       router.push(`/login?redirect=/guides/${id}`);

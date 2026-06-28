@@ -3,8 +3,8 @@
  * NEXT_PUBLIC_* vars are inlined at build time on Vercel.
  */
 
-const LOCAL_API = "http://localhost:5000/api";
-const LOCAL_SOCKET = "http://localhost:5000";
+const LOCAL_API = "/api";
+const LOCAL_SOCKET = "";
 
 function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
@@ -16,8 +16,8 @@ export function getApiBaseUrl(): string {
 
   if (!raw) {
     if (process.env.NODE_ENV === "production") {
-      console.error(
-        "[XOXO API] NEXT_PUBLIC_API_URL is not set — requests will fail in production."
+      console.warn(
+        "[XOXO API] NEXT_PUBLIC_API_URL is empty — defaulting to same-origin /api"
       );
     }
     return LOCAL_API;

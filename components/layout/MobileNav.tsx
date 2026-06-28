@@ -28,7 +28,7 @@ export function MobileNav() {
       <div className="flex items-stretch min-h-[56px]">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive =
-            pathname === href || (href !== "/" && pathname.startsWith(href));
+            pathname === href || (href !== "/" && pathname && pathname.startsWith(href));
           return (
             <Link
               key={href}

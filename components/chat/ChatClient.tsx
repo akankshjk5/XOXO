@@ -30,7 +30,7 @@ interface Conversation {
 export function ChatClient() {
   const user = useAuthStore((s) => s.user);
   const params = useSearchParams();
-  const initialPeer = params.get("peer");
+  const initialPeer = params ? params.get("peer") : null;
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activePeer, setActivePeer] = useState<string | null>(initialPeer);

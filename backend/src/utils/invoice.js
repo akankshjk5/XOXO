@@ -2,7 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const logger = require("../config/logger");
 
-const INVOICE_DIR = path.join(__dirname, "..", "..", "invoices");
+const isServerless = process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS;
+const INVOICE_DIR = isServerless
+  ? path.join("/tmp", "invoices")
+  : path.join(__dirname, "..", "..", "invoices");
 
 function ensureDir() {
   if (!fs.existsSync(INVOICE_DIR)) fs.mkdirSync(INVOICE_DIR, { recursive: true });
