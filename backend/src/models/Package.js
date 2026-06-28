@@ -40,6 +40,16 @@ const packageSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     visaRequired: { type: Boolean, default: true },
     isVisaFree: { type: Boolean, default: false },
+    featured: { type: Boolean, default: false },
+    trending: { type: Boolean, default: false },
+    isLuxury: { type: Boolean, default: false },
+    isPopular: { type: Boolean, default: false },
+    isHidden: { type: Boolean, default: false },
+    status: { type: String, enum: ["draft", "published"], default: "published" },
+    viewCount: { type: Number, default: 0 },
+    shareCount: { type: Number, default: 0 },
+    seoTitle: { type: String },
+    seoDescription: { type: String },
   },
   { timestamps: true }
 );

@@ -119,6 +119,10 @@ app.use("/api/verification", require("./routes/verification.routes"));
 app.use("/api/groups", require("./routes/group.routes"));
 app.use("/api/posts", require("./routes/post.routes"));
 app.use("/api/friends", require("./routes/friend.routes"));
+app.use("/api/analytics", require("./routes/analytics.routes"));
+app.use("/api/newsletter", require("./routes/newsletter.routes"));
+app.use("/api/contact", require("./routes/contact.routes"));
+app.use("/api/support", require("./routes/support.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 
 app.use(notFound);

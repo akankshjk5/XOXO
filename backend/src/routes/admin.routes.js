@@ -1,6 +1,8 @@
 const express = require("express");
 const Destination = require("../models/Destination");
 const { seedDatabase } = require("../services/seedDatabase");
+const { protect, adminOnly } = require("../middleware/auth.middleware");
+const adminCtrl = require("../controllers/admin.controller");
 
 const router = express.Router();
 
@@ -48,5 +50,10 @@ router.get("/seed/status", async (req, res, next) => {
     next(err);
   }
 });
+
+/** Protected admin routes */
+router.use(protect, adminOnly);
+
+router.get("/dashboard", adminCtrl.getDashboard);
 
 module.exports = router;

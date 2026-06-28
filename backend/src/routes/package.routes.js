@@ -8,9 +8,13 @@ const router = express.Router();
 router.get("/trending", ctrl.getTrending);
 router.get("/visa-free", ctrl.getVisaFree);
 router.get("/recent-bookings", ctrl.getRecentBookings);
+router.get("/admin/list", protect, adminOnly, ctrl.getAllAdmin);
 router.get("/slug/:slug", ctrl.getBySlug);
 
 router.get("/", ctrl.getAll);
+router.get("/:id/flights", ctrl.getFlightSuggestions);
+router.get("/:id/hotels", ctrl.getHotelSuggestions);
+router.get("/:id/checklist", ctrl.getChecklist);
 router.get("/:id", ctrl.getById);
 
 router.post("/", protect, adminOnly, ctrl.create);

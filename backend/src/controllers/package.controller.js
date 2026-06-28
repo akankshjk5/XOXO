@@ -1,5 +1,6 @@
 const Package = require("../models/Package");
 const Destination = require("../models/Destination");
+const { estimateFlights, estimateHotels, generateChecklist } = require("../services/packageSuggestions");
 
 // Map homepage traveler types to package categories
 const TYPE_TO_CATEGORY = {
@@ -15,6 +16,20 @@ const SORT_MAP = {
   rating: { rating: -1 },
   popular: { bookingCount: -1 },
   newest: { createdAt: -1 },
+};
+
+// GET /api/packages/admin/list (admin — includes drafts/hidden)
+exports.getAllAdmin = async (req, res, next) => {
+  try {
+    const items = await Package.find()
+      .populate("destination", "name slug country")
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .lean();
+    res.json({ success: true, data: items });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /api/packages
@@ -33,7 +48,12 @@ exports.getAll = async (req, res, next) => {
       limit = 12,
     } = req.query;
 
-    const filter = { isActive: true };
+    const filter = { isActive: true, isHidden: { $ne: true }, status: { $ne: "draft" } };
+
+    if (req.query.featured === "true") filter.featured = true;
+    if (req.query.trending === "true") filter.trending = true;
+    if (req.query.visaFree === "true") filter.isVisaFree = true;
+    if (req.query.luxury === "true") filter.isLuxury = true;
 
     const resolvedCategory = category || (type && TYPE_TO_CATEGORY[type]) || type;
     if (resolvedCategory) filter.category = resolvedCategory;
@@ -149,17 +169,54 @@ exports.getBySlug = async (req, res, next) => {
   }
 };
 
+// GET /api/packages/:id/flights
+exports.getFlightSuggestions = async (req, res, next) => {
+  try {
+    const pkg = await Package.findById(req.params.id).populate("destination");
+    if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
+    res.json({ success: true, data: estimateFlights(pkg) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/packages/:id/hotels
+exports.getHotelSuggestions = async (req, res, next) => {
+  try {
+    const pkg = await Package.findById(req.params.id).populate("destination");
+    if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
+    res.json({ success: true, data: estimateHotels(pkg) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/packages/:id/checklist
+exports.getChecklist = async (req, res, next) => {
+  try {
+    const pkg = await Package.findById(req.params.id).populate("destination");
+    if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
+    res.json({ success: true, data: generateChecklist(pkg) });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/packages/:id
 exports.getById = async (req, res, next) => {
   try {
     const pkg = await Package.findById(req.params.id).populate("destination");
-    if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
+    if (!pkg || pkg.isHidden || pkg.status === "draft") {
+      return res.status(404).json({ success: false, message: "Package not found" });
+    }
 
     // Similar packages (same category, exclude self)
     const similar = await Package.find({
       _id: { $ne: pkg._id },
       category: pkg.category,
       isActive: true,
+      isHidden: { $ne: true },
+      status: { $ne: "draft" },
     })
       .populate("destination")
       .limit(4);
