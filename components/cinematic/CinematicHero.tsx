@@ -10,6 +10,8 @@ import {
   useTransform,
 } from "framer-motion";
 import { Search, ChevronDown } from "lucide-react";
+import { destinationsAPI } from "@/lib/api";
+import { buildDestinationHref } from "@/lib/destination-url";
 import { HERO_BG } from "@/lib/images";
 import { markIntroSeen, shouldShowIntro } from "@/lib/intro-storage";
 import { INTRO_TAGLINE, INTRO_TIMELINE, INTRO_DURATION_MS } from "@/lib/intro-timeline";
@@ -42,6 +44,8 @@ export function CinematicHero() {
   const reduced = useReducedMotion();
   const { setIntroActive, replayToken } = useIntro();
   const [search, setSearch] = useState("");
+  const [suggestions, setSuggestions] = useState<{ name: string; slug: string; country?: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const [playIntro, setPlayIntro] = useState(false);
@@ -124,11 +128,33 @@ export function CinematicHero() {
     });
   };
 
-  const handleSearch = () => {
+  const handleSearch = (slug?: string) => {
+    if (slug) {
+      router.push(buildDestinationHref(slug));
+      setShowSuggestions(false);
+      return;
+    }
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     router.push(`/packages?${params.toString()}`);
+    setShowSuggestions(false);
   };
+
+  useEffect(() => {
+    if (search.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await destinationsAPI.autocomplete(search.trim());
+        setSuggestions(data.data || []);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleMagnet = (e: React.MouseEvent) => {
     const el = searchRef.current;
@@ -333,7 +359,7 @@ export function CinematicHero() {
               ref={searchRef}
               onMouseMove={handleMagnet}
               onMouseLeave={resetMagnet}
-              className="pyt-search-glow mx-auto magnetic transform-gpu"
+              className="pyt-search-glow mx-auto magnetic transform-gpu relative"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.28, ease: EASE_OUT }}
@@ -343,11 +369,32 @@ export function CinematicHero() {
                 type="text"
                 placeholder="Search countries, cities"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="pyt-search-input"
                 aria-label="Search destinations"
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute left-0 right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-lg border border-[#EBEBEB] overflow-hidden text-left">
+                  {suggestions.map((s) => (
+                    <li key={s.slug}>
+                      <button
+                        type="button"
+                        className="w-full px-4 py-3 text-sm text-left hover:bg-off-white text-text-dark"
+                        onMouseDown={() => handleSearch(s.slug)}
+                      >
+                        {s.name}
+                        {s.country ? <span className="text-text-grey"> · {s.country}</span> : null}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </motion.div>
           </>
         )}

@@ -36,6 +36,14 @@ const PackagesByDuration = dynamic(
   () => import("@/components/home/PackagesByDuration").then((m) => m.PackagesByDuration),
   { loading: () => <SectionFallback /> }
 );
+const TrendingPackagesSection = dynamic(
+  () => import("@/components/home/TrendingPackagesSection").then((m) => m.TrendingPackagesSection),
+  { loading: () => <SectionFallback /> }
+);
+const OffersSection = dynamic(
+  () => import("@/components/home/OffersSection").then((m) => m.OffersSection),
+  { loading: () => <SectionFallback /> }
+);
 const AIItineraryBanner = dynamic(
   () => import("@/components/home/AIItineraryBanner").then((m) => m.AIItineraryBanner),
   { loading: () => <SectionFallback /> }
@@ -77,7 +85,13 @@ export default function HomePage() {
         <HomeDestinationSections />
       </RevealOnScroll>
       <RevealOnScroll>
+        <TrendingPackagesSection />
+      </RevealOnScroll>
+      <RevealOnScroll>
         <PackagesByDuration />
+      </RevealOnScroll>
+      <RevealOnScroll>
+        <OffersSection />
       </RevealOnScroll>
       <StoryBridge label="Plan smarter" />
       <RevealOnScroll>

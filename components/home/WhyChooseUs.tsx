@@ -1,15 +1,21 @@
 "use client";
 
-import { WHY_CHOOSE_STATS } from "@/lib/pyt-data";
+import { useEffect, useState } from "react";
+import { packagesAPI, destinationsAPI } from "@/lib/api";
 import { StaggerContainer, StaggerItem } from "@/components/motion/FadeIn";
 import { CountUp } from "@/components/motion/CountUp";
 import { RevealOnScroll } from "@/components/motion/RevealOnScroll";
 import { FloatingCard } from "@/components/motion/AnimatedCard";
 
+const BASE_STATS = [
+  { icon: "🌍", label: "Destinations", key: "destinations" as const },
+  { icon: "📦", label: "Holiday Packages", key: "packages" as const },
+  { icon: "⭐", label: "Traveller Rating", key: "rating" as const, value: "4.6" },
+  { icon: "🎧", label: "Support", key: "support" as const, value: "24X7" },
+];
+
 function StatValue({ value }: { value: string }) {
-  if (value === "24X7") {
-    return <span>{value}</span>;
-  }
+  if (value === "24X7") return <span>{value}</span>;
   if (value.endsWith("%")) {
     const num = parseInt(value, 10);
     return <CountUp end={num} suffix="%" />;
@@ -18,20 +24,55 @@ function StatValue({ value }: { value: string }) {
     const num = parseInt(value, 10);
     return <CountUp end={num} suffix="k+" />;
   }
-  const { prefix, num, suffix } = (() => {
-    const match = value.match(/^([^0-9]*)([0-9.]+)(.*)$/);
-    if (!match) return { prefix: "", num: 0, suffix: value };
-    return { prefix: match[1], num: parseFloat(match[2]), suffix: match[3] };
-  })();
+  const match = value.match(/^([^0-9]*)([0-9.]+)(.*)$/);
+  if (!match) return <span>{value}</span>;
   return (
     <>
-      {prefix}
-      <CountUp end={num} suffix={suffix} />
+      {match[1]}
+      <CountUp end={parseFloat(match[2])} suffix={match[3]} />
     </>
   );
 }
 
 export function WhyChooseUs() {
+  const [counts, setCounts] = useState({ packages: 0, destinations: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [pkgRes, destRes] = await Promise.all([
+          packagesAPI.getAll({ limit: 1 }),
+          destinationsAPI.getAll({}),
+        ]);
+        if (cancelled) return;
+        console.info("[WhyChooseUs] Live inventory counts →", {
+          packages: pkgRes.data.pagination?.total,
+          destinations: destRes.data.data?.length,
+        });
+        setCounts({
+          packages: pkgRes.data.pagination?.total ?? pkgRes.data.data?.length ?? 0,
+          destinations: destRes.data.data?.length ?? 0,
+        });
+      } catch (err) {
+        console.error("[WhyChooseUs] Failed to load inventory counts:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = BASE_STATS.map((stat) => {
+    if (stat.key === "packages") {
+      return { ...stat, value: counts.packages > 0 ? `${counts.packages}+` : "—" };
+    }
+    if (stat.key === "destinations") {
+      return { ...stat, value: counts.destinations > 0 ? String(counts.destinations) : "—" };
+    }
+    return stat;
+  });
+
   return (
     <section className="bg-off-white py-16 md:py-24">
       <div className="max-w-[900px] mx-auto px-4 sm:px-6">
@@ -42,20 +83,18 @@ export function WhyChooseUs() {
         </RevealOnScroll>
 
         <StaggerContainer className="relative grid grid-cols-2 gap-x-8 gap-y-10 md:gap-x-16 md:gap-y-12 mb-14 min-h-[280px]">
-          {WHY_CHOOSE_STATS.map((stat) => (
-              <StaggerItem
-                key={stat.label}
-                className={`flex flex-col items-center text-center ${
-                  stat.position.includes("left") ? "md:items-end md:text-right" : "md:items-start md:text-left"
-                }`}
-              >
-                <span className="text-2xl mb-2">{stat.icon}</span>
-                <span className="text-[36px] sm:text-[42px] font-black text-green-bright leading-none tracking-tight">
-                  <StatValue value={stat.value} />
-                </span>
-                <span className="text-sm text-text-grey mt-1.5 font-medium">{stat.label}</span>
-              </StaggerItem>
-            ))}
+          {stats.map((stat) => (
+            <StaggerItem
+              key={stat.label}
+              className="flex flex-col items-center text-center md:items-center"
+            >
+              <span className="text-2xl mb-2">{stat.icon}</span>
+              <span className="text-[36px] sm:text-[42px] font-black text-green-bright leading-none tracking-tight">
+                <StatValue value={stat.value || "—"} />
+              </span>
+              <span className="text-sm text-text-grey mt-1.5 font-medium">{stat.label}</span>
+            </StaggerItem>
+          ))}
 
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <FloatingCard>
@@ -76,13 +115,8 @@ export function WhyChooseUs() {
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white border text-[10px] font-bold shadow-sm">
                 <span className="text-[#4285F4]">G</span>
               </div>
-              4.6 ⭐ · 8250+ reviews
+              Live inventory · {counts.packages} packages · {counts.destinations} destinations
             </div>
-            <p className="text-[15px] text-text-grey italic leading-relaxed line-clamp-2">
-              &ldquo;XOXO arranged a beautiful relaxing vacation to Maldives for me and my husband.
-              The whole vacation was hustle free for us and the packages they offer are great.&rdquo;
-            </p>
-            <p className="text-green-neon text-sm font-semibold mt-3">Prameet Roy, Vietnam</p>
           </div>
         </RevealOnScroll>
       </div>

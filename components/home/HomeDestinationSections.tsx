@@ -6,13 +6,31 @@ import { toDestinationCard, type DestinationLinkInput } from "@/lib/destination-
 import { DestinationCarousel } from "@/components/home/DestinationCarousel";
 import type { ValidatedDestinationCard } from "@/components/home/DestinationCarousel";
 
+type DestRow = DestinationLinkInput & {
+  isVisaFree?: boolean;
+  isTrending?: boolean;
+  isAdventure?: boolean;
+};
+
+function mapRows(
+  rows: DestRow[],
+  subLabel: string,
+  prefix: string
+): ValidatedDestinationCard[] {
+  return rows
+    .map((d, i) => toDestinationCard(d, subLabel, `${prefix}-${i}`))
+    .filter(Boolean) as ValidatedDestinationCard[];
+}
+
 export function HomeDestinationSections() {
   const [trending, setTrending] = useState<ValidatedDestinationCard[]>([]);
   const [visaFree, setVisaFree] = useState<ValidatedDestinationCard[]>([]);
   const [adventure, setAdventure] = useState<ValidatedDestinationCard[]>([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const [trendRes, advRes, allRes] = await Promise.all([
@@ -21,10 +39,11 @@ export function HomeDestinationSections() {
           destinationsAPI.getAll({}),
         ]);
 
-        const trendData = trendRes.data.data || [];
-        const advData = advRes.data.data || [];
-        const allData: { name: string; slug: string; isVisaFree?: boolean; tagline?: string; coverImage?: string; _id?: string }[] =
-          allRes.data.data || [];
+        if (cancelled) return;
+
+        const trendData: DestRow[] = trendRes.data.data || [];
+        const advData: DestRow[] = advRes.data.data || [];
+        const allData: DestRow[] = allRes.data.data || [];
 
         console.info("[HomeDestinationSections] GET /api/destinations →", {
           count: allData.length,
@@ -39,36 +58,44 @@ export function HomeDestinationSections() {
           data: advData,
         });
 
+        const trendingSource =
+          trendData.length > 0 ? trendData : allData.filter((d) => d.isTrending);
+        const adventureSource =
+          advData.length > 0 ? advData : allData.filter((d) => d.isAdventure);
+
         setTrending(
-          trendData
-            .map((d: DestinationLinkInput, i: number) =>
-              toDestinationCard(d, d.tagline?.toUpperCase() || "EXPLORE THE BEAUTY OF", `t-${i}`)
-            )
-            .filter(Boolean) as ValidatedDestinationCard[]
+          mapRows(
+            trendingSource.length > 0 ? trendingSource : allData.slice(0, 8),
+            "EXPLORE THE BEAUTY OF",
+            "t"
+          )
         );
 
         setVisaFree(
-          allData
-            .filter((d) => d.isVisaFree)
-            .map((d, i) =>
-              toDestinationCard(d, "EXPLORE WITHOUT VISA", `v-${i}`)
-            )
-            .filter(Boolean) as ValidatedDestinationCard[]
+          mapRows(
+            allData.filter((d) => d.isVisaFree),
+            "EXPLORE WITHOUT VISA",
+            "v"
+          )
         );
 
         setAdventure(
-          advData
-            .map((d: DestinationLinkInput, i: number) =>
-              toDestinationCard(d, "ADVENTURES WORTH CHASING", `a-${i}`)
-            )
-            .filter(Boolean) as ValidatedDestinationCard[]
+          mapRows(
+            adventureSource.length > 0 ? adventureSource : allData.slice(0, 6),
+            "ADVENTURES WORTH CHASING",
+            "a"
+          )
         );
       } catch (err) {
         console.error("[HomeDestinationSections] Failed to load destinations:", err);
+        if (!cancelled) setError(true);
       } finally {
-        setReady(true);
+        if (!cancelled) setReady(true);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!ready) {
@@ -90,9 +117,11 @@ export function HomeDestinationSections() {
     );
   }
 
+  const hasAny = trending.length > 0 || visaFree.length > 0 || adventure.length > 0;
+
   return (
     <>
-      {ready && trending.length === 0 && visaFree.length === 0 && adventure.length === 0 && (
+      {error && !hasAny && (
         <div className="bg-white section border-t border-[#EBEBEB]">
           <div className="container-x">
             <p className="text-sm text-text-grey text-center py-8 border border-dashed border-[#E0E0E0] rounded-2xl">

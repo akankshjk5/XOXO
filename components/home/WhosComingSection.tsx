@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
-import { TRAVELER_TYPES } from "@/lib/pyt-data";
+import { TRAVELER_TYPES } from "@/lib/home-categories";
 
 const grid: Variants = {
   hidden: {},

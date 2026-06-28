@@ -15,10 +15,13 @@ export function HomeApiLogger() {
 
     (async () => {
       try {
-        const [packagesRes, destinationsRes, trendingRes] = await Promise.all([
+        const [packagesRes, destinationsRes, trendingDestRes, trendingPkgRes, offersRes] =
+          await Promise.all([
           packagesAPI.getAll({ limit: 24, sort: "popular" }),
           destinationsAPI.getAll({}),
           destinationsAPI.getTrending(),
+          packagesAPI.getTrending(),
+          packagesAPI.getVisaFree(),
         ]);
 
         console.info("[XOXO Homepage] GET /api/packages →", {
@@ -35,8 +38,18 @@ export function HomeApiLogger() {
         });
 
         console.info("[XOXO Homepage] GET /api/destinations/trending →", {
-          count: trendingRes.data?.data?.length ?? 0,
-          data: trendingRes.data?.data,
+          count: trendingDestRes.data?.data?.length ?? 0,
+          data: trendingDestRes.data?.data,
+        });
+
+        console.info("[XOXO Homepage] GET /api/packages/trending →", {
+          count: trendingPkgRes.data?.data?.length ?? 0,
+          data: trendingPkgRes.data?.data,
+        });
+
+        console.info("[XOXO Homepage] GET /api/packages/visa-free →", {
+          count: offersRes.data?.data?.length ?? 0,
+          data: offersRes.data?.data,
         });
       } catch (err) {
         console.error("[XOXO Homepage] Inventory fetch failed:", err);
