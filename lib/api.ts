@@ -7,13 +7,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Attach JWT from localStorage
+// Attach JWT from localStorage; log resolved URL in development
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("xoxo_token");
     if (token) {
       config.headers = (config.headers || {}) as AxiosRequestHeaders;
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (process.env.NODE_ENV !== "production") {
+      const base = config.baseURL || "";
+      const path = config.url || "";
+      console.debug("[XOXO API] →", `${base}${path}`);
     }
   }
   return config;
@@ -25,7 +30,9 @@ api.interceptors.response.use(
   (err) => {
     if (typeof window !== "undefined") {
       const url = `${err.config?.baseURL || ""}${err.config?.url || ""}`;
+      const body = err.response?.data;
       console.error("[XOXO API] Request failed:", url, err.response?.status, err.message);
+      if (body) console.error("[XOXO API] Response body:", body);
     }
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("xoxo_token");
@@ -35,7 +42,28 @@ api.interceptors.response.use(
 );
 
 export default api;
-export { getApiBaseUrl, getApiDebugInfo, getSocketBaseUrl } from "@/lib/api-config";
+export { getApiBaseUrl, getApiDebugInfo, getSocketBaseUrl, resolveApiUrl } from "@/lib/api-config";
+
+/** Homepage inventory endpoints — full paths relative to baseURL (/api) */
+export const API_ENDPOINTS = {
+  packages: {
+    getAll: "GET /packages",
+    getTrending: "GET /packages/trending",
+    getVisaFree: "GET /packages/visa-free",
+    recentBookings: "GET /packages/recent-bookings",
+    getById: "GET /packages/:id",
+    getBySlug: "GET /packages/slug/:slug",
+  },
+  destinations: {
+    getAll: "GET /destinations",
+    getTrending: "GET /destinations/trending",
+    getAdventure: "GET /destinations/adventure",
+    getVisaFree: "GET /destinations/visa-free",
+    autocomplete: "GET /destinations/autocomplete?q=",
+    search: "GET /destinations/search?q=",
+    getBySlug: "GET /destinations/slug/:slug",
+  },
+} as const;
 
 /* ---- Typed-light API helpers ---- */
 type AnyObj = Record<string, unknown>;

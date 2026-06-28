@@ -1,3 +1,23 @@
+/**
+ * Resolve upstream API origin for Vercel rewrites (no /api suffix).
+ * Set API_PROXY_TARGET on Vercel, or derive from NEXT_PUBLIC_API_URL.
+ */
+function getApiProxyOrigin() {
+  const explicit = process.env.API_PROXY_TARGET?.trim();
+  if (explicit) return explicit.replace(/\/+$/, "").replace(/\/api$/, "");
+
+  const fromPublic = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fromPublic) {
+    return fromPublic.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return "https://xoxo-production-2503.up.railway.app";
+  }
+
+  return "http://localhost:5000";
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -21,14 +41,21 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    const origin = getApiProxyOrigin();
+
     return [
+      // App Router handles /api/intro-videos — all other /api/* proxies to Railway
+      {
+        source: "/api/:path((?!intro-videos).*)",
+        destination: `${origin}/api/:path`,
+      },
       {
         source: "/invoices/:path*",
-        destination: "/api/invoices/:path*",
+        destination: `${origin}/api/invoices/:path*`,
       },
       {
         source: "/uploads/:path*",
-        destination: "/api/uploads/:path*",
+        destination: `${origin}/api/uploads/:path*`,
       },
     ];
   },
