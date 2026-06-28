@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     // Run Express request handler
     return app(req, res);
   } catch (error) {
-    console.error("Serverless API route error:", error);
+    console.error("Serverless API route error:", error.message);
     return res.status(500).json({
       success: false,
       message: "Serverless execution error",

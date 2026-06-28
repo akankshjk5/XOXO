@@ -1,6 +1,13 @@
-require("dotenv").config();
 const http = require("http");
 const path = require("path");
+
+// Vercel injects env vars directly — dotenv must not run in serverless/production.
+const isServerlessRuntime =
+  process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS;
+if (!isServerlessRuntime && process.env.NODE_ENV !== "production") {
+  require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+  require("dotenv").config({ path: path.join(__dirname, "../.env") });
+}
 const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");

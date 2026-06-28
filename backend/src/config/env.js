@@ -3,6 +3,8 @@
  * In production, missing critical secrets will prevent the server from booting.
  */
 
+const { resolveMongoUri } = require("./mongo-uri");
+
 const REQUIRED_PRODUCTION = [
   "MONGODB_URI",
   "JWT_SECRET",
@@ -42,7 +44,7 @@ function validateEnv() {
     isProduction: isProd,
     port: Number(process.env.PORT) || 5000,
     clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
-    mongoUri: process.env.MONGODB_URI || "mongodb://localhost:27017/xoxo-travels",
+    mongoUri: resolveMongoUri(),
     trustProxy: process.env.TRUST_PROXY === "true" || isProd,
   };
 }
