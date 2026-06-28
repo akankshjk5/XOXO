@@ -21,11 +21,18 @@ function buildCorsOptions() {
 
   const isDev = process.env.NODE_ENV !== "production";
 
+  function isAllowedOrigin(origin) {
+    if (!origin) return true;
+    if (allowedOrigins.has(origin)) return true;
+    if (isDev && /^http:\/\/localhost:\d+$/.test(origin)) return true;
+    // Vercel production + preview deployments
+    if (/^https:\/\/[a-z0-9-]+(-[a-z0-9-]+)*\.vercel\.app$/i.test(origin)) return true;
+    return false;
+  }
+
   return {
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (allowedOrigins.has(origin)) return cb(null, true);
-      if (isDev && /^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
+      if (isAllowedOrigin(origin)) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,

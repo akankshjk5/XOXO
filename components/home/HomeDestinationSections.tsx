@@ -26,6 +26,19 @@ export function HomeDestinationSections() {
         const allData: { name: string; slug: string; isVisaFree?: boolean; tagline?: string; coverImage?: string; _id?: string }[] =
           allRes.data.data || [];
 
+        console.info("[HomeDestinationSections] GET /api/destinations →", {
+          count: allData.length,
+          data: allData,
+        });
+        console.info("[HomeDestinationSections] GET /api/destinations/trending →", {
+          count: trendData.length,
+          data: trendData,
+        });
+        console.info("[HomeDestinationSections] GET /api/destinations/adventure →", {
+          count: advData.length,
+          data: advData,
+        });
+
         setTrending(
           trendData
             .map((d: DestinationLinkInput, i: number) =>
@@ -50,8 +63,8 @@ export function HomeDestinationSections() {
             )
             .filter(Boolean) as ValidatedDestinationCard[]
         );
-      } catch {
-        /* carousels stay empty — no broken static slugs */
+      } catch (err) {
+        console.error("[HomeDestinationSections] Failed to load destinations:", err);
       } finally {
         setReady(true);
       }
@@ -79,6 +92,16 @@ export function HomeDestinationSections() {
 
   return (
     <>
+      {ready && trending.length === 0 && visaFree.length === 0 && adventure.length === 0 && (
+        <div className="bg-white section border-t border-[#EBEBEB]">
+          <div className="container-x">
+            <p className="text-sm text-text-grey text-center py-8 border border-dashed border-[#E0E0E0] rounded-2xl">
+              Could not load destinations from the API. Open the browser console for details and
+              confirm NEXT_PUBLIC_API_URL points to your Railway backend.
+            </p>
+          </div>
+        </div>
+      )}
       {trending.length > 0 && (
         <DestinationCarousel title="Trending Destinations" destinations={trending} />
       )}

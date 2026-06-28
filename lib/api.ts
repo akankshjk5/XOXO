@@ -1,8 +1,9 @@
 import axios, { type AxiosRequestHeaders } from "axios";
 import type { ConciergeSession } from "@/lib/concierge-types";
+import { getApiBaseUrl } from "@/lib/api-config";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  baseURL: getApiBaseUrl(),
   withCredentials: true,
 });
 
@@ -18,10 +19,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 → clear token (redirect handled by callers/store to avoid loops)
+// Handle 401 → clear token; log failures for production debugging
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (typeof window !== "undefined") {
+      const url = `${err.config?.baseURL || ""}${err.config?.url || ""}`;
+      console.error("[XOXO API] Request failed:", url, err.response?.status, err.message);
+    }
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("xoxo_token");
     }
@@ -30,6 +35,7 @@ api.interceptors.response.use(
 );
 
 export default api;
+export { getApiBaseUrl, getApiDebugInfo, getSocketBaseUrl } from "@/lib/api-config";
 
 /* ---- Typed-light API helpers ---- */
 type AnyObj = Record<string, unknown>;
@@ -96,7 +102,7 @@ export const conciergeAPI = {
     onToken: (text: string) => void,
     onDone: (session: ConciergeSession) => void
   ) => {
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    const base = getApiBaseUrl();
     const token = typeof window !== "undefined" ? localStorage.getItem("xoxo_token") : null;
     const guestId = typeof window !== "undefined" ? localStorage.getItem("xoxo_concierge_guest") : null;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
