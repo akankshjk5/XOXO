@@ -11,7 +11,7 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!token && !user) {
-      router.replace("/login?redirect=/admin/verification");
+      router.replace("/login?redirect=/admin");
       return;
     }
     if (user && user.role !== "admin") {

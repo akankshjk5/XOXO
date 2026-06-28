@@ -62,6 +62,13 @@ export const packagesAPI = {
   getTrending: () => api.get("/packages/trending"),
   getVisaFree: () => api.get("/packages/visa-free"),
   recentBookings: () => api.get("/packages/recent-bookings"),
+  getFlightSuggestions: (id: string) => api.get(`/packages/${id}/flights`),
+  getHotelSuggestions: (id: string) => api.get(`/packages/${id}/hotels`),
+  getChecklist: (id: string) => api.get(`/packages/${id}/checklist`),
+  getAllAdmin: () => api.get("/packages/admin/list"),
+  create: (data: AnyObj) => api.post("/packages", data),
+  update: (id: string, data: AnyObj) => api.put(`/packages/${id}`, data),
+  remove: (id: string) => api.delete(`/packages/${id}`),
 };
 
 export const destinationsAPI = {
@@ -162,8 +169,35 @@ export const bookingsAPI = {
   create: (data: AnyObj) => api.post("/bookings", data),
   createTransport: (data: AnyObj) => api.post("/bookings/transport", data),
   getMy: () => api.get("/bookings/my"),
+  getAll: () => api.get("/bookings"),
   getById: (id: string) => api.get(`/bookings/${id}`),
   cancel: (id: string) => api.put(`/bookings/${id}/cancel`),
+  updateStatus: (id: string, status: string) => api.put(`/bookings/${id}/status`, { status }),
+};
+
+export const adminAPI = {
+  getDashboard: () => api.get("/admin/dashboard"),
+  seedStatus: () => api.get("/admin/seed/status"),
+  getAnalyticsSummary: () => api.get("/analytics/summary"),
+  exportNewsletter: () => api.get("/newsletter/export", { responseType: "blob" }),
+  getNewsletterCount: () => api.get("/newsletter/count"),
+  getContactMessages: () => api.get("/contact/messages"),
+  getSupportTickets: () => api.get("/support/tickets"),
+};
+
+export const analyticsAPI = {
+  track: (data: AnyObj) => api.post("/analytics/track", data),
+  summary: () => api.get("/analytics/summary"),
+};
+
+export const newsletterAPI = {
+  subscribe: (data: { email: string; name?: string; source?: string }) =>
+    api.post("/newsletter/subscribe", data),
+};
+
+export const contactAPI = {
+  submit: (data: AnyObj) => api.post("/contact", data),
+  createTicket: (data: AnyObj) => api.post("/support/tickets", data),
 };
 
 export const transportAPI = {

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { AppShell } from "@/components/layout/AppShell";
+import { RouteChrome } from "@/components/layout/RouteChrome";
+import { FloatingConcierge } from "@/components/concierge/FloatingConcierge";
+import { CompareBar } from "@/components/packages/CompareBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { IntroProvider } from "@/context/IntroContext";
@@ -39,11 +39,9 @@ export default function RootLayout({
         <AuthProvider>
           <IntroProvider>
             <SkipLink />
-            <Navbar />
-            <main id="main-content" className="min-h-screen outline-none" tabIndex={-1}>
-              <AppShell>{children}</AppShell>
-            </main>
-            <Footer />
+            <RouteChrome>{children}</RouteChrome>
+            <FloatingConcierge />
+            <CompareBar />
           </IntroProvider>
         </AuthProvider>
         <Toaster

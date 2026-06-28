@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { Star, Clock, Check, X, Minus, Plus, Share2, ChevronDown, Heart } from "lucide-react";
+import { Star, Clock, Check, X, Minus, Plus, Heart, GitCompare, ChevronDown } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import toast from "react-hot-toast";
 import { packagesAPI, usersAPI } from "@/lib/api";
@@ -13,6 +13,15 @@ import { formatPrice } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { BookingModal } from "@/components/packages/BookingModal";
 import { PackageReviews } from "@/components/packages/PackageReviews";
+import { RecommendedFlights } from "@/components/packages/RecommendedFlights";
+import { RecommendedHotels } from "@/components/packages/RecommendedHotels";
+import { BudgetCalculator } from "@/components/packages/BudgetCalculator";
+import { SmartTripPlanner } from "@/components/packages/SmartTripPlanner";
+import { TravelChecklist } from "@/components/packages/TravelChecklist";
+import { ShareTrip } from "@/components/packages/ShareTrip";
+import { RecentlyViewedSection } from "@/components/packages/RecentlyViewedSection";
+import { addRecentlyViewed, toggleCompare, isInCompare } from "@/lib/package-storage";
+import { trackEvent } from "@/lib/analytics";
 
 interface ItineraryDay {
   day: number;
@@ -38,7 +47,8 @@ interface PackageFull {
   exclusions?: string[];
   itinerary?: ItineraryDay[];
   highlights?: string[];
-  destination?: { name?: string; country?: string };
+  isVisaFree?: boolean;
+  destination?: { name?: string; country?: string; slug?: string };
   similar?: {
     _id: string;
     title: string;
@@ -62,6 +72,7 @@ export function PackageDetail() {
   const [openDay, setOpenDay] = useState<number | null>(1);
   const [showBooking, setShowBooking] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
+  const [comparing, setComparing] = useState(false);
   const reduced = useReducedMotion();
 
   useEffect(() => {
@@ -83,6 +94,7 @@ export function PackageDetail() {
     try {
       const { data } = await usersAPI.toggleWishlist(id);
       setWishlisted(data.added);
+      trackEvent("wishlist", { entityType: "package", entityId: id, meta: { added: data.added } });
       toast.success(data.added ? "Added to wishlist ❤️" : "Removed from wishlist");
     } catch {
       toast.error("Couldn't update wishlist.");
@@ -96,6 +108,20 @@ export function PackageDetail() {
       try {
         const { data } = await packagesAPI.getById(id);
         setPkg(data.data);
+        if (data.data) {
+          addRecentlyViewed({
+            _id: data.data._id,
+            title: data.data.title,
+            images: data.data.images,
+            pricePerPerson: data.data.pricePerPerson,
+            durationDays: data.data.durationDays,
+            destination: data.data.destination,
+            rating: data.data.rating,
+            isVisaFree: data.data.isVisaFree,
+            category: data.data.category,
+          });
+          trackEvent("view", { entityType: "package", entityId: id });
+        }
       } catch {
         toast.error("Couldn't load this package.");
       } finally {
@@ -104,13 +130,15 @@ export function PackageDetail() {
     })();
   }, [id]);
 
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
-    } catch {
-      toast.error("Couldn't copy link.");
-    }
+  useEffect(() => {
+    if (id) setComparing(isInCompare(id));
+  }, [id]);
+
+  const handleCompare = () => {
+    if (!id) return;
+    const list = toggleCompare(id);
+    setComparing(list.includes(id));
+    toast.success(list.includes(id) ? "Added to compare" : "Removed from compare");
   };
 
   const book = () => {
@@ -229,6 +257,13 @@ export function PackageDetail() {
             </div>
           )}
 
+          {tab === "Itinerary" && id && (
+            <>
+              <RecommendedFlights packageId={id} />
+              <RecommendedHotels packageId={id} />
+            </>
+          )}
+
           {tab === "Inclusions" && (
             <div className="grid sm:grid-cols-2 gap-6">
               <div>
@@ -309,10 +344,10 @@ export function PackageDetail() {
           >
             Book Now
           </button>
-          <div className="flex gap-3">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={toggleWishlist}
-              className={`flex-1 flex items-center justify-center gap-2 border font-medium py-3 rounded-full transition-colors ${
+              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 border font-medium py-3 rounded-full transition-colors ${
                 wishlisted
                   ? "border-red-300 text-red-500 bg-red-50"
                   : "border-[#E0E0E0] text-text-dark hover:border-green-dark"
@@ -321,14 +356,33 @@ export function PackageDetail() {
               <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500" : ""}`} /> {wishlisted ? "Saved" : "Save"}
             </button>
             <button
-              onClick={share}
-              className="flex-1 flex items-center justify-center gap-2 border border-[#E0E0E0] text-text-dark font-medium py-3 rounded-full hover:border-green-dark transition-colors"
+              onClick={handleCompare}
+              className={`flex items-center justify-center gap-2 border font-medium py-3 px-4 rounded-full transition-colors ${
+                comparing ? "border-green-dark bg-green-dark/10 text-green-dark" : "border-[#E0E0E0] text-text-dark"
+              }`}
+              aria-pressed={comparing}
             >
-              <Share2 className="h-4 w-4" /> Share
+              <GitCompare className="h-4 w-4" /> Compare
             </button>
+          </div>
+          <div className="mt-3">
+            <ShareTrip packageId={pkg._id} title={pkg.title} />
           </div>
         </aside>
       </div>
+
+      {id && (
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 space-y-2">
+          <BudgetCalculator packagePricePerPerson={pkg.pricePerPerson} durationDays={pkg.durationDays} />
+          <SmartTripPlanner
+            packageId={id}
+            destination={pkg.destination?.name}
+            defaultDays={pkg.durationDays}
+            defaultBudget={pkg.pricePerPerson * travelers}
+          />
+          <TravelChecklist packageId={id} />
+        </div>
+      )}
 
       {/* Similar packages */}
       {pkg.similar?.length ? (
@@ -355,6 +409,8 @@ export function PackageDetail() {
           </div>
         </div>
       ) : null}
+
+      <RecentlyViewedSection />
 
       {showBooking && (
         <BookingModal

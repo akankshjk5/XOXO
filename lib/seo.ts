@@ -1,0 +1,82 @@
+export interface PackageSeoInput {
+  title: string;
+  description?: string;
+  images?: string[];
+  slug?: string;
+  id: string;
+  pricePerPerson?: number;
+  destination?: { name?: string; country?: string };
+  rating?: number;
+  seoTitle?: string;
+  seoDescription?: string;
+}
+
+const SITE = "https://xoxotravels.com";
+
+export function buildPackageMetadata(pkg: PackageSeoInput) {
+  const title = pkg.seoTitle || `${pkg.title} | XOXO Travels`;
+  const description =
+    pkg.seoDescription ||
+    pkg.description?.slice(0, 160) ||
+    `Book ${pkg.title} with XOXO Travels. Custom international holidays for Indian travellers.`;
+  const image = pkg.images?.[0] || `${SITE}/og-default.jpg`;
+  const canonical = `${SITE}/packages/${pkg.id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "XOXO Travels",
+      images: [{ url: image, width: 1200, height: 630, alt: pkg.title }],
+      type: "website" as const,
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
+export function buildPackageJsonLd(pkg: PackageSeoInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    name: pkg.title,
+    description: pkg.description,
+    image: pkg.images?.[0],
+    touristType: pkg.destination?.country,
+    offers: pkg.pricePerPerson
+      ? {
+          "@type": "Offer",
+          price: pkg.pricePerPerson,
+          priceCurrency: "INR",
+        }
+      : undefined,
+    aggregateRating: pkg.rating
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: pkg.rating,
+          bestRating: 5,
+        }
+      : undefined,
+  };
+}
+
+export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}

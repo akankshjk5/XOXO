@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RevealOnScroll } from "@/components/motion/RevealOnScroll";
 import { useIntro } from "@/context/IntroContext";
 import { clearIntroSeen, requestIntroReplay } from "@/lib/intro-storage";
+import { NewsletterSignup } from "@/components/layout/NewsletterSignup";
 
 const LINKS = [
   { label: "Packages", href: "/packages" },
@@ -13,6 +14,7 @@ const LINKS = [
   { label: "AI Concierge", href: "/concierge" },
   { label: "Community", href: "/community" },
   { label: "Visa", href: "/visa" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Footer() {
@@ -47,6 +49,7 @@ export function Footer() {
             <p className="mt-4 text-xs text-white/40 font-medium tracking-wide uppercase">
               Trusted by 2 Lakh+ travellers
             </p>
+            <NewsletterSignup />
           </div>
 
           <nav className="flex flex-wrap justify-center md:justify-end gap-x-10 gap-y-4">

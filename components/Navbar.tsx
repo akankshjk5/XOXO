@@ -199,11 +199,11 @@ export default function Navbar() {
               </Link>
               {user.role === "admin" && (
                 <Link
-                  href="/admin/verification"
+                  href="/admin"
                   onClick={() => setDrawerOpen(false)}
                   className="flex items-center gap-2 text-[15px] font-medium text-amber-700 py-2"
                 >
-                  <Shield className="h-4 w-4" /> Verification queue
+                  <Shield className="h-4 w-4" /> Admin dashboard
                 </Link>
               )}
               <button

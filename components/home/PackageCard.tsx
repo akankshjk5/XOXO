@@ -16,7 +16,7 @@ export function PackageCard({ pkg, className }: PackageCardProps) {
     "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
 
   return (
-    <Link href={`/packages/${pkg.id}`}>
+    <Link href={`/packages/${pkg.id}`} prefetch>
       <article
         className={cn(
           "rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift group cursor-pointer shadow-[0_2px_16px_rgba(0,0,0,0.06)]",
@@ -30,6 +30,7 @@ export function PackageCard({ pkg, className }: PackageCardProps) {
             fill
             className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, 33vw"
+            loading="lazy"
           />
           {pkg.badge && (
             <span className="absolute top-3 left-3 rounded-pill bg-white/95 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-bold text-text-primary capitalize shadow-sm">
