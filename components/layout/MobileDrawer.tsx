@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { X, Phone } from "lucide-react";
-import { DRAWER_MENU } from "@/lib/pyt-data";
+import { DRAWER_MENU } from "@/lib/nav-menu";
 import { cn } from "@/lib/utils";
 
 interface MobileDrawerProps {

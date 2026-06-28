@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { SOCIAL_FEATURES } from "@/lib/home-data";
+import { SOCIAL_FEATURES } from "@/lib/social-features";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion/FadeIn";
 
 export function SocialTravelSection() {

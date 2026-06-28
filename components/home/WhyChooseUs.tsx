@@ -46,10 +46,6 @@ export function WhyChooseUs() {
           destinationsAPI.getAll({}),
         ]);
         if (cancelled) return;
-        console.info("[WhyChooseUs] Live inventory counts →", {
-          packages: pkgRes.data.pagination?.total,
-          destinations: destRes.data.data?.length,
-        });
         setCounts({
           packages: pkgRes.data.pagination?.total ?? pkgRes.data.data?.length ?? 0,
           destinations: destRes.data.data?.length ?? 0,

@@ -5,8 +5,6 @@
 
 const LOCAL_API = "http://localhost:5000/api";
 const LOCAL_RELATIVE_API = "/api";
-/** Production Railway API — used when env var missing at build time */
-const PRODUCTION_RAILWAY_API = "https://xoxo-production-2503.up.railway.app/api";
 
 function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
@@ -18,10 +16,6 @@ export function getApiBaseUrl(): string {
 
   if (!raw) {
     if (process.env.NODE_ENV === "production") {
-      // Prefer same-origin /api (rewritten to Railway in next.config.mjs)
-      console.warn(
-        "[XOXO API] NEXT_PUBLIC_API_URL unset at build — using same-origin /api (proxied to Railway)"
-      );
       return LOCAL_RELATIVE_API;
     }
     return LOCAL_API;
@@ -30,11 +24,6 @@ export function getApiBaseUrl(): string {
   let base = stripTrailingSlash(raw);
   if (!base.endsWith("/api")) {
     base = `${base}/api`;
-  }
-
-  // Never use bare "/api" when a full Railway URL was configured
-  if (base === LOCAL_RELATIVE_API && process.env.NODE_ENV === "production") {
-    return PRODUCTION_RAILWAY_API;
   }
 
   return base;
@@ -52,7 +41,7 @@ export function getSocketBaseUrl(): string {
     : "http://localhost:5000";
 }
 
-/** Debug helper — resolved URLs at runtime (client) or build time (SSR) */
+/** Debug helper — development only */
 export function getApiDebugInfo() {
   return {
     apiBaseUrl: getApiBaseUrl(),
@@ -70,14 +59,4 @@ export function resolveApiUrl(path: string): string {
   if (base.startsWith("http")) return `${base}${segment}`;
   if (typeof window !== "undefined") return `${window.location.origin}${base}${segment}`;
   return `${base}${segment}`;
-}
-
-if (typeof window !== "undefined") {
-  const info = getApiDebugInfo();
-  console.info("[XOXO API] Resolved configuration:", info);
-  console.info("[XOXO API] Example endpoints:", {
-    packages: resolveApiUrl("/packages"),
-    packagesTrending: resolveApiUrl("/packages/trending"),
-    destinations: resolveApiUrl("/destinations"),
-  });
 }

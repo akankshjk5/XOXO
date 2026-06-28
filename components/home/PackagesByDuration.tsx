@@ -22,13 +22,7 @@ export function PackagesByDuration() {
       try {
         const { data } = await packagesAPI.getAll({ limit: 24, sort: "popular" });
         if (cancelled) return;
-        const mapped = (data.data || []).map(mapHomePackageCard);
-        console.info("[PackagesByDuration] GET /api/packages →", {
-          count: mapped.length,
-          total: data.pagination?.total,
-          data: data.data,
-        });
-        setPackages(mapped);
+        setPackages((data.data || []).map(mapHomePackageCard));
       } catch (err) {
         console.error("[PackagesByDuration] Failed to load packages:", err);
         if (!cancelled) setPackages([]);

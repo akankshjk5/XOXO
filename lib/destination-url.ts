@@ -37,7 +37,9 @@ export function toDestinationCard(
   id?: string
 ): { id: string; subLabel: string; name: string; slug: string; image: string; href: string } | null {
   if (!isValidDestinationSlug(dest.slug)) {
-    console.warn("[destination-url] Skipping destination with invalid slug:", dest.name, dest.slug);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[destination-url] Skipping destination with invalid slug:", dest.name, dest.slug);
+    }
     return null;
   }
   return {

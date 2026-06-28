@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { packagesAPI } from "@/lib/api";
+import { fetchTrendingPackages } from "@/lib/home-inventory";
 import { mapHomePackageCard, type HomePackageCard } from "@/lib/home-mappers";
 import { formatPrice } from "@/lib/utils";
 import { LazyImage } from "@/components/motion/LazyImage";
@@ -18,14 +18,9 @@ export function TrendingPackagesSection() {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await packagesAPI.getTrending();
+        const items = await fetchTrendingPackages();
         if (cancelled) return;
-        const mapped = (data.data || []).map(mapHomePackageCard);
-        console.info("[TrendingPackagesSection] GET /api/packages/trending →", {
-          count: mapped.length,
-          data: data.data,
-        });
-        setPackages(mapped);
+        setPackages(items.map(mapHomePackageCard));
       } catch (err) {
         console.error("[TrendingPackagesSection] Failed to load trending packages:", err);
         if (!cancelled) setError(true);

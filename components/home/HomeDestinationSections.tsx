@@ -45,19 +45,6 @@ export function HomeDestinationSections() {
         const advData: DestRow[] = advRes.data.data || [];
         const allData: DestRow[] = allRes.data.data || [];
 
-        console.info("[HomeDestinationSections] GET /api/destinations →", {
-          count: allData.length,
-          data: allData,
-        });
-        console.info("[HomeDestinationSections] GET /api/destinations/trending →", {
-          count: trendData.length,
-          data: trendData,
-        });
-        console.info("[HomeDestinationSections] GET /api/destinations/adventure →", {
-          count: advData.length,
-          data: advData,
-        });
-
         const trendingSource =
           trendData.length > 0 ? trendData : allData.filter((d) => d.isTrending);
         const adventureSource =

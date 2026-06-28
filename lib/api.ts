@@ -44,27 +44,6 @@ api.interceptors.response.use(
 export default api;
 export { getApiBaseUrl, getApiDebugInfo, getSocketBaseUrl, resolveApiUrl } from "@/lib/api-config";
 
-/** Homepage inventory endpoints — full paths relative to baseURL (/api) */
-export const API_ENDPOINTS = {
-  packages: {
-    getAll: "GET /packages",
-    getTrending: "GET /packages/trending",
-    getVisaFree: "GET /packages/visa-free",
-    recentBookings: "GET /packages/recent-bookings",
-    getById: "GET /packages/:id",
-    getBySlug: "GET /packages/slug/:slug",
-  },
-  destinations: {
-    getAll: "GET /destinations",
-    getTrending: "GET /destinations/trending",
-    getAdventure: "GET /destinations/adventure",
-    getVisaFree: "GET /destinations/visa-free",
-    autocomplete: "GET /destinations/autocomplete?q=",
-    search: "GET /destinations/search?q=",
-    getBySlug: "GET /destinations/slug/:slug",
-  },
-} as const;
-
 /* ---- Typed-light API helpers ---- */
 type AnyObj = Record<string, unknown>;
 

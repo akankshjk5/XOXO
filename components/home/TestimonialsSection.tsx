@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { packagesAPI } from "@/lib/api";
+import { fetchTrendingPackages } from "@/lib/home-inventory";
 import { mapHomePackageCard, type HomePackageCard } from "@/lib/home-mappers";
 import { FadeIn } from "@/components/motion/FadeIn";
 
@@ -16,13 +16,9 @@ export function TestimonialsSection() {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await packagesAPI.getTrending();
+        const items = await fetchTrendingPackages();
         if (cancelled) return;
-        const mapped = (data.data || []).map(mapHomePackageCard);
-        console.info("[TestimonialsSection] GET /api/packages/trending (social proof) →", {
-          count: mapped.length,
-        });
-        setItems(mapped);
+        setItems(items.map(mapHomePackageCard));
       } catch (err) {
         console.error("[TestimonialsSection] Failed to load package social proof:", err);
       } finally {

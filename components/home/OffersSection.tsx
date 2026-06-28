@@ -19,12 +19,7 @@ export function OffersSection() {
       try {
         const { data } = await packagesAPI.getVisaFree();
         if (cancelled) return;
-        const mapped = (data.data || []).map(mapHomePackageCard);
-        console.info("[OffersSection] GET /api/packages/visa-free →", {
-          count: mapped.length,
-          data: data.data,
-        });
-        setOffers(mapped);
+        setOffers((data.data || []).map(mapHomePackageCard));
       } catch (err) {
         console.error("[OffersSection] Failed to load visa-free offers:", err);
         if (!cancelled) setOffers([]);

@@ -63,10 +63,6 @@ export function RecentlyBookedSection() {
         const items = (data.data || []).map((item: Parameters<typeof mapRecentBooking>[0], i: number) =>
           mapRecentBooking(item, i)
         );
-        console.info("[RecentlyBookedSection] GET /api/packages/recent-bookings →", {
-          count: items.length,
-          data: data.data,
-        });
         setBookings(items);
       } catch (err) {
         console.error("[RecentlyBookedSection] Failed to load recent bookings:", err);

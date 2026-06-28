@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { packagesAPI } from "@/lib/api";
-import { mapItineraryPreview, type ApiPackage, type ItineraryPreviewDay } from "@/lib/home-mappers";
+import { fetchTrendingPackages } from "@/lib/home-inventory";
+import { mapItineraryPreview, type ItineraryPreviewDay } from "@/lib/home-mappers";
 import { FadeIn } from "@/components/motion/FadeIn";
 
 export function AIItineraryBanner() {
@@ -18,14 +18,13 @@ export function AIItineraryBanner() {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await packagesAPI.getTrending();
+        const items = await fetchTrendingPackages();
         if (cancelled) return;
-        const pkg = (data.data?.[0] || null) as ApiPackage | null;
+        const pkg = items[0];
         if (!pkg) return;
         setPackageTitle(pkg.title);
         setDestinationName(pkg.destination?.name || "");
         setPreview(mapItineraryPreview(pkg, 3));
-        console.info("[AIItineraryBanner] GET /api/packages/trending (itinerary preview) →", pkg.title);
       } catch (err) {
         console.error("[AIItineraryBanner] Failed to load itinerary preview:", err);
       }

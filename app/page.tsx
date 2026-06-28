@@ -1,7 +1,6 @@
 import dynamic from "next/dynamic";
 import { CinematicHero } from "@/components/cinematic/CinematicHero";
 import { WhosComingSection } from "@/components/home/WhosComingSection";
-import { HomeApiLogger } from "@/components/home/HomeApiLogger";
 import { HashtagTicker } from "@/components/home/HashtagTicker";
 import { StoryBridge } from "@/components/home/StorySection";
 import { RevealOnScroll } from "@/components/motion/RevealOnScroll";
@@ -68,7 +67,6 @@ const PlanWithXOXO = dynamic(
 export default function HomePage() {
   return (
     <>
-      <HomeApiLogger />
       <CinematicHero />
       <WhosComingSection />
       <HashtagTicker />
