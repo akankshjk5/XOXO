@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
+    "seed:production": "node scripts/seed-production.js",
     "smoke": "node scripts/smoke-test-production.js",
     "qa": "node scripts/smoke-test-production.js && node scripts/qa-smoke-extended.js"
   },
