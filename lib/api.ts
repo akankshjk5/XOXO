@@ -79,6 +79,9 @@ export const destinationsAPI = {
   getAdventure: () => api.get("/destinations/adventure"),
   search: (q: string) => api.get("/destinations/search", { params: { q } }),
   autocomplete: (q: string) => api.get("/destinations/autocomplete", { params: { q } }),
+  create: (data: AnyObj) => api.post("/destinations", data),
+  update: (id: string, data: AnyObj) => api.put(`/destinations/${id}`, data),
+  remove: (id: string) => api.delete(`/destinations/${id}`),
 };
 
 export const aiAPI = {
@@ -169,7 +172,7 @@ export const bookingsAPI = {
   create: (data: AnyObj) => api.post("/bookings", data),
   createTransport: (data: AnyObj) => api.post("/bookings/transport", data),
   getMy: () => api.get("/bookings/my"),
-  getAll: () => api.get("/bookings"),
+  getAll: (params?: AnyObj) => api.get("/bookings", { params }),
   getById: (id: string) => api.get(`/bookings/${id}`),
   cancel: (id: string) => api.put(`/bookings/${id}/cancel`),
   updateStatus: (id: string, status: string) => api.put(`/bookings/${id}/status`, { status }),
@@ -183,6 +186,21 @@ export const adminAPI = {
   getNewsletterCount: () => api.get("/newsletter/count"),
   getContactMessages: () => api.get("/contact/messages"),
   getSupportTickets: () => api.get("/support/tickets"),
+  listUsers: (params?: AnyObj) => api.get("/admin/users", { params }),
+  updateUser: (id: string, data: AnyObj) => api.patch(`/admin/users/${id}`, data),
+  listReviews: (params?: AnyObj) => api.get("/admin/reviews", { params }),
+  moderateReview: (id: string, status: string) => api.patch(`/admin/reviews/${id}`, { status }),
+  deleteReview: (id: string) => api.delete(`/admin/reviews/${id}`),
+  listCoupons: () => api.get("/admin/coupons"),
+  createCoupon: (data: AnyObj) => api.post("/admin/coupons", data),
+  updateCoupon: (id: string, data: AnyObj) => api.put(`/admin/coupons/${id}`, data),
+  deleteCoupon: (id: string) => api.delete(`/admin/coupons/${id}`),
+  getSettings: () => api.get("/admin/settings"),
+  updateSettings: (data: AnyObj) => api.put("/admin/settings", data),
+};
+
+export const settingsAPI = {
+  get: () => api.get("/settings"),
 };
 
 export const analyticsAPI = {

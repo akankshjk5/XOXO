@@ -1,4 +1,8 @@
 export interface AdminDashboardStats {
+  totalPackages: number;
+  totalDestinations: number;
+  totalBookings: number;
+  totalUsers: number;
   todayBookings: number;
   todayRevenue: number;
   activeUsers: number;

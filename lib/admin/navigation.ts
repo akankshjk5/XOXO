@@ -4,21 +4,11 @@ import {
   CalendarCheck,
   Package,
   MapPin,
-  Bus,
-  Hotel,
   Users,
   Star,
   Ticket,
-  CreditCard,
-  FileText,
-  BookOpen,
-  Bell,
-  BarChart3,
-  LifeBuoy,
   Settings,
-  UserCircle,
   LogOut,
-  Compass,
 } from "lucide-react";
 
 export type AdminRoleId =
@@ -41,24 +31,13 @@ export interface AdminNavItem {
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { id: "bookings", label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
   { id: "packages", label: "Packages", href: "/admin/packages", icon: Package },
   { id: "destinations", label: "Destinations", href: "/admin/destinations", icon: MapPin },
-  { id: "transport", label: "Transport", href: "/admin/transport", icon: Bus },
-  { id: "hotels", label: "Hotels", href: "/admin/hotels", icon: Hotel },
-  { id: "guides", label: "Guides", href: "/admin/guides", icon: Compass },
+  { id: "bookings", label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
   { id: "users", label: "Users", href: "/admin/users", icon: Users },
   { id: "reviews", label: "Reviews", href: "/admin/reviews", icon: Star },
   { id: "coupons", label: "Coupons", href: "/admin/coupons", icon: Ticket },
-  { id: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard, roles: ["super-admin", "admin", "finance"] },
-  { id: "invoices", label: "Invoices", href: "/admin/invoices", icon: FileText, roles: ["super-admin", "admin", "finance"] },
-  { id: "blogs", label: "Blogs", href: "/admin/blogs", icon: BookOpen },
-  { id: "notifications", label: "Notifications", href: "/admin/notifications", icon: Bell },
-  { id: "analytics", label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { id: "support", label: "Support Tickets", href: "/admin/support", icon: LifeBuoy, roles: ["super-admin", "admin", "support"] },
-  { id: "settings", label: "Settings", href: "/admin/settings", icon: Settings, roles: ["super-admin", "admin"] },
-  { id: "profile", label: "Profile", href: "/admin/profile", icon: UserCircle },
-  { id: "verification", label: "Verification", href: "/admin/verification", icon: UserCircle, roles: ["super-admin", "admin", "support"] },
+  { id: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export const ADMIN_FOOTER_NAV: AdminNavItem[] = [
@@ -165,18 +144,8 @@ export const ADMIN_MODULE_META: Record<string, AdminModuleMeta> = {
   },
   settings: {
     title: "Settings",
-    description: "Branding, API keys, payments, and security.",
-    features: ["General", "Branding", "SEO", "API Keys", "Social Login"],
-  },
-  profile: {
-    title: "Admin Profile",
-    description: "Your admin account and preferences.",
-    features: ["Profile", "Password", "2FA (coming soon)"],
-  },
-  verification: {
-    title: "Verification Queue",
-    description: "Review traveler identity verification requests.",
-    features: ["Approve / Reject", "Document Review"],
+    description: "Website name, logo, contact details, and social links.",
+    features: ["Branding", "Contact", "Social Links"],
   },
 };
 

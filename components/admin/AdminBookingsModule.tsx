@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { bookingsAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { formatDistanceToNow } from "date-fns";
@@ -23,18 +23,25 @@ export function AdminBookingsModule() {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  const load = () => {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const load = useCallback(() => {
     setLoading(true);
+    const params: Record<string, string> = {};
+    if (search) params.search = search;
+    if (statusFilter !== "all") params.status = statusFilter;
     bookingsAPI
-      .getAll()
+      .getAll(params)
       .then((res) => setBookings(res.data.data || []))
       .catch(() => setError("Failed to load bookings"))
       .finally(() => setLoading(false));
-  };
+  }, [search, statusFilter]);
 
   useEffect(() => {
-    load();
-  }, []);
+    const t = setTimeout(load, 300);
+    return () => clearTimeout(t);
+  }, [load]);
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(id);
@@ -52,6 +59,24 @@ export function AdminBookingsModule() {
     <>
       <AdminHeader title="Bookings" subtitle="Live booking table — approve, cancel, and manage trips" />
       <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search customer, email, or package…"
+            className="rounded-lg border px-3 py-2 text-sm flex-1 max-w-md"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="all">All statuses</option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
         {error && (
           <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
             {error}

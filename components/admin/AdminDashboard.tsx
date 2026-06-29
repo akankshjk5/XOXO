@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
+  Package,
+  MapPin,
   CalendarCheck,
-  IndianRupee,
   Users,
-  CreditCard,
-  XCircle,
-  Star,
+  IndianRupee,
 } from "lucide-react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
@@ -76,34 +76,39 @@ export function AdminDashboard() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          <AdminStatCard
-            label="Today's Bookings"
-            value={stats?.todayBookings ?? "—"}
-            icon={CalendarCheck}
-          />
-          <AdminStatCard
-            label="Today's Revenue"
-            value={stats ? formatINR(stats.todayRevenue) : "—"}
-            icon={IndianRupee}
-          />
-          <AdminStatCard
-            label="Active Users"
-            value={stats?.activeUsers ?? "—"}
-            icon={Users}
-            trend="Last 30 days"
-          />
-          <AdminStatCard
-            label="Pending Payments"
-            value={stats?.pendingPayments ?? "—"}
-            icon={CreditCard}
-          />
-          <AdminStatCard
-            label="Cancelled Trips"
-            value={stats?.cancelledTrips ?? "—"}
-            icon={XCircle}
-          />
-          <AdminStatCard label="New Reviews" value={stats?.newReviews ?? "—"} icon={Star} />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminStatCard label="Total Packages" value={stats?.totalPackages ?? "—"} icon={Package} />
+          <AdminStatCard label="Total Destinations" value={stats?.totalDestinations ?? "—"} icon={MapPin} />
+          <AdminStatCard label="Total Bookings" value={stats?.totalBookings ?? "—"} icon={CalendarCheck} />
+          <AdminStatCard label="Total Users" value={stats?.totalUsers ?? "—"} icon={Users} />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminStatCard label="Today's Bookings" value={stats?.todayBookings ?? "—"} icon={CalendarCheck} />
+          <AdminStatCard label="Today's Revenue" value={stats ? formatINR(stats.todayRevenue) : "—"} icon={IndianRupee} />
+          <AdminStatCard label="Active Users (30d)" value={stats?.activeUsers ?? "—"} icon={Users} trend="Last 30 days" />
+          <AdminStatCard label="Pending Payments" value={stats?.pendingPayments ?? "—"} icon={CalendarCheck} />
+        </div>
+
+        <div className="admin-card p-5">
+          <h3 className="font-medium text-text-dark mb-3">Quick actions</h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { href: "/admin/packages", label: "Manage packages" },
+              { href: "/admin/destinations", label: "Manage destinations" },
+              { href: "/admin/bookings", label: "View bookings" },
+              { href: "/admin/coupons", label: "Create coupon" },
+              { href: "/admin/settings", label: "Site settings" },
+            ].map((a) => (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--admin-bg)] transition-colors"
+              >
+                {a.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -151,7 +156,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           <AdminActivityFeed
             title="Recent Bookings"
             items={(data?.activity.recentBookings ?? []).map((b) => {
@@ -169,48 +174,6 @@ export function AdminDashboard() {
                 time: booking.createdAt,
               };
             })}
-          />
-          <AdminActivityFeed
-            title="Recent Users"
-            items={(data?.activity.recentUsers ?? []).map((u) => {
-              const user = u as { _id: string; name?: string; email?: string; createdAt?: string };
-              return {
-                id: user._id,
-                title: user.name || "User",
-                subtitle: user.email,
-                time: user.createdAt,
-              };
-            })}
-          />
-          <AdminActivityFeed
-            title="Recent Payments"
-            items={(data?.activity.recentPayments ?? []).map((p) => {
-              const pay = p as {
-                _id: string;
-                user?: { name?: string };
-                paidAmount?: number;
-                updatedAt?: string;
-              };
-              return {
-                id: pay._id,
-                title: formatINR(pay.paidAmount || 0),
-                subtitle: pay.user?.name,
-                time: pay.updatedAt,
-              };
-            })}
-          />
-          <AdminActivityFeed
-            title="Notifications"
-            items={(data?.activity.recentNotifications ?? []).map((n) => {
-              const note = n as { _id: string; title?: string; body?: string; createdAt?: string };
-              return {
-                id: note._id,
-                title: note.title || "Notification",
-                subtitle: note.body,
-                time: note.createdAt,
-              };
-            })}
-            emptyMessage="No system notifications"
           />
         </div>
       </div>
