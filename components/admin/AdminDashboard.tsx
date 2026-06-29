@@ -143,7 +143,10 @@ export function AdminDashboard() {
           <div className="admin-card p-5">
             <h3 className="font-medium text-text-dark">Popular Destinations</h3>
             <ul className="mt-4 space-y-2">
-              {(data?.charts.topDestinations ?? []).map((dest) => (
+              {(data?.charts.topDestinations ?? []).length === 0 ? (
+                <li className="py-4 text-center text-sm text-text-grey">No destination data yet</li>
+              ) : (
+                data?.charts.topDestinations.map((dest) => (
                 <li
                   key={dest.slug || dest.name}
                   className="flex items-center justify-between rounded-xl bg-[var(--admin-bg)] px-3 py-2 text-sm"
@@ -151,7 +154,8 @@ export function AdminDashboard() {
                   <span className="font-medium">{dest.name}</span>
                   <span className="text-text-grey">{dest.country}</span>
                 </li>
-              ))}
+              ))
+              )}
             </ul>
           </div>
         </div>

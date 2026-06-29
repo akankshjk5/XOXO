@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { getUserRole, isAdminRole, isUserOnlyRoute } from "@/lib/auth-routing";
 
 /**
  * Client-side route guard. Redirects unauthenticated users to /login
  * with a redirect back to the originally requested page.
+ * Admins visiting traveler-only routes are sent to /admin.
  */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -18,12 +20,21 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
+
     if (!token && !user) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname || "")}`);
       setAllowed(false);
-    } else {
-      setAllowed(true);
+      return;
     }
+
+    const role = getUserRole(user);
+    if (isAdminRole(role) && pathname && isUserOnlyRoute(pathname)) {
+      router.replace("/admin");
+      setAllowed(false);
+      return;
+    }
+
+    setAllowed(true);
   }, [token, user, pathname, router, hydrated]);
 
   if (!hydrated || !allowed) {

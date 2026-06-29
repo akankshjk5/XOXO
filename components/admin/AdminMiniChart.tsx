@@ -31,7 +31,9 @@ export function AdminMiniChart({
                   title={`${valuePrefix}${point.value.toLocaleString()}`}
                 />
               </div>
-              <span className="truncate text-[10px] text-text-grey">{point.label.slice(5)}</span>
+              <span className="truncate text-[10px] text-text-grey">
+                {point.label.length >= 10 ? point.label.slice(8, 10) : point.label}
+              </span>
             </div>
           ))}
         </div>

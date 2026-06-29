@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
@@ -20,8 +21,10 @@ import toast from "react-hot-toast";
 import { bookingsAPI, usersAPI, itinerariesAPI, walletAPI, uploadAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { formatPrice } from "@/lib/utils";
+import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 import { CountUp } from "@/components/motion/CountUp";
 import { EmptyState } from "@/components/motion/EmptyState";
+import { DataLoadError } from "@/components/ui/DataLoadError";
 
 type Tab = "overview" | "bookings" | "wishlist" | "itineraries" | "wallet" | "profile";
 
@@ -75,11 +78,13 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
 
 export function DashboardClient() {
   const { user, setUser } = useAuthStore();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("overview");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [wishlist, setWishlist] = useState<WishItem[]>([]);
   const [itineraries, setItineraries] = useState<Itin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState({
     name: user?.name || "",
@@ -92,6 +97,13 @@ export function DashboardClient() {
   const [redeemAmt, setRedeemAmt] = useState("");
   const [refCode, setRefCode] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  useEffect(() => {
+    const requested = searchParams?.get("tab");
+    if (requested && NAV.some((n) => n.id === requested)) {
+      setTab(requested as Tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (tab !== "wallet" || wallet) return;
@@ -145,23 +157,27 @@ export function DashboardClient() {
     }
   };
 
+  const loadDashboard = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [b, w, i] = await Promise.all([
+        bookingsAPI.getMy(),
+        usersAPI.getWishlist(),
+        itinerariesAPI.getMy(),
+      ]);
+      setBookings(b.data.data);
+      setWishlist(w.data.data);
+      setItineraries(i.data.data);
+    } catch {
+      setLoadError("Couldn't load your dashboard.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const [b, w, i] = await Promise.all([
-          bookingsAPI.getMy(),
-          usersAPI.getWishlist(),
-          itinerariesAPI.getMy(),
-        ]);
-        setBookings(b.data.data);
-        setWishlist(w.data.data);
-        setItineraries(i.data.data);
-      } catch {
-        toast.error("Couldn't load your dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    loadDashboard();
   }, []);
 
   const cancelBooking = async (id: string) => {
@@ -256,6 +272,9 @@ export function DashboardClient() {
 
         {/* Content */}
         <div>
+          {loadError && !loading ? (
+            <DataLoadError message={loadError} onRetry={loadDashboard} className="mb-6" />
+          ) : null}
           {loading ? (
             <div className="flex items-center gap-2 text-text-grey py-12">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading…
@@ -284,9 +303,13 @@ export function DashboardClient() {
                     bookings.map((b) => (
                       <div key={b._id} className="flex gap-4 border border-[#EBEBEB] rounded-2xl p-4">
                         <div className="relative h-20 w-28 rounded-xl overflow-hidden shrink-0 bg-off-white">
-                          {b.package?.images?.[0] && (
-                            <Image src={b.package.images[0]} alt={b.package.title} fill sizes="112px" className="object-cover" />
-                          )}
+                          <Image
+                            src={b.package?.images?.[0] || DEFAULT_PACKAGE_IMAGE}
+                            alt={b.package?.title || "Package"}
+                            fill
+                            sizes="112px"
+                            className="object-cover"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
@@ -329,9 +352,13 @@ export function DashboardClient() {
                     wishlist.map((w) => (
                       <div key={w._id} className="rounded-2xl overflow-hidden border border-[#EBEBEB] group">
                         <Link href={`/packages/${w._id}`} className="block relative h-32">
-                          {w.images?.[0] && (
-                            <Image src={w.images[0]} alt={w.title} fill sizes="33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                          )}
+                          <Image
+                            src={w.images?.[0] || DEFAULT_PACKAGE_IMAGE}
+                            alt={w.title}
+                            fill
+                            sizes="33vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
                         </Link>
                         <div className="p-3">
                           <p className="text-sm font-semibold line-clamp-1">{w.title}</p>

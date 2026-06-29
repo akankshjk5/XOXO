@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Loader2, ShieldCheck, FileText, CalendarDays } from "lucide-react";
@@ -8,7 +8,10 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import toast from "react-hot-toast";
 import { bookingsAPI, paymentsAPI } from "@/lib/api";
 import { loadRazorpay } from "@/lib/razorpay";
+import { getBookingConfirmationPath } from "@/lib/auth-routing";
 import { useAuthStore } from "@/store/authStore";
+import { usePaymentMode } from "@/hooks/usePaymentMode";
+import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
 import { formatPrice } from "@/lib/utils";
 
 interface BookingModalProps {
@@ -25,6 +28,7 @@ const ADDONS_COMING_SOON = [
 export function BookingModal({ pkg, travelers: initialTravelers, onClose }: BookingModalProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const { mode: paymentMode, loading: paymentModeLoading, isDemo } = usePaymentMode();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -32,11 +36,21 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
   const [travelers, setTravelers] = useState(initialTravelers);
   const [travelDate, setTravelDate] = useState("");
   const [lead, setLead] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: "",
+    email: "",
     phone: "",
   });
   const [specialRequests, setSpecialRequests] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setLead((prev) => ({
+        ...prev,
+        name: prev.name || user.name || "",
+        email: prev.email || user.email || "",
+      }));
+    }
+  }, [user]);
 
   const total = pkg.pricePerPerson * travelers;
 
@@ -70,16 +84,16 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
       const { data: orderRes } = await paymentsAPI.createOrder(booking._id);
       const order = orderRes.data;
 
-      // 3a. Demo mode — no Razorpay keys configured on the server
+      // 3a. Demo mode — Razorpay keys not configured on API (see PAYMENT_SETUP.md)
       if (orderRes.demo) {
         await paymentsAPI.verify({ bookingId: booking._id });
         toast.success("Booking confirmed! (demo payment) 🎉");
         onClose();
-        router.push("/dashboard");
+        router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
         return;
       }
 
-      // 3b. Real Razorpay checkout
+      // 3b. Live/test Razorpay checkout — keyId comes from the API, never hardcoded here
       const ok = await loadRazorpay();
       if (!ok) {
         toast.error("Couldn't load payment gateway.");
@@ -104,7 +118,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
             await paymentsAPI.verify({ bookingId: booking._id, ...resp });
             toast.success("Payment successful! Booking confirmed 🎉");
             onClose();
-            router.push("/dashboard");
+            router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
           } catch {
             toast.error("Payment verification failed.");
           }
@@ -283,9 +297,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>
-              <p className="text-xs text-text-grey flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-green-dark" /> Secure payment via Razorpay
-              </p>
+              <PaymentModeNotice mode={paymentMode} loading={paymentModeLoading} />
             </div>
           )}
             </motion.div>
@@ -318,7 +330,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
                 className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors flex items-center gap-2 disabled:opacity-60"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                Pay & Confirm
+                {isDemo ? "Confirm demo booking" : "Pay & Confirm"}
               </button>
             )}
           </div>

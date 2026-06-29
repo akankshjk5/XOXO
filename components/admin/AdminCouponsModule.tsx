@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { adminAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { DataLoadError } from "@/components/ui/DataLoadError";
 import toast from "react-hot-toast";
 
 interface CouponRow {
@@ -17,26 +18,34 @@ interface CouponRow {
   usageCount?: number;
 }
 
+const EMPTY_COUPON_FORM = {
+  code: "",
+  discountType: "percent" as "percent" | "fixed",
+  discountValue: 10,
+  minAmount: 0,
+  expiresAt: "",
+  isActive: true,
+};
+
 export function AdminCouponsModule() {
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CouponRow | null>(null);
-  const [form, setForm] = useState({
-    code: "",
-    discountType: "percent" as "percent" | "fixed",
-    discountValue: 10,
-    minAmount: 0,
-    expiresAt: "",
-    isActive: true,
-  });
+  const [form, setForm] = useState(EMPTY_COUPON_FORM);
 
   const load = () => {
     setLoading(true);
+    setLoadError(null);
     adminAPI
       .listCoupons()
-      .then((res) => setCoupons(res.data.data || []))
-      .catch(() => toast.error("Failed to load coupons"))
+      .then((res) => {
+        setCoupons(res.data.data || []);
+        setLoadError(null);
+      })
+      .catch(() => setLoadError("Failed to load coupons"))
       .finally(() => setLoading(false));
   };
 
@@ -44,11 +53,18 @@ export function AdminCouponsModule() {
     load();
   }, []);
 
+  const openCreate = () => {
+    setEditing(null);
+    setForm(EMPTY_COUPON_FORM);
+    setOpen(true);
+  };
+
   const save = async () => {
     if (!form.code) {
       toast.error("Coupon code required");
       return;
     }
+    setSaving(true);
     const payload = {
       ...form,
       expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
@@ -65,6 +81,8 @@ export function AdminCouponsModule() {
       load();
     } catch {
       toast.error("Save failed — code may already exist");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -83,9 +101,11 @@ export function AdminCouponsModule() {
     <>
       <AdminHeader title="Coupons" subtitle="Promotional discount codes" />
       <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-        <button type="button" onClick={() => { setEditing(null); setOpen(true); }} className="inline-flex items-center gap-2 rounded-lg bg-green-dark text-white px-4 py-2.5 text-sm font-medium">
+        <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-green-dark text-white px-4 py-2.5 text-sm font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark disabled:opacity-60">
           <Plus className="h-4 w-4" /> New coupon
         </button>
+
+        {loadError && <DataLoadError message={loadError} onRetry={load} />}
 
         <div className="admin-card overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
@@ -103,7 +123,7 @@ export function AdminCouponsModule() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={7} className="py-12 text-center text-text-grey">Loading…</td></tr>
-              ) : coupons.length === 0 ? (
+              ) : coupons.length === 0 && !loadError ? (
                 <tr><td colSpan={7} className="py-12 text-center text-text-grey">No coupons yet</td></tr>
               ) : (
                 coupons.map((c) => (
@@ -141,7 +161,7 @@ export function AdminCouponsModule() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
             <div className="flex gap-2">
               <button type="button" onClick={() => setOpen(false)} className="flex-1 border rounded-lg py-2 text-sm">Cancel</button>
-              <button type="button" onClick={save} className="flex-1 bg-green-dark text-white rounded-lg py-2 text-sm">Save</button>
+              <button type="button" onClick={save} disabled={saving} className="flex-1 bg-green-dark text-white rounded-lg py-2 text-sm disabled:opacity-60">{saving ? "Saving…" : "Save"}</button>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Attach JWT from localStorage; log resolved URL in development
+// Attach JWT from localStorage
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("xoxo_token");
@@ -15,25 +15,14 @@ api.interceptors.request.use((config) => {
       config.headers = (config.headers || {}) as AxiosRequestHeaders;
       config.headers.Authorization = `Bearer ${token}`;
     }
-    if (process.env.NODE_ENV !== "production") {
-      const base = config.baseURL || "";
-      const path = config.url || "";
-      console.debug("[XOXO API] →", `${base}${path}`);
-    }
   }
   return config;
 });
 
-// Handle 401 → clear token; log failures for production debugging
+// Handle 401 → clear token
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (typeof window !== "undefined") {
-      const url = `${err.config?.baseURL || ""}${err.config?.url || ""}`;
-      const body = err.response?.data;
-      console.error("[XOXO API] Request failed:", url, err.response?.status, err.message);
-      if (body) console.error("[XOXO API] Response body:", body);
-    }
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("xoxo_token");
     }
@@ -226,6 +215,7 @@ export const transportAPI = {
 };
 
 export const paymentsAPI = {
+  getStatus: () => api.get("/payments/status"),
   createOrder: (bookingId: string) => api.post("/payments/order", { bookingId }),
   verify: (data: AnyObj) => api.post("/payments/verify", data),
   refund: (bookingId: string, amount?: number, reason?: string) =>

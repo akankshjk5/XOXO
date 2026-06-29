@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminAPI, uploadAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { DataLoadError } from "@/components/ui/DataLoadError";
 import toast from "react-hot-toast";
 
 interface SiteSettings {
@@ -30,14 +31,24 @@ export function AdminSettingsModule() {
     socialLinkedin: "",
   });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
+    setLoadError(null);
     adminAPI
       .getSettings()
-      .then((res) => setForm((f) => ({ ...f, ...(res.data.data as Partial<SiteSettings>) })))
-      .catch(() => toast.error("Failed to load settings"))
+      .then((res) => {
+        setForm((f) => ({ ...f, ...(res.data.data as Partial<SiteSettings>) }));
+        setLoadError(null);
+      })
+      .catch(() => setLoadError("Failed to load settings"))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const save = async () => {
@@ -69,6 +80,17 @@ export function AdminSettingsModule() {
       <>
         <AdminHeader title="Settings" subtitle="Website branding and contact" />
         <div className="p-8 text-center text-text-grey">Loading…</div>
+      </>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <>
+        <AdminHeader title="Settings" subtitle="Website branding and contact" />
+        <div className="p-4 sm:p-6 lg:p-8 max-w-2xl">
+          <DataLoadError message={loadError} onRetry={load} />
+        </div>
       </>
     );
   }

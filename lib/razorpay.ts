@@ -1,3 +1,9 @@
+/**
+ * Razorpay checkout script loader.
+ * Only call loadRazorpay() when GET /api/payments/status reports test or live mode.
+ * Key ID is returned by POST /api/payments/order — do not hardcode keys in the frontend.
+ * Client setup: PAYMENT_SETUP.md
+ */
 declare global {
   interface Window {
     Razorpay?: new (options: Record<string, unknown>) => { open: () => void };

@@ -1,4 +1,4 @@
-const { createOrder, refundPayment, verifySignature, verifyWebhookSignature, isConfigured } = require("../utils/razorpay");
+const { createOrder, refundPayment, verifySignature, verifyWebhookSignature, isConfigured, getRazorpayStatus } = require("../utils/razorpay");
 
 const Booking = require("../models/Booking");
 
@@ -19,6 +19,10 @@ const { bookingConfirmationEmail } = require("../utils/emailTemplates");
 const { sendEmail } = require("../utils/email");
 
 const logger = require("../config/logger");
+
+/** Shown in checkout UI when Razorpay env vars are not set on the API server. */
+const DEMO_PAYMENT_MESSAGE =
+  "Online payment will be enabled after the client configures their payment gateway.";
 
 
 
@@ -516,6 +520,24 @@ exports.getInvoice = async (req, res, next) => {
 
   }
 
+};
+
+
+
+// GET /api/payments/status — public; safe payment mode for checkout UI (no secrets).
+exports.getStatus = (req, res) => {
+  const status = getRazorpayStatus();
+  res.json({
+    success: true,
+    data: {
+      configured: status.configured,
+      mode: status.mode,
+      demo: !status.configured,
+      live: status.live,
+      webhook: status.webhook,
+      message: status.configured ? null : DEMO_PAYMENT_MESSAGE,
+    },
+  });
 };
 
 

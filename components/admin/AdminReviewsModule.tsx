@@ -97,10 +97,14 @@ export function AdminReviewsModule() {
                     <td className="px-4 py-3">{r.user?.name || "—"}</td>
                     <td className="px-4 py-3">{r.rating}★</td>
                     <td className="px-4 py-3 max-w-xs truncate text-text-grey">{r.comment}</td>
-                    <td className="px-4 py-3 capitalize">{r.status || "approved"}</td>
+                    <td className="px-4 py-3 capitalize">{r.status || "pending"}</td>
                     <td className="px-4 py-3 text-right space-x-1">
-                      <button type="button" onClick={() => moderate(r._id, "approved")} className="text-xs px-2 py-1 rounded bg-green-dark/10 text-green-dark">Approve</button>
-                      <button type="button" onClick={() => moderate(r._id, "rejected")} className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-800">Reject</button>
+                      {r.status !== "approved" && (
+                        <button type="button" onClick={() => moderate(r._id, "approved")} className="text-xs px-2 py-1 rounded bg-green-dark/10 text-green-dark hover:bg-green-dark/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark">Approve</button>
+                      )}
+                      {r.status !== "rejected" && (
+                        <button type="button" onClick={() => moderate(r._id, "rejected")} className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Reject</button>
+                      )}
                       <button type="button" onClick={() => remove(r._id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-600">Delete</button>
                     </td>
                   </tr>

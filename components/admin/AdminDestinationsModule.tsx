@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { destinationsAPI, uploadAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { DataLoadError } from "@/components/ui/DataLoadError";
 import toast from "react-hot-toast";
 
 interface DestRow {
@@ -11,6 +12,7 @@ interface DestRow {
   name: string;
   country: string;
   slug?: string;
+  description?: string;
   coverImage?: string;
   isTrending?: boolean;
   isActive?: boolean;
@@ -19,6 +21,8 @@ interface DestRow {
 export function AdminDestinationsModule() {
   const [items, setItems] = useState<DestRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<DestRow | null>(null);
@@ -33,15 +37,20 @@ export function AdminDestinationsModule() {
 
   const load = useCallback(() => {
     setLoading(true);
+    setLoadError(null);
     destinationsAPI
       .getAll(search ? { search } : undefined)
-      .then((res) => setItems(res.data.data || []))
-      .catch(() => toast.error("Failed to load destinations"))
+      .then((res) => {
+        setItems(res.data.data || []);
+        setLoadError(null);
+      })
+      .catch(() => setLoadError("Failed to load destinations"))
       .finally(() => setLoading(false));
   }, [search]);
 
   useEffect(() => {
-    load();
+    const t = setTimeout(load, 300);
+    return () => clearTimeout(t);
   }, [load]);
 
   const openCreate = () => {
@@ -50,17 +59,31 @@ export function AdminDestinationsModule() {
     setFormOpen(true);
   };
 
-  const openEdit = (d: DestRow) => {
+  const openEdit = async (d: DestRow) => {
     setEditing(d);
-    setForm({
-      name: d.name,
-      country: d.country,
-      description: "",
-      coverImage: d.coverImage || "",
-      isTrending: !!d.isTrending,
-      isActive: d.isActive !== false,
-    });
     setFormOpen(true);
+    try {
+      const { data } = await destinationsAPI.getById(d._id);
+      const full = data.data as DestRow;
+      setForm({
+        name: full.name,
+        country: full.country,
+        description: full.description || "",
+        coverImage: full.coverImage || "",
+        isTrending: !!full.isTrending,
+        isActive: full.isActive !== false,
+      });
+    } catch {
+      setForm({
+        name: d.name,
+        country: d.country,
+        description: d.description || "",
+        coverImage: d.coverImage || "",
+        isTrending: !!d.isTrending,
+        isActive: d.isActive !== false,
+      });
+      toast.error("Could not load full destination details");
+    }
   };
 
   const save = async () => {
@@ -68,6 +91,7 @@ export function AdminDestinationsModule() {
       toast.error("Name and country are required");
       return;
     }
+    setSaving(true);
     const slug = `${form.name}-${form.country}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const payload = { ...form, slug };
     try {
@@ -82,6 +106,8 @@ export function AdminDestinationsModule() {
       load();
     } catch {
       toast.error("Save failed");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -128,6 +154,8 @@ export function AdminDestinationsModule() {
           </button>
         </div>
 
+        {loadError && <DataLoadError message={loadError} onRetry={load} />}
+
         <div className="admin-card overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b bg-[var(--admin-bg)]">
@@ -142,7 +170,7 @@ export function AdminDestinationsModule() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={5} className="py-12 text-center text-text-grey">Loading…</td></tr>
-              ) : items.length === 0 ? (
+              ) : items.length === 0 && !loadError ? (
                 <tr><td colSpan={5} className="py-12 text-center text-text-grey">No destinations found</td></tr>
               ) : (
                 items.map((d) => (
@@ -182,7 +210,7 @@ export function AdminDestinationsModule() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setFormOpen(false)} className="flex-1 border rounded-lg py-2 text-sm">Cancel</button>
-              <button type="button" onClick={save} className="flex-1 bg-green-dark text-white rounded-lg py-2 text-sm">Save</button>
+              <button type="button" onClick={save} disabled={saving} className="flex-1 bg-green-dark text-white rounded-lg py-2 text-sm disabled:opacity-60">{saving ? "Saving…" : "Save"}</button>
             </div>
           </div>
         </div>

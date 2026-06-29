@@ -9,6 +9,21 @@ const {
 } = require("../utils/jwt");
 const { sendEmail } = require("../utils/email");
 
+const toAuthUser = (user) => {
+  const u = user.toJSON ? user.toJSON() : user;
+  return {
+    _id: u._id,
+    name: u.name,
+    email: u.email,
+    avatar: u.avatar || "",
+    role: u.role || "user",
+    rewardPoints: u.rewardPoints,
+    isVerified: u.isVerified,
+    trustScore: u.trustScore,
+    verificationStatus: u.verificationStatus,
+  };
+};
+
 const issueTokens = async (user, res) => {
   const accessToken = signAccessToken(user._id);
   const refreshToken = signRefreshToken(user._id);
@@ -40,7 +55,7 @@ exports.register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: { user, accessToken },
+      data: { user: toAuthUser(user), accessToken },
     });
   } catch (err) {
     next(err);
@@ -62,7 +77,7 @@ exports.login = async (req, res, next) => {
     }
 
     const { accessToken } = await issueTokens(user, res);
-    res.json({ success: true, data: { user, accessToken } });
+    res.json({ success: true, data: { user: toAuthUser(user), accessToken } });
   } catch (err) {
     next(err);
   }
@@ -184,5 +199,5 @@ exports.resetPassword = async (req, res, next) => {
 
 // GET /api/auth/me
 exports.me = async (req, res) => {
-  res.json({ success: true, data: { user: req.user } });
+  res.json({ success: true, data: { user: toAuthUser(req.user) } });
 };

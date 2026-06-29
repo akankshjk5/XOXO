@@ -32,6 +32,10 @@ export const DESTINATION_IMAGES: Record<string, string> = {
 export const HERO_BG =
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=85&auto=format&fit=crop";
 
+/** Default package card / detail hero when no image is uploaded. */
+export const DEFAULT_PACKAGE_IMAGE =
+  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
+
 // Traveler type photos
 export const TRAVELER_IMAGES: Record<string, string> = {
   couple: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=400&q=80",

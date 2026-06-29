@@ -24,6 +24,7 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const requestId = require("./middleware/requestId");
 const { standardLimiter, authLimiter, aiLimiter } = require("./middleware/rateLimiter");
 const paymentCtrl = require("./controllers/payment.controller");
+const { getRazorpayStatus, logRazorpayStartupMode } = require("./utils/razorpay");
 const { INVOICE_DIR } = require("./utils/invoice");
 const mongoose = require("mongoose");
 
@@ -92,6 +93,7 @@ function healthHandler(req, res) {
     database: dbLabels[dbState] || "unknown",
     ready: dbState === 1,
     env: getEnvStatus(),
+    payments: getRazorpayStatus(),
     version: process.env.npm_package_version || "1.0.0",
   });
 }
@@ -181,6 +183,7 @@ async function bootstrapDatabase() {
 const startPromise = (async () => {
   if (process.env.VERCEL || process.env.NEXT_RUNTIME || process.env.IS_SERVERLESS) {
     logger.info("Serverless database connection initializing...");
+    logRazorpayStartupMode();
     await bootstrapDatabase();
     logger.info("Serverless database connection initialized successfully.");
     return;
@@ -188,6 +191,7 @@ const startPromise = (async () => {
 
   return new Promise((resolve) => {
     server.listen(PORT, HOST, () => {
+      logRazorpayStartupMode();
       logger.info(`XOXO Travels API listening on ${HOST}:${PORT}`, {
         environment: env.nodeEnv,
         clientUrl: env.clientUrl,

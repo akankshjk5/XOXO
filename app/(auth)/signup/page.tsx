@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
+import { getPostLoginPath } from "@/lib/auth-routing";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function SignupPage() {
         phone: data.phone,
       });
       toast.success(`Welcome aboard, ${user.name.split(" ")[0]}! 🎉`);
-      router.push("/dashboard");
+      router.replace(getPostLoginPath(user));
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

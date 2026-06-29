@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authAPI } from "@/lib/api";
+import { getUserRole } from "@/lib/auth-routing";
 
 export interface AuthUser {
   _id: string;
@@ -17,6 +18,7 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
+  role: string | null;
   loading: boolean;
   hydrated: boolean;
   setUser: (user: AuthUser | null) => void;
@@ -27,15 +29,29 @@ interface AuthState {
   setHydrated: () => void;
 }
 
+function normalizeUser(user: AuthUser): AuthUser {
+  return { ...user, role: getUserRole(user) };
+}
+
+function authSession(user: AuthUser | null, token: string | null) {
+  const normalized = user ? normalizeUser(user) : null;
+  return {
+    user: normalized,
+    token,
+    role: normalized ? getUserRole(normalized) : null,
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
+      role: null,
       loading: false,
       hydrated: false,
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => set(authSession(user, get().token)),
       setHydrated: () => set({ hydrated: true }),
 
       login: async (email, password) => {
@@ -43,9 +59,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authAPI.login({ email, password });
           const { user, accessToken } = data.data;
+          const normalized = normalizeUser(user);
           if (typeof window !== "undefined") localStorage.setItem("xoxo_token", accessToken);
-          set({ user, token: accessToken, loading: false, hydrated: true });
-          return user;
+          set({ ...authSession(normalized, accessToken), loading: false, hydrated: true });
+          return normalized;
         } catch (err) {
           set({ loading: false });
           throw err;
@@ -57,9 +74,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authAPI.register(payload);
           const { user, accessToken } = data.data;
+          const normalized = normalizeUser(user);
           if (typeof window !== "undefined") localStorage.setItem("xoxo_token", accessToken);
-          set({ user, token: accessToken, loading: false, hydrated: true });
-          return user;
+          set({ ...authSession(normalized, accessToken), loading: false, hydrated: true });
+          return normalized;
         } catch (err) {
           set({ loading: false });
           throw err;
@@ -73,25 +91,29 @@ export const useAuthStore = create<AuthState>()(
           /* ignore network errors on logout */
         }
         if (typeof window !== "undefined") localStorage.removeItem("xoxo_token");
-        set({ user: null, token: null, hydrated: true });
+        set({ user: null, token: null, role: null, hydrated: true });
       },
 
       fetchMe: async () => {
         try {
           const { data } = await authAPI.me();
-          set({ user: data.data.user, hydrated: true });
+          const normalized = normalizeUser(data.data.user);
+          set({ ...authSession(normalized, get().token), hydrated: true });
         } catch {
           if (typeof window !== "undefined") localStorage.removeItem("xoxo_token");
-          set({ user: null, token: null, hydrated: true });
+          set({ user: null, token: null, role: null, hydrated: true });
         }
       },
     }),
     {
       name: "xoxo-auth",
-      partialize: (s) => ({ user: s.user, token: s.token }),
+      partialize: (s) => ({ user: s.user, token: s.token, role: s.role }),
       onRehydrateStorage: () => (state) => {
         if (state?.token && typeof window !== "undefined") {
           localStorage.setItem("xoxo_token", state.token);
+        }
+        if (state?.user && !state.role) {
+          state.role = getUserRole(state.user);
         }
       },
     }

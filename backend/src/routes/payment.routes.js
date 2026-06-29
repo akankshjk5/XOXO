@@ -12,7 +12,8 @@ const { paymentLimiter } = require("../middleware/rateLimiter");
 
 router.use(paymentLimiter);
 
-
+// Public — lets the checkout UI know demo vs live mode (no secrets exposed).
+router.get("/status", ctrl.getStatus);
 
 router.post("/order", protect, ctrl.createOrder);
 

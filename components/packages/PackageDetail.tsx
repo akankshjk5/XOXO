@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,6 +24,7 @@ import { ShareTrip } from "@/components/packages/ShareTrip";
 import { RecentlyViewedSection } from "@/components/packages/RecentlyViewedSection";
 import { addRecentlyViewed, toggleCompare, isInCompare } from "@/lib/package-storage";
 import { trackEvent } from "@/lib/analytics";
+import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 
 interface ItineraryDay {
   day: number;
@@ -67,6 +68,7 @@ export function PackageDetail() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const [pkg, setPkg] = useState<PackageFull | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,10 +146,16 @@ export function PackageDetail() {
     toast.success(list.includes(id) ? "Added to compare" : "Removed from compare");
   };
 
+  useEffect(() => {
+    if (searchParams?.get("book") === "1" && user) {
+      setShowBooking(true);
+    }
+  }, [searchParams, user]);
+
   const book = () => {
     if (!user) {
       toast.error("Please log in to book this trip.");
-      router.push(`/login?redirect=/packages/${id}`);
+      router.push(`/login?redirect=${encodeURIComponent(`/packages/${id}?book=1`)}`);
       return;
     }
     setShowBooking(true);
@@ -173,7 +181,7 @@ export function PackageDetail() {
     );
   }
 
-  const heroImg = pkg.images?.[0] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80";
+  const heroImg = pkg.images?.[0] || DEFAULT_PACKAGE_IMAGE;
   const total = pkg.pricePerPerson * travelers;
 
   return (

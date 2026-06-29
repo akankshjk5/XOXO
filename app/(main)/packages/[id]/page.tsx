@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PackageDetail } from "@/components/packages/PackageDetail";
 import { buildPackageMetadata, buildPackageJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo";
@@ -53,7 +54,9 @@ export default async function PackageDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
         />
       )}
-      <PackageDetail />
+      <Suspense fallback={<div className="pt-32 text-center text-text-grey">Loading package…</div>}>
+        <PackageDetail />
+      </Suspense>
     </>
   );
 }

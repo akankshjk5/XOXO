@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
@@ -8,7 +9,9 @@ export const metadata = {
 export default function DashboardPage() {
   return (
     <RequireAuth>
-      <DashboardClient />
+      <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-text-grey">Loading…</div>}>
+        <DashboardClient />
+      </Suspense>
     </RequireAuth>
   );
 }

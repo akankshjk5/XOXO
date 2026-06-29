@@ -1,5 +1,7 @@
 /** Canonical destination URL helpers — slugs must match backend `Destination.slug`. */
 
+import { getDestImage } from "@/lib/images";
+
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function isValidDestinationSlug(slug: unknown): slug is string {
@@ -12,9 +14,6 @@ export function isValidDestinationSlug(slug: unknown): slug is string {
  */
 export function buildDestinationHref(slug: unknown): string {
   if (!isValidDestinationSlug(slug)) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[destination-url] Invalid slug — using /destinations fallback:", slug);
-    }
     return "/destinations";
   }
   return `/destinations/${slug}`;
@@ -37,9 +36,6 @@ export function toDestinationCard(
   id?: string
 ): { id: string; subLabel: string; name: string; slug: string; image: string; href: string } | null {
   if (!isValidDestinationSlug(dest.slug)) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[destination-url] Skipping destination with invalid slug:", dest.name, dest.slug);
-    }
     return null;
   }
   return {
@@ -47,9 +43,7 @@ export function toDestinationCard(
     subLabel,
     name: dest.name,
     slug: dest.slug,
-    image:
-      dest.coverImage ||
-      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80",
+    image: dest.coverImage || getDestImage(dest.slug),
     href: buildDestinationHref(dest.slug),
   };
 }

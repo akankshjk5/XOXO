@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { bookingsAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { DataLoadError } from "@/components/ui/DataLoadError";
 import { formatDistanceToNow } from "date-fns";
 
 interface BookingRow {
@@ -28,12 +29,16 @@ export function AdminBookingsModule() {
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(null);
     const params: Record<string, string> = {};
     if (search) params.search = search;
     if (statusFilter !== "all") params.status = statusFilter;
     bookingsAPI
       .getAll(params)
-      .then((res) => setBookings(res.data.data || []))
+      .then((res) => {
+        setBookings(res.data.data || []);
+        setError(null);
+      })
       .catch(() => setError("Failed to load bookings"))
       .finally(() => setLoading(false));
   }, [search, statusFilter]);
@@ -78,9 +83,7 @@ export function AdminBookingsModule() {
           </select>
         </div>
         {error && (
-          <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-            {error}
-          </p>
+          <DataLoadError message={error} onRetry={load} className="mb-4" />
         )}
 
         <div className="admin-card overflow-hidden">

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
+import { getPostLoginPath } from "@/lib/auth-routing";
 
 export function LoginForm() {
   const router = useRouter();
@@ -32,8 +33,8 @@ export function LoginForm() {
     try {
       const user = await login(data.email, data.password);
       toast.success(`Welcome back, ${user.name.split(" ")[0]}! 👋`);
-      const redirect = searchParams?.get("redirect") || "/dashboard";
-      router.push(redirect);
+      const redirect = searchParams?.get("redirect");
+      router.replace(getPostLoginPath(user, redirect));
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
+import { getPostLoginPath } from "@/lib/auth-routing";
 
 function passwordStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "bg-white/20" };
@@ -45,6 +46,9 @@ export function PremiumLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useAuthStore((s) => s.login);
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
@@ -66,6 +70,12 @@ export function PremiumLoginForm() {
 
   const emailValue = watch("email");
   const strength = useMemo(() => passwordStrength(pwValue), [pwValue]);
+
+  useEffect(() => {
+    if (!hydrated || !user || !token) return;
+    const redirect = searchParams?.get("redirect");
+    router.replace(getPostLoginPath(user, redirect));
+  }, [hydrated, user, token, router, searchParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -92,8 +102,8 @@ export function PremiumLoginForm() {
       }
       setSuccess(true);
       toast.success(`Welcome back, ${user.name.split(" ")[0]}!`);
-      const redirect = searchParams?.get("redirect") || "/dashboard";
-      setTimeout(() => router.push(redirect), 600);
+      const redirect = searchParams?.get("redirect");
+      setTimeout(() => router.replace(getPostLoginPath(user, redirect)), 600);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

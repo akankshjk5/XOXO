@@ -102,10 +102,10 @@ Quick reference: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 | Doc | Description |
 |-----|-------------|
+| **[PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md)** | **Client v1.0 handover — credentials, deploy checklist** |
+| **[PAYMENT_SETUP.md](./PAYMENT_SETUP.md)** | Razorpay activation (demo → live) |
 | [GITHUB_DEPLOYMENT_GUIDE.md](./GITHUB_DEPLOYMENT_GUIDE.md) | End-to-end deploy guide |
 | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Detailed ops & architecture |
-| [AI_CONCIERGE_ARCHITECTURE.md](./AI_CONCIERGE_ARCHITECTURE.md) | AI Concierge system design |
-| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Feature & QA status |
 | [docs/integrations/](./docs/integrations/) | Provider integration guides |
 
 ---

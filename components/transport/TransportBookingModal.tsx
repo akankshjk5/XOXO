@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { bookingsAPI, paymentsAPI } from "@/lib/api";
 import { loadRazorpay } from "@/lib/razorpay";
 import { useAuthStore } from "@/store/authStore";
+import { usePaymentMode } from "@/hooks/usePaymentMode";
+import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
 import { formatPrice } from "@/lib/utils";
 import type { TransportOffer } from "@/lib/transport-types";
 import { MODE_ICONS } from "@/lib/transport-types";
@@ -20,6 +22,7 @@ interface TransportBookingModalProps {
 export function TransportBookingModal({ offer, passengers, onClose }: TransportBookingModalProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const { mode: paymentMode, loading: paymentModeLoading, isDemo } = usePaymentMode();
   const [submitting, setSubmitting] = useState(false);
   const [lead, setLead] = useState({
     name: user?.name || "",
@@ -129,6 +132,7 @@ export function TransportBookingModal({ offer, passengers, onClose }: TransportB
             value={lead.phone}
             onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
           />
+          <PaymentModeNotice mode={paymentMode} loading={paymentModeLoading} />
           <button
             type="button"
             onClick={confirmAndPay}
@@ -136,7 +140,7 @@ export function TransportBookingModal({ offer, passengers, onClose }: TransportB
             className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-green-dark text-white font-semibold disabled:opacity-60"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Pay & confirm
+            {isDemo ? "Confirm demo booking" : "Pay & confirm"}
           </button>
         </div>
       </div>

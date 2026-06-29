@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Star, Clock } from "lucide-react";
 import { formatCategoryLabel } from "@/lib/travel-categories";
 import { formatPrice, cn } from "@/lib/utils";
+import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 import type { Package } from "@/types";
 
 interface PackageCardProps {
@@ -11,9 +12,7 @@ interface PackageCardProps {
 }
 
 export function PackageCard({ pkg, className }: PackageCardProps) {
-  const image =
-    pkg.images?.[0] ||
-    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
+  const image = pkg.images?.[0] || DEFAULT_PACKAGE_IMAGE;
 
   return (
     <Link href={`/packages/${pkg.id}`} prefetch>
