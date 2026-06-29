@@ -3,6 +3,7 @@ const Destination = require("../models/Destination");
 const { seedDatabase } = require("../services/seedDatabase");
 const { protect, adminOnly } = require("../middleware/auth.middleware");
 const adminCtrl = require("../controllers/admin.controller");
+const manageCtrl = require("../controllers/admin.manage.controller");
 
 const router = express.Router();
 
@@ -55,5 +56,20 @@ router.get("/seed/status", async (req, res, next) => {
 router.use(protect, adminOnly);
 
 router.get("/dashboard", adminCtrl.getDashboard);
+
+router.get("/users", manageCtrl.listUsers);
+router.patch("/users/:id", manageCtrl.updateUser);
+
+router.get("/reviews", manageCtrl.listReviews);
+router.patch("/reviews/:id", manageCtrl.moderateReview);
+router.delete("/reviews/:id", manageCtrl.deleteReview);
+
+router.get("/coupons", manageCtrl.listCoupons);
+router.post("/coupons", manageCtrl.createCoupon);
+router.put("/coupons/:id", manageCtrl.updateCoupon);
+router.delete("/coupons/:id", manageCtrl.deleteCoupon);
+
+router.get("/settings", manageCtrl.getSettings);
+router.put("/settings", manageCtrl.updateSettings);
 
 module.exports = router;

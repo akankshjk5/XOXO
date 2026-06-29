@@ -25,6 +25,10 @@ exports.getDashboard = async (req, res, next) => {
     const monthStart = startOfMonth();
 
     const [
+      totalPackages,
+      totalDestinations,
+      totalBookings,
+      totalUsers,
       todayBookings,
       todayRevenueAgg,
       activeUsers,
@@ -40,6 +44,10 @@ exports.getDashboard = async (req, res, next) => {
       topPackages,
       topDestinations,
     ] = await Promise.all([
+      Package.countDocuments(),
+      Destination.countDocuments(),
+      Booking.countDocuments(),
+      User.countDocuments(),
       Booking.countDocuments({ createdAt: { $gte: today } }),
       Booking.aggregate([
         { $match: { createdAt: { $gte: today }, paymentStatus: "paid" } },
@@ -102,6 +110,10 @@ exports.getDashboard = async (req, res, next) => {
       success: true,
       data: {
         stats: {
+          totalPackages,
+          totalDestinations,
+          totalBookings,
+          totalUsers,
           todayBookings,
           todayRevenue: todayRevenueAgg[0]?.total || 0,
           activeUsers,

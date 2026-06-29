@@ -139,7 +139,28 @@ exports.cancel = async (req, res, next) => {
 // GET /api/bookings  (admin)
 exports.getAll = async (req, res, next) => {
   try {
-    const items = await Booking.find().populate("package").populate("user", "name email").sort({ createdAt: -1 });
+    const { search, status } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { bookingRef: { $regex: search, $options: "i" } },
+      ];
+    }
+    let items = await Booking.find(filter)
+      .populate("package", "title slug")
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+    if (search) {
+      const q = String(search).toLowerCase();
+      items = items.filter(
+        (b) =>
+          b.user?.name?.toLowerCase().includes(q) ||
+          b.user?.email?.toLowerCase().includes(q) ||
+          b.package?.title?.toLowerCase().includes(q)
+      );
+    }
     res.json({ success: true, data: items });
   } catch (err) {
     next(err);

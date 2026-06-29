@@ -16,6 +16,7 @@ const destinationSchema = new mongoose.Schema(
     isVisaFree: { type: Boolean, default: false },
     isAdventure: { type: Boolean, default: false },
     isTrending: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     currency: { type: String },
     language: { type: String },
     timezone: { type: String },

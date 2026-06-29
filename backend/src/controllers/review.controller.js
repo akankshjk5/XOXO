@@ -13,7 +13,7 @@ async function recalcPackageRating(packageId) {
 // GET /api/reviews/package/:packageId
 exports.getForPackage = async (req, res, next) => {
   try {
-    const reviews = await Review.find({ package: req.params.packageId })
+    const reviews = await Review.find({ package: req.params.packageId, status: "approved" })
       .populate("user", "name avatar")
       .sort({ createdAt: -1 });
     res.json({ success: true, data: reviews });

@@ -57,6 +57,9 @@ exports.login = async (req, res, next) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
     }
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, message: "Account is blocked. Contact support." });
+    }
 
     const { accessToken } = await issueTokens(user, res);
     res.json({ success: true, data: { user, accessToken } });

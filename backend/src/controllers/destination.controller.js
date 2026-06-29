@@ -120,3 +120,28 @@ exports.create = async (req, res, next) => {
     next(err);
   }
 };
+
+// PUT /api/destinations/:id  (admin)
+exports.update = async (req, res, next) => {
+  try {
+    const dest = await Destination.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!dest) return res.status(404).json({ success: false, message: "Destination not found" });
+    res.json({ success: true, data: dest });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/destinations/:id  (admin)
+exports.remove = async (req, res, next) => {
+  try {
+    const dest = await Destination.findByIdAndDelete(req.params.id);
+    if (!dest) return res.status(404).json({ success: false, message: "Destination not found" });
+    res.json({ success: true, message: "Destination deleted" });
+  } catch (err) {
+    next(err);
+  }
+};

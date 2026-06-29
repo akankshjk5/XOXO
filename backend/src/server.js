@@ -128,6 +128,7 @@ app.use("/api/analytics", require("./routes/analytics.routes"));
 app.use("/api/newsletter", require("./routes/newsletter.routes"));
 app.use("/api/contact", require("./routes/contact.routes"));
 app.use("/api/support", require("./routes/support.routes"));
+app.use("/api/settings", require("./routes/settings.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 
 app.use(notFound);

@@ -20,6 +20,9 @@ const protect = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ success: false, message: "User no longer exists" });
     }
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, message: "Account is blocked" });
+    }
 
     req.user = user;
     next();
