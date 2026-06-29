@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { packagesAPI, destinationsAPI } from "@/lib/api";
+import { packagesAPI, destinationsAPI, uploadAPI } from "@/lib/api";
 import {
   PACKAGE_CATEGORIES,
   CATEGORY_LABELS,
-  CORPORATE_TRAVEL_TYPES,
+  CORPORATE_FEATURES,
 } from "@/lib/travel-categories";
 import type { CorporatePackageInfo, PackageRecord } from "@/lib/package-types";
 import toast from "react-hot-toast";
@@ -25,18 +25,20 @@ interface Props {
 }
 
 const EMPTY_CORPORATE: CorporatePackageInfo = {
-  supportsInvoice: true,
-  supportsGst: true,
-  airportTransfers: true,
+  gstInvoiceAvailable: true,
+  airportPickup: true,
   dedicatedTravelManager: false,
   customPricing: false,
-  negotiatedHotels: false,
-  travelTypes: [],
+  meetingConference: false,
+  teamOuting: false,
+  workation: false,
+  corporateRetreat: false,
 };
 
 export function AdminPackageForm({ open, initial, onClose, onSaved }: Props) {
   const [destinations, setDestinations] = useState<DestinationOption[]>([]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<Partial<PackageRecord>>({
     title: "",
     description: "",
@@ -92,12 +94,31 @@ export function AdminPackageForm({ open, initial, onClose, onSaved }: Props) {
     }));
   };
 
-  const toggleTravelType = (id: string) => {
-    const current = form.corporate?.travelTypes || [];
-    const next = current.includes(id)
-      ? current.filter((t) => t !== id)
-      : [...current, id];
-    setCorporate({ travelTypes: next });
+  const toggleCorporate = (key: keyof CorporatePackageInfo, value: boolean) => {
+    setCorporate({ [key]: value });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { data } = await uploadAPI.image(file);
+      const url = data.data?.url || data.url;
+      if (url) {
+        setForm((f) => ({ ...f, images: [...(f.images || []), url] }));
+        toast.success("Image uploaded");
+      }
+    } catch {
+      toast.error("Image upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeImage = (url: string) => {
+    setForm((f) => ({ ...f, images: (f.images || []).filter((i) => i !== url) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,6 +145,7 @@ export function AdminPackageForm({ open, initial, onClose, onSaved }: Props) {
       payload.corporate = form.corporate;
       payload.maxPeople = Math.max(Number(form.maxPeople) || 10, 10);
     }
+    if (form.images?.length) payload.images = form.images;
 
     try {
       if (initial?._id) {
@@ -275,6 +297,28 @@ export function AdminPackageForm({ open, initial, onClose, onSaved }: Props) {
             </label>
           </div>
 
+          <div className="rounded-xl border border-[var(--admin-border)] p-4 space-y-3">
+            <p className="text-sm font-semibold text-text-dark">Images</p>
+            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+            {uploading && <p className="text-xs text-text-grey">Uploading…</p>}
+            <div className="flex flex-wrap gap-2">
+              {(form.images || []).map((url) => (
+                <div key={url} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-16 w-24 object-cover rounded-lg border" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 text-xs"
+                    aria-label="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {form.category === "corporate" && (
             <fieldset className="rounded-xl border border-[var(--admin-border)] p-4 space-y-3">
               <legend className="text-sm font-semibold text-text-dark px-1">Corporate details</legend>
@@ -286,73 +330,27 @@ export function AdminPackageForm({ open, initial, onClose, onSaved }: Props) {
                   className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
                 />
               </label>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="text-xs font-medium text-text-grey">Min employees</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.corporate?.employeeCountMin || ""}
-                    onChange={(e) => setCorporate({ employeeCountMin: Number(e.target.value) })}
-                    className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-medium text-text-grey">Max employees</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.corporate?.employeeCountMax || ""}
-                    onChange={(e) => setCorporate({ employeeCountMax: Number(e.target.value) })}
-                    className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </label>
-              </div>
               <label className="block">
-                <span className="text-xs font-medium text-text-grey">Meeting location</span>
+                <span className="text-xs font-medium text-text-grey">Number of employees</span>
                 <input
-                  value={form.corporate?.meetingLocation || ""}
-                  onChange={(e) => setCorporate({ meetingLocation: e.target.value })}
+                  type="number"
+                  min={1}
+                  value={form.corporate?.employeeCount || ""}
+                  onChange={(e) => setCorporate({ employeeCount: Number(e.target.value) })}
                   className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
                 />
               </label>
-              <div>
-                <span className="text-xs font-medium text-text-grey">Travel types</span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {CORPORATE_TRAVEL_TYPES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => toggleTravelType(t.id)}
-                      className={`rounded-full px-3 py-1 text-xs border ${
-                        form.corporate?.travelTypes?.includes(t.id)
-                          ? "bg-green-dark text-white border-green-dark"
-                          : "border-gray-300 text-text-grey"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
               <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                {(
-                  [
-                    ["supportsInvoice", "Invoice support"],
-                    ["supportsGst", "GST support"],
-                    ["dedicatedTravelManager", "Dedicated travel manager"],
-                    ["customPricing", "Custom pricing"],
-                    ["negotiatedHotels", "Negotiated hotels"],
-                    ["airportTransfers", "Airport transfers"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2">
+                {CORPORATE_FEATURES.map((f) => (
+                  <label key={f.key} className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={!!form.corporate?.[key]}
-                      onChange={(e) => setCorporate({ [key]: e.target.checked })}
+                      checked={!!form.corporate?.[f.key as keyof CorporatePackageInfo]}
+                      onChange={(e) =>
+                        toggleCorporate(f.key as keyof CorporatePackageInfo, e.target.checked)
+                      }
                     />
-                    {label}
+                    {f.label}
                   </label>
                 ))}
               </div>

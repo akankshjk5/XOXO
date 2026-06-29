@@ -194,26 +194,18 @@ function buildItinerary(days, place) {
   return arr;
 }
 
-function buildCorporateDetails(index, destName) {
-  const travelTypeSets = [
-    ["conference", "business-event", "mice-travel"],
-    ["incentive-travel", "team-outing"],
-    ["workation", "corporate-retreat"],
-    ["conference", "business-event"],
-  ];
-  const types = travelTypeSets[index % travelTypeSets.length];
+function buildCorporateDetails(index) {
   return {
     companyName: "XOXO Corporate Partners",
-    employeeCountMin: 10 + index * 5,
-    employeeCountMax: 50 + index * 20,
-    meetingLocation: `${destName} Convention Centre`,
-    travelTypes: types,
-    supportsInvoice: true,
-    supportsGst: true,
+    employeeCount: 20 + index * 10,
+    meetingConference: index % 2 === 0,
+    teamOuting: index % 3 === 0,
+    workation: index % 4 === 0,
+    corporateRetreat: true,
+    gstInvoiceAvailable: true,
     dedicatedTravelManager: index % 2 === 0,
+    airportPickup: true,
     customPricing: true,
-    negotiatedHotels: index % 3 !== 0,
-    airportTransfers: true,
   };
 }
 
@@ -274,10 +266,10 @@ function buildPackages(destDocs) {
       isActive: true,
     };
     if (cat === "corporate") {
-      pkg.corporate = buildCorporateDetails(pkgs.length, dest.name);
+      pkg.corporate = buildCorporateDetails(pkgs.length);
       pkg.title = `${dest.name} Corporate ${["Retreat", "MICE", "Offsite", "Conference"][pkgs.length % 4]}`;
       pkg.slug = slugify(`${pkg.title}-${days}d`);
-      pkg.description = `End-to-end corporate travel for teams of ${pkg.corporate.employeeCountMin}+ in ${dest.name}. Invoice & GST supported.`;
+      pkg.description = `End-to-end corporate travel for teams of ${pkg.corporate.employeeCount}+ in ${dest.name}. GST invoice & dedicated support available.`;
     }
     pkgs.push(pkg);
     i++;

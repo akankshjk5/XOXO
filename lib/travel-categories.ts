@@ -14,7 +14,6 @@ export const PACKAGE_CATEGORIES = [
 
 export type PackageCategory = (typeof PACKAGE_CATEGORIES)[number];
 
-/** Homepage / marketing traveler type IDs → package DB category */
 export const TRAVELER_TYPE_TO_CATEGORY: Record<string, PackageCategory> = {
   couple: "honeymoon",
   family: "family",
@@ -26,28 +25,18 @@ export const TRAVELER_TYPE_TO_CATEGORY: Record<string, PackageCategory> = {
   luxury: "luxury",
 };
 
-/** AI planner & itinerary trip types */
-export const AI_TRIP_TYPES = [
-  "solo",
-  "couple",
-  "family",
-  "group",
-  "corporate",
+export const AI_TRIP_TYPES = ["solo", "couple", "family", "group", "corporate"] as const;
+
+export const CORPORATE_FEATURES = [
+  { key: "meetingConference", label: "Meeting / Conference" },
+  { key: "teamOuting", label: "Team Outing" },
+  { key: "workation", label: "Workation" },
+  { key: "corporateRetreat", label: "Corporate Retreat" },
+  { key: "gstInvoiceAvailable", label: "GST Invoice Available" },
+  { key: "dedicatedTravelManager", label: "Dedicated Travel Manager" },
+  { key: "airportPickup", label: "Airport Pickup" },
+  { key: "customPricing", label: "Custom Pricing" },
 ] as const;
-
-export type AiTripType = (typeof AI_TRIP_TYPES)[number];
-
-export const CORPORATE_TRAVEL_TYPES = [
-  { id: "conference", label: "Conference" },
-  { id: "business-event", label: "Business Event" },
-  { id: "incentive-travel", label: "Incentive Travel" },
-  { id: "team-outing", label: "Team Outing" },
-  { id: "workation", label: "Workation" },
-  { id: "corporate-retreat", label: "Corporate Retreat" },
-  { id: "mice-travel", label: "MICE Travel" },
-] as const;
-
-export type CorporateTravelTypeId = (typeof CORPORATE_TRAVEL_TYPES)[number]["id"];
 
 export const CATEGORY_LABELS: Record<string, string> = {
   all: "All Types",

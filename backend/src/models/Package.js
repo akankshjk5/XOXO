@@ -1,28 +1,17 @@
 const mongoose = require("mongoose");
 
-const CORPORATE_TRAVEL_TYPES = [
-  "conference",
-  "business-event",
-  "incentive-travel",
-  "team-outing",
-  "workation",
-  "corporate-retreat",
-  "mice-travel",
-];
-
 const corporateDetailsSchema = new mongoose.Schema(
   {
     companyName: { type: String, trim: true },
-    employeeCountMin: { type: Number, min: 1 },
-    employeeCountMax: { type: Number },
-    meetingLocation: { type: String, trim: true },
-    travelTypes: [{ type: String, enum: CORPORATE_TRAVEL_TYPES }],
-    supportsInvoice: { type: Boolean, default: true },
-    supportsGst: { type: Boolean, default: true },
+    employeeCount: { type: Number, min: 1 },
+    meetingConference: { type: Boolean, default: false },
+    teamOuting: { type: Boolean, default: false },
+    workation: { type: Boolean, default: false },
+    corporateRetreat: { type: Boolean, default: false },
+    gstInvoiceAvailable: { type: Boolean, default: true },
     dedicatedTravelManager: { type: Boolean, default: false },
+    airportPickup: { type: Boolean, default: true },
     customPricing: { type: Boolean, default: false },
-    negotiatedHotels: { type: Boolean, default: false },
-    airportTransfers: { type: Boolean, default: true },
   },
   { _id: false }
 );

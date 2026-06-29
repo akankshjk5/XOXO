@@ -48,16 +48,15 @@ export interface PackageFlags {
 
 export interface CorporatePackageInfo {
   companyName?: string;
-  employeeCountMin?: number;
-  employeeCountMax?: number;
-  meetingLocation?: string;
-  travelTypes?: string[];
-  supportsInvoice?: boolean;
-  supportsGst?: boolean;
+  employeeCount?: number;
+  meetingConference?: boolean;
+  teamOuting?: boolean;
+  workation?: boolean;
+  corporateRetreat?: boolean;
+  gstInvoiceAvailable?: boolean;
   dedicatedTravelManager?: boolean;
+  airportPickup?: boolean;
   customPricing?: boolean;
-  negotiatedHotels?: boolean;
-  airportTransfers?: boolean;
 }
 
 export interface PackageRecord {
