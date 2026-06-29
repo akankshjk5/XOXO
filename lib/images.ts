@@ -36,13 +36,22 @@ export const HERO_BG =
 export const DEFAULT_PACKAGE_IMAGE =
   "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
 
-// Traveler type photos
+// Traveler type photos — homepage "Who's coming along?" hexagon cards
+export const TRAVELER_IMAGE_FALLBACK =
+  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=80&auto=format&fit=crop";
+
 export const TRAVELER_IMAGES: Record<string, string> = {
-  couple: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=400&q=80",
-  family: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=400&q=80",
-  friends: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80",
-  corporate: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&q=80",
+  couple: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=400&q=80&auto=format&fit=crop",
+  family: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=400&q=80&auto=format&fit=crop",
+  friends: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80&auto=format&fit=crop",
+  solo: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=80&auto=format&fit=crop",
+  corporate: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&q=80&auto=format&fit=crop",
 };
+
+/** Resolve traveler category image with a safe fallback when missing or broken. */
+export function getTravelerImage(id: string): string {
+  return TRAVELER_IMAGES[id] || TRAVELER_IMAGE_FALLBACK;
+}
 
 const FALLBACK = DESTINATION_IMAGES.bali;
 

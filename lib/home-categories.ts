@@ -1,11 +1,11 @@
 /** Homepage category navigation — UI labels/images only, not inventory. */
 
-import { TRAVELER_IMAGES } from "@/lib/images";
+import { getTravelerImage } from "@/lib/images";
 
 export const TRAVELER_TYPES = [
-  { id: "couple", label: "COUPLE", emoji: "💑", image: TRAVELER_IMAGES.couple },
-  { id: "family", label: "FAMILY", emoji: "👨‍👩‍👧", image: TRAVELER_IMAGES.family },
-  { id: "friends", label: "FRIENDS", emoji: "👯", image: TRAVELER_IMAGES.friends },
-  { id: "solo", label: "SOLO", emoji: "🧳", image: TRAVELER_IMAGES.solo },
-  { id: "corporate", label: "CORPORATE", emoji: "🏢", image: TRAVELER_IMAGES.corporate },
+  { id: "couple", label: "COUPLE", emoji: "💑", image: getTravelerImage("couple") },
+  { id: "family", label: "FAMILY", emoji: "👨‍👩‍👧", image: getTravelerImage("family") },
+  { id: "friends", label: "FRIENDS", emoji: "👯", image: getTravelerImage("friends") },
+  { id: "solo", label: "SOLO", emoji: "🧳", image: getTravelerImage("solo") },
+  { id: "corporate", label: "CORPORATE", emoji: "🏢", image: getTravelerImage("corporate") },
 ];

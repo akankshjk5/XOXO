@@ -1,9 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
 import { TRAVELER_TYPES } from "@/lib/home-categories";
+import { TRAVELER_IMAGE_FALLBACK } from "@/lib/images";
+
+function HexagonCategoryImage({ src, alt }: { src: string; alt: string }) {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      fill
+      sizes="160px"
+      className="object-cover object-center"
+      onError={() => {
+        if (imgSrc !== TRAVELER_IMAGE_FALLBACK) {
+          setImgSrc(TRAVELER_IMAGE_FALLBACK);
+        }
+      }}
+    />
+  );
+}
 
 const grid: Variants = {
   hidden: {},
@@ -48,13 +69,7 @@ export function WhosComingSection() {
                   "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
               }}
             >
-              <Image
-                src={type.image}
-                alt={type.label}
-                fill
-                sizes="160px"
-                className="object-cover object-center"
-              />
+              <HexagonCategoryImage src={type.image} alt={type.label} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
             <p className="mt-4 text-white font-extrabold text-base sm:text-lg uppercase tracking-wide flex items-center gap-1 group-hover:text-green-bright transition-colors">
