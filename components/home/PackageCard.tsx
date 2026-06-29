@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Clock } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatCategoryLabel } from "@/lib/travel-categories";
+import { formatPrice, cn } from "@/lib/utils";
 import type { Package } from "@/types";
-import { cn } from "@/lib/utils";
 
 interface PackageCardProps {
   pkg: Package;
@@ -60,7 +60,7 @@ export function PackageCard({ pkg, className }: PackageCardProps) {
               </span>
             )}
             {pkg.category && (
-              <span className="capitalize">· {pkg.category}</span>
+              <span>· {formatCategoryLabel(pkg.category)}</span>
             )}
           </div>
 

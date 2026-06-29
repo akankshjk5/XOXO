@@ -127,7 +127,9 @@ async function searchPackages(intent) {
     }
     filter.$or = or;
   }
-  if (intent.budgetINR) {
+  if (intent.tripType === "corporate") {
+    filter.category = "corporate";
+  }
     const perPerson = Math.floor(intent.budgetINR / (intent.travelers || 2));
     filter.pricePerPerson = { $lte: perPerson * 1.15 };
   }

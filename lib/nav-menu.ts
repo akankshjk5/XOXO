@@ -3,6 +3,7 @@
 export const DRAWER_MENU = [
   { label: "Family Theme Packages", href: "/packages?type=family" },
   { label: "Honeymoon Theme Packages", href: "/packages?type=honeymoon" },
+  { label: "Corporate Travel", href: "/packages?type=corporate" },
   { label: "Adventure Theme Packages", href: "/packages?type=adventure" },
   { label: "International Destinations", href: "/destinations" },
   { label: "Visa Assistance", href: "/visa" },

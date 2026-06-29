@@ -7,4 +7,5 @@ export const TRAVELER_TYPES = [
   { id: "family", label: "FAMILY", emoji: "👨‍👩‍👧", image: TRAVELER_IMAGES.family },
   { id: "friends", label: "FRIENDS", emoji: "👯", image: TRAVELER_IMAGES.friends },
   { id: "solo", label: "SOLO", emoji: "🧳", image: TRAVELER_IMAGES.solo },
+  { id: "corporate", label: "CORPORATE", emoji: "🏢", image: TRAVELER_IMAGES.corporate },
 ];

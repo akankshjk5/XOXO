@@ -1,14 +1,7 @@
 const Package = require("../models/Package");
 const Destination = require("../models/Destination");
 const { estimateFlights, estimateHotels, generateChecklist } = require("../services/packageSuggestions");
-
-// Map homepage traveler types to package categories
-const TYPE_TO_CATEGORY = {
-  couple: "honeymoon",
-  family: "family",
-  friends: "friends",
-  solo: "solo",
-};
+const { resolveCategoryFilter } = require("../constants/travel-categories");
 
 const SORT_MAP = {
   price_asc: { pricePerPerson: 1 },
@@ -55,7 +48,7 @@ exports.getAll = async (req, res, next) => {
     if (req.query.visaFree === "true") filter.isVisaFree = true;
     if (req.query.luxury === "true") filter.isLuxury = true;
 
-    const resolvedCategory = category || (type && TYPE_TO_CATEGORY[type]) || type;
+    const resolvedCategory = resolveCategoryFilter({ category, type });
     if (resolvedCategory) filter.category = resolvedCategory;
     if (badge) filter.badge = badge;
 

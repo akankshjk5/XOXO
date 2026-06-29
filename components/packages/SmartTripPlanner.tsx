@@ -12,6 +12,7 @@ interface Props {
   destination?: string;
   defaultDays: number;
   defaultBudget?: number;
+  category?: string;
 }
 
 const STYLES: { id: TravelStyle; label: string }[] = [
@@ -22,7 +23,7 @@ const STYLES: { id: TravelStyle; label: string }[] = [
   { id: "backpacking", label: "Backpacking" },
 ];
 
-export function SmartTripPlanner({ packageId, destination, defaultDays, defaultBudget }: Props) {
+export function SmartTripPlanner({ packageId, destination, defaultDays, defaultBudget, category }: Props) {
   const router = useRouter();
   const [days, setDays] = useState(defaultDays);
   const [budget, setBudget] = useState(defaultBudget || 150000);
@@ -37,7 +38,16 @@ export function SmartTripPlanner({ packageId, destination, defaultDays, defaultB
     }
     setLoading(true);
     try {
-      const tripType = style === "romantic" ? "couple" : style === "family" ? "family" : style === "backpacking" ? "solo" : "group";
+      const tripType =
+        category === "corporate"
+          ? "corporate"
+          : style === "romantic"
+            ? "couple"
+            : style === "family"
+              ? "family"
+              : style === "backpacking"
+                ? "solo"
+                : "group";
       const budgetTier = budget > 200000 ? "luxury" : budget > 100000 ? "mid-range" : "budget";
       const { data } = await aiAPI.generateItinerary({
         destination,

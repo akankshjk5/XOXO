@@ -58,6 +58,12 @@ function getMongoHostname(uri) {
   return host || null;
 }
 
+function isLocalMongoHost(hostname) {
+  if (!hostname) return false;
+  const host = hostname.split(":")[0].toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "mongo" || host === "0.0.0.0";
+}
+
 /** Safe debug info — no username/password. */
 function getMongoUriDebugInfo() {
   const raw = process.env.MONGODB_URI;
@@ -86,7 +92,8 @@ function validateMongoUri(uri) {
   }
 
   // Hostname without a dot (e.g. "0804") means credentials/host split is wrong.
-  if (!hostname.includes(".")) {
+  // Local/docker hosts are valid without a dot.
+  if (!isLocalMongoHost(hostname) && !hostname.includes(".")) {
     throw new Error(
       `MONGODB_URI hostname "${hostname}" is invalid. ` +
         "This usually means the password contains special characters (@, :, /, #) that must be URL-encoded, " +

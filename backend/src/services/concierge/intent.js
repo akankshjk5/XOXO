@@ -35,6 +35,7 @@ function parseTripType(text = "") {
   if (t.includes("honeymoon")) return "honeymoon";
   if (t.includes("solo") || t.includes("backpack")) return "solo";
   if (t.includes("family")) return "family";
+  if (t.includes("corporate") || t.includes("business") || t.includes("mice") || t.includes("conference")) return "corporate";
   if (t.includes("group") || t.includes("friends")) return "group";
   return null;
 }

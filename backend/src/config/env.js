@@ -3,7 +3,7 @@
  * In production, missing critical secrets will prevent the server from booting.
  */
 
-const { resolveMongoUri } = require("./mongo-uri");
+const { resolveMongoUri, getMongoUriDebugInfo } = require("./mongo-uri");
 
 const REQUIRED_PRODUCTION = [
   "MONGODB_URI",
@@ -19,7 +19,43 @@ const WEAK_SECRETS = [
   "jwt_secret",
 ];
 
+/** Map common dashboard typos / aliases onto canonical names (no values logged). */
+function normalizeEnvAliases() {
+  const pairs = [
+    ["REFRESH_TOKEN_SECRET", ["JWT_REFRESH_SECRET", "JWT_REFRESH_TOKEN_SECRET", "REFRESH_SECRET"]],
+    ["JWT_SECRET", ["JWT_ACCESS_SECRET", "ACCESS_TOKEN_SECRET"]],
+  ];
+
+  for (const [canonical, aliases] of pairs) {
+    if (process.env[canonical]?.trim()) continue;
+    for (const alias of aliases) {
+      const value = process.env[alias]?.trim();
+      if (value) {
+        process.env[canonical] = value;
+        break;
+      }
+    }
+  }
+}
+
+/** Safe booleans for /health — never exposes secret values. */
+function getEnvStatus() {
+  normalizeEnvAliases();
+  return {
+    mongodbUri: Boolean(process.env.MONGODB_URI?.trim()),
+    jwtSecret: Boolean(process.env.JWT_SECRET?.trim()),
+    refreshTokenSecret: Boolean(process.env.REFRESH_TOKEN_SECRET?.trim()),
+    clientUrl: Boolean(process.env.CLIENT_URL?.trim()),
+    refreshAliasDetected: Boolean(
+      process.env.JWT_REFRESH_SECRET?.trim() && !process.env.REFRESH_TOKEN_SECRET?.trim()
+    ),
+    mongo: getMongoUriDebugInfo(),
+  };
+}
+
 function validateEnv() {
+  normalizeEnvAliases();
+
   const isProd = process.env.NODE_ENV === "production";
   const missing = REQUIRED_PRODUCTION.filter((k) => !process.env[k]?.trim());
 
@@ -49,4 +85,4 @@ function validateEnv() {
   };
 }
 
-module.exports = { validateEnv };
+module.exports = { validateEnv, normalizeEnvAliases, getEnvStatus };

@@ -1,5 +1,32 @@
 const mongoose = require("mongoose");
 
+const CORPORATE_TRAVEL_TYPES = [
+  "conference",
+  "business-event",
+  "incentive-travel",
+  "team-outing",
+  "workation",
+  "corporate-retreat",
+  "mice-travel",
+];
+
+const corporateDetailsSchema = new mongoose.Schema(
+  {
+    companyName: { type: String, trim: true },
+    employeeCountMin: { type: Number, min: 1 },
+    employeeCountMax: { type: Number },
+    meetingLocation: { type: String, trim: true },
+    travelTypes: [{ type: String, enum: CORPORATE_TRAVEL_TYPES }],
+    supportsInvoice: { type: Boolean, default: true },
+    supportsGst: { type: Boolean, default: true },
+    dedicatedTravelManager: { type: Boolean, default: false },
+    customPricing: { type: Boolean, default: false },
+    negotiatedHotels: { type: Boolean, default: false },
+    airportTransfers: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 const itineraryDaySchema = new mongoose.Schema(
   {
     day: Number,
@@ -26,8 +53,9 @@ const packageSchema = new mongoose.Schema(
     minPeople: { type: Number, default: 1 },
     category: {
       type: String,
-      enum: ["honeymoon", "family", "friends", "solo", "adventure", "luxury"],
+      enum: ["honeymoon", "family", "friends", "solo", "adventure", "luxury", "corporate"],
     },
+    corporate: corporateDetailsSchema,
     badge: { type: String, enum: ["hot", "new", "deal", ""], default: "" },
     images: [{ type: String }],
     inclusions: [{ type: String }],

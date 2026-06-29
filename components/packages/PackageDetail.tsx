@@ -17,6 +17,8 @@ import { RecommendedFlights } from "@/components/packages/RecommendedFlights";
 import { RecommendedHotels } from "@/components/packages/RecommendedHotels";
 import { BudgetCalculator } from "@/components/packages/BudgetCalculator";
 import { SmartTripPlanner } from "@/components/packages/SmartTripPlanner";
+import { CorporatePackageDetails } from "@/components/packages/CorporatePackageDetails";
+import type { CorporatePackageInfo } from "@/lib/package-types";
 import { TravelChecklist } from "@/components/packages/TravelChecklist";
 import { ShareTrip } from "@/components/packages/ShareTrip";
 import { RecentlyViewedSection } from "@/components/packages/RecentlyViewedSection";
@@ -49,6 +51,7 @@ interface PackageFull {
   highlights?: string[];
   isVisaFree?: boolean;
   destination?: { name?: string; country?: string; slug?: string };
+  corporate?: CorporatePackageInfo;
   similar?: {
     _id: string;
     title: string;
@@ -203,6 +206,8 @@ export function PackageDetail() {
         {/* Main */}
         <div className="lg:col-span-2">
           {pkg.description && <p className="text-text-grey leading-relaxed mb-6">{pkg.description}</p>}
+
+          <CorporatePackageDetails corporate={pkg.corporate} category={pkg.category} />
 
           {/* Tabs */}
           <div className="flex gap-2 border-b border-[#EBEBEB] mb-5">
@@ -379,6 +384,7 @@ export function PackageDetail() {
             destination={pkg.destination?.name}
             defaultDays={pkg.durationDays}
             defaultBudget={pkg.pricePerPerson * travelers}
+            category={pkg.category}
           />
           <TravelChecklist packageId={id} />
         </div>

@@ -15,7 +15,7 @@ export const signupSchema = z.object({
 export const itinerarySchema = z.object({
   destination: z.string().min(2, "Destination is required"),
   days: z.number().min(1).max(30),
-  tripType: z.enum(["solo", "couple", "family", "group"]),
+  tripType: z.enum(["solo", "couple", "family", "group", "corporate"]),
   budget: z.enum(["budget", "mid-range", "luxury"]),
   travelStyle: z.array(z.string()).min(1, "Select at least one style"),
 });

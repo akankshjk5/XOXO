@@ -176,7 +176,7 @@ const destinations = [
   },
 ];
 
-const categories = ["honeymoon", "family", "friends", "solo", "adventure", "luxury"];
+const categories = ["honeymoon", "family", "friends", "solo", "adventure", "luxury", "corporate"];
 const badges = ["hot", "new", "deal", ""];
 
 function buildItinerary(days, place) {
@@ -192,6 +192,29 @@ function buildItinerary(days, place) {
     });
   }
   return arr;
+}
+
+function buildCorporateDetails(index, destName) {
+  const travelTypeSets = [
+    ["conference", "business-event", "mice-travel"],
+    ["incentive-travel", "team-outing"],
+    ["workation", "corporate-retreat"],
+    ["conference", "business-event"],
+  ];
+  const types = travelTypeSets[index % travelTypeSets.length];
+  return {
+    companyName: "XOXO Corporate Partners",
+    employeeCountMin: 10 + index * 5,
+    employeeCountMax: 50 + index * 20,
+    meetingLocation: `${destName} Convention Centre`,
+    travelTypes: types,
+    supportsInvoice: true,
+    supportsGst: true,
+    dedicatedTravelManager: index % 2 === 0,
+    customPricing: true,
+    negotiatedHotels: index % 3 !== 0,
+    airportTransfers: true,
+  };
 }
 
 function buildPackages(destDocs) {
@@ -214,7 +237,8 @@ function buildPackages(destDocs) {
     const title = `${dest.name} ${titleBase}`;
     const price = Math.round((dest.avgPriceINR || 60000) * (0.9 + (pkgs.length % 3) * 0.15));
     const original = Math.round(price * 1.2);
-    pkgs.push({
+    const cat = categories[pkgs.length % categories.length];
+    const pkg = {
       title,
       slug: slugify(`${title}-${days}d`),
       destination: dest._id,
@@ -223,12 +247,22 @@ function buildPackages(destDocs) {
       durationNights: days - 1,
       pricePerPerson: price,
       originalPrice: original,
-      maxPeople: 12,
-      minPeople: 1,
-      category: categories[pkgs.length % categories.length],
+      maxPeople: cat === "corporate" ? 80 : 12,
+      minPeople: cat === "corporate" ? 10 : 1,
+      category: cat,
       badge: badges[pkgs.length % badges.length],
       images: [dest.coverImage, ...(dest.images || [])],
-      inclusions: ["Flights", "Hotels", "Airport transfers", "Daily breakfast", "Sightseeing"],
+      inclusions: cat === "corporate"
+        ? [
+            "Flights",
+            "Negotiated business hotels",
+            "Airport transfers",
+            "Meeting venue coordination",
+            "GST invoice",
+            "Dedicated travel manager",
+            "Daily breakfast",
+          ]
+        : ["Flights", "Hotels", "Airport transfers", "Daily breakfast", "Sightseeing"],
       exclusions: ["Visa fees", "Travel insurance", "Personal expenses"],
       itinerary: buildItinerary(days, dest.name),
       highlights: [`${dest.tagline}`, "Curated experiences", "24x7 support"],
@@ -238,7 +272,14 @@ function buildPackages(destDocs) {
       visaRequired: dest.visaRequired,
       isVisaFree: dest.isVisaFree,
       isActive: true,
-    });
+    };
+    if (cat === "corporate") {
+      pkg.corporate = buildCorporateDetails(pkgs.length, dest.name);
+      pkg.title = `${dest.name} Corporate ${["Retreat", "MICE", "Offsite", "Conference"][pkgs.length % 4]}`;
+      pkg.slug = slugify(`${pkg.title}-${days}d`);
+      pkg.description = `End-to-end corporate travel for teams of ${pkg.corporate.employeeCountMin}+ in ${dest.name}. Invoice & GST supported.`;
+    }
+    pkgs.push(pkg);
     i++;
   }
   return pkgs;

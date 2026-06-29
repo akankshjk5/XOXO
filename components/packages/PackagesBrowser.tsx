@@ -9,6 +9,11 @@ import toast from "react-hot-toast";
 import { packagesAPI } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import {
+  PACKAGE_CATEGORIES,
+  CATEGORY_LABELS,
+  resolvePackageCategoryFilter,
+} from "@/lib/travel-categories";
+import {
   AnimatedTabs,
   EmptyState,
   SkeletonCard,
@@ -44,7 +49,7 @@ const DURATION_TABS = [
   { id: "6-9", label: "6-9 Days" },
   { id: "10+", label: "10+ Days" },
 ];
-const CATEGORIES = ["all", "honeymoon", "family", "friends", "solo", "adventure", "luxury"];
+const CATEGORIES = ["all", ...PACKAGE_CATEGORIES];
 const SORTS = [
   { id: "popular", label: "Most Popular" },
   { id: "price_asc", label: "Price: Low → High" },
@@ -77,7 +82,11 @@ export function PackagesBrowser() {
     setLoading(true);
     const b = BUDGET_FILTERS.find((x) => x.id === budget);
     const params: Record<string, string | number> = { sort, limit: 24 };
-    if (category !== "all") params.category = category;
+    if (category !== "all") {
+      const mapped = resolvePackageCategoryFilter(category);
+      if (mapped.type) params.type = mapped.type;
+      if (mapped.category) params.category = mapped.category;
+    }
     if (duration !== "all") params.duration = duration;
     if (debounced) params.search = debounced;
     if (b && b.id !== "all") {
@@ -102,7 +111,7 @@ export function PackagesBrowser() {
 
   const categoryTabs = CATEGORIES.map((c) => ({
     id: c,
-    label: c === "all" ? "All Types" : c,
+    label: CATEGORY_LABELS[c] || c,
   }));
 
   return (

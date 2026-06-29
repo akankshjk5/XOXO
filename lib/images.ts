@@ -37,7 +37,7 @@ export const TRAVELER_IMAGES: Record<string, string> = {
   couple: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=400&q=80",
   family: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=400&q=80",
   friends: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80",
-  solo: "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=400&q=80",
+  corporate: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&q=80",
 };
 
 const FALLBACK = DESTINATION_IMAGES.bali;

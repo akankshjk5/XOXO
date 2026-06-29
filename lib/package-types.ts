@@ -45,3 +45,38 @@ export interface PackageFlags {
   isHidden?: boolean;
   status?: "draft" | "published";
 }
+
+export interface CorporatePackageInfo {
+  companyName?: string;
+  employeeCountMin?: number;
+  employeeCountMax?: number;
+  meetingLocation?: string;
+  travelTypes?: string[];
+  supportsInvoice?: boolean;
+  supportsGst?: boolean;
+  dedicatedTravelManager?: boolean;
+  customPricing?: boolean;
+  negotiatedHotels?: boolean;
+  airportTransfers?: boolean;
+}
+
+export interface PackageRecord {
+  _id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  destination?: string | { _id: string; name?: string };
+  durationDays: number;
+  durationNights?: number;
+  pricePerPerson: number;
+  originalPrice?: number;
+  maxPeople?: number;
+  minPeople?: number;
+  category?: string;
+  images?: string[];
+  inclusions?: string[];
+  exclusions?: string[];
+  highlights?: string[];
+  corporate?: CorporatePackageInfo;
+  status?: "draft" | "published";
+}

@@ -14,7 +14,7 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 
-const { validateEnv } = require("./config/env");
+const { validateEnv, getEnvStatus } = require("./config/env");
 const { buildCorsOptions, getSocketCorsOrigins } = require("./config/cors");
 const logger = require("./config/logger");
 const connectDB = require("./config/db");
@@ -32,12 +32,16 @@ try {
   env = validateEnv();
 } catch (err) {
   logger.error(`Environment validation failed: ${err.message}`);
+  if (process.env.NODE_ENV === "production") {
+    logger.error("Refusing to start in production with invalid environment.");
+    process.exit(1);
+  }
   env = {
     nodeEnv: process.env.NODE_ENV || "development",
-    isProduction: process.env.NODE_ENV === "production",
+    isProduction: false,
     port: Number(process.env.PORT) || 5000,
     clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
-    trustProxy: process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production",
+    trustProxy: process.env.TRUST_PROXY === "true",
   };
 }
 
@@ -87,6 +91,7 @@ function healthHandler(req, res) {
     environment: env.nodeEnv,
     database: dbLabels[dbState] || "unknown",
     ready: dbState === 1,
+    env: getEnvStatus(),
     version: process.env.npm_package_version || "1.0.0",
   });
 }

@@ -26,7 +26,7 @@ interface Itinerary {
   localTips?: string[];
 }
 
-const TRIP_TYPES = ["solo", "couple", "family", "group"];
+const TRIP_TYPES = ["solo", "couple", "family", "group", "corporate"];
 const BUDGETS = ["budget", "mid-range", "luxury"];
 const STYLES = ["Beaches", "Adventure", "Culture", "Food", "Nightlife", "Nature", "Shopping", "Relaxation"];
 
