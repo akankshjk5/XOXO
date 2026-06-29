@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { normalizePhone, validatePhone } = require("../utils/phone");
 
 // GET /api/users/wishlist
 exports.getWishlist = async (req, res, next) => {
