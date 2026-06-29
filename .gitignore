@@ -36,6 +36,7 @@ backend/*.log
 backend/.env
 backend/.env.local
 backend/.env.production
+.env.production.vercel
 
 # vercel
 .vercel
