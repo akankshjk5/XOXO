@@ -1,7 +1,23 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "@/lib/phone";
+
+const optionalPhone = z
+  .string()
+  .optional()
+  .refine((val) => !val || isValidPhoneNumber(val), {
+    message: "Enter a valid phone number (at least 10 digits)",
+  });
+
+const requiredPhone = z
+  .string()
+  .min(1, "Phone number is required")
+  .refine(isValidPhoneNumber, {
+    message: "Enter a valid phone number (at least 10 digits)",
+  });
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
+  phone: optionalPhone,
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -9,7 +25,7 @@ export const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  phone: z.string().optional(),
+  phone: requiredPhone,
 });
 
 export const itinerarySchema = z.object({

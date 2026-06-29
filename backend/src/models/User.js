@@ -1,12 +1,26 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { normalizePhone, validatePhone } = require("../utils/phone");
 
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6, select: false },
-    phone: { type: String },
+    /** Primary contact number (also exposed as phoneNumber in API responses). */
+    phone: {
+      type: String,
+      trim: true,
+      sparse: true,
+      unique: true,
+      validate: {
+        validator(v) {
+          if (!v) return true;
+          return validatePhone(v);
+        },
+        message: "Phone number must be 10–15 digits",
+      },
+    },
     avatar: { type: String, default: "" },
     role: { type: String, enum: ["user", "guide", "admin"], default: "user" },
     isBlocked: { type: Boolean, default: false },
@@ -48,6 +62,11 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
+  if (this.isModified("phone") && this.phone) {
+    this.phone = normalizePhone(this.phone) || undefined;
+  }
+  if (this.phone === "") this.phone = undefined;
+
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);

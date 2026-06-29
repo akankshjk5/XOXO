@@ -9,6 +9,8 @@ interface UserRow {
   _id: string;
   name: string;
   email: string;
+  phone?: string;
+  phoneNumber?: string;
   role: string;
   isBlocked?: boolean;
   createdAt?: string;
@@ -55,7 +57,7 @@ export function AdminUsersModule() {
       <AdminHeader title="Users" subtitle="View and manage registered travelers" />
       <div className="p-4 sm:p-6 lg:p-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or email…" className="rounded-lg border px-3 py-2 text-sm flex-1 max-w-md" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, or phone…" className="rounded-lg border px-3 py-2 text-sm flex-1 max-w-md" />
           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="rounded-lg border px-3 py-2 text-sm">
             <option value="all">All roles</option>
             <option value="user">User</option>
@@ -75,20 +77,22 @@ export function AdminUsersModule() {
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Email</th>
+                <th className="px-4 py-3 text-left">Phone</th>
                 <th className="px-4 py-3 text-left">Role</th>
                 <th className="px-4 py-3 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} className="py-12 text-center text-text-grey">Loading…</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-text-grey">Loading…</td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={4} className="py-12 text-center text-text-grey">No users found</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-text-grey">No users found</td></tr>
               ) : (
                 users.map((u) => (
                   <tr key={u._id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{u.name}</td>
                     <td className="px-4 py-3 text-text-grey">{u.email}</td>
+                    <td className="px-4 py-3 text-text-grey">{u.phone || u.phoneNumber || "—"}</td>
                     <td className="px-4 py-3">
                       <select value={u.role} onChange={(e) => updateUser(u._id, { role: e.target.value })} className="rounded-lg border px-2 py-1 text-xs">
                         <option value="user">user</option>

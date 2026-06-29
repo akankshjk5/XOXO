@@ -71,8 +71,9 @@ export default function SignupPage() {
               {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input id="phone" type="tel" placeholder="+91 98765 43210" {...register("phone")} />
+              {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

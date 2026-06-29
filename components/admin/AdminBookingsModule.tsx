@@ -12,7 +12,7 @@ interface BookingRow {
   paymentStatus?: string;
   totalAmount?: number;
   createdAt?: string;
-  user?: { name?: string; email?: string };
+  user?: { name?: string; email?: string; phone?: string };
   package?: { title?: string };
 }
 
@@ -68,7 +68,7 @@ export function AdminBookingsModule() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customer, email, or package…"
+            placeholder="Search customer, email, phone, or package…"
             className="rounded-lg border px-3 py-2 text-sm flex-1 max-w-md"
           />
           <select
@@ -119,6 +119,9 @@ export function AdminBookingsModule() {
                       <td className="px-4 py-3">
                         <p className="font-medium text-text-dark">{booking.user?.name || "—"}</p>
                         <p className="text-xs text-text-grey">{booking.user?.email}</p>
+                        {booking.user?.phone && (
+                          <p className="text-xs text-text-grey">{booking.user.phone}</p>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-text-dark">{booking.package?.title || "—"}</td>
                       <td className="px-4 py-3">₹{(booking.totalAmount || 0).toLocaleString("en-IN")}</td>

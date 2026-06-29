@@ -8,13 +8,17 @@ const {
   clearCookieOptions,
 } = require("../utils/jwt");
 const { sendEmail } = require("../utils/email");
+const { normalizePhone, validatePhone } = require("../utils/phone");
 
 const toAuthUser = (user) => {
   const u = user.toJSON ? user.toJSON() : user;
+  const phone = u.phone || "";
   return {
     _id: u._id,
     name: u.name,
     email: u.email,
+    phone,
+    phoneNumber: phone,
     avatar: u.avatar || "",
     role: u.role || "user",
     rewardPoints: u.rewardPoints,
@@ -41,7 +45,17 @@ const issueTokens = async (user, res) => {
 // POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, phoneNumber } = req.body;
+    const rawPhone = phone || phoneNumber;
+
+    if (!rawPhone || !validatePhone(rawPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid phone number is required (at least 10 digits)",
+      });
+    }
+
+    const normalizedPhone = normalizePhone(rawPhone);
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -50,7 +64,14 @@ exports.register = async (req, res, next) => {
         .json({ success: false, message: "Email already registered" });
     }
 
-    const user = await User.create({ name, email, password, phone });
+    const phoneExists = await User.findOne({ phone: normalizedPhone });
+    if (phoneExists) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Phone number already registered" });
+    }
+
+    const user = await User.create({ name, email, password, phone: normalizedPhone });
     const { accessToken } = await issueTokens(user, res);
 
     res.status(201).json({
@@ -58,6 +79,11 @@ exports.register = async (req, res, next) => {
       data: { user: toAuthUser(user), accessToken },
     });
   } catch (err) {
+    if (err.code === 11000 && err.keyPattern?.phone) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Phone number already registered" });
+    }
     next(err);
   }
 };

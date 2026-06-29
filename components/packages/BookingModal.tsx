@@ -10,6 +10,7 @@ import { bookingsAPI, paymentsAPI } from "@/lib/api";
 import { loadRazorpay } from "@/lib/razorpay";
 import { getBookingConfirmationPath } from "@/lib/auth-routing";
 import { useAuthStore } from "@/store/authStore";
+import { isValidPhoneNumber } from "@/lib/phone";
 import { usePaymentMode } from "@/hooks/usePaymentMode";
 import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
 import { formatPrice } from "@/lib/utils";
@@ -48,6 +49,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
         ...prev,
         name: prev.name || user.name || "",
         email: prev.email || user.email || "",
+        phone: prev.phone || user.phone || user.phoneNumber || "",
       }));
     }
   }, [user]);
@@ -59,7 +61,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
       toast.error("Please pick a travel date.");
       return;
     }
-    if (step === 2 && (!lead.name || !lead.email || lead.phone.length < 10)) {
+    if (step === 2 && (!lead.name || !lead.email || !isValidPhoneNumber(lead.phone))) {
       toast.error("Please fill in valid contact details.");
       return;
     }

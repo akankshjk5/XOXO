@@ -109,7 +109,7 @@ exports.getMy = async (req, res, next) => {
 // GET /api/bookings/:id
 exports.getById = async (req, res, next) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate("package").populate("user", "name email");
+    const booking = await Booking.findById(req.params.id).populate("package").populate("user", "name email phone");
     if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
     if (String(booking.user._id || booking.user) !== String(req.user._id) && req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Not your booking" });
@@ -149,7 +149,7 @@ exports.getAll = async (req, res, next) => {
     }
     let items = await Booking.find(filter)
       .populate("package", "title slug")
-      .populate("user", "name email")
+      .populate("user", "name email phone")
       .sort({ createdAt: -1 })
       .lean();
     if (search) {
@@ -158,6 +158,7 @@ exports.getAll = async (req, res, next) => {
         (b) =>
           b.user?.name?.toLowerCase().includes(q) ||
           b.user?.email?.toLowerCase().includes(q) ||
+          b.user?.phone?.includes(q.replace(/\D/g, "")) ||
           b.package?.title?.toLowerCase().includes(q)
       );
     }

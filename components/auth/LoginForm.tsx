@@ -31,7 +31,7 @@ export function LoginForm() {
   const onSubmit = async (data: LoginInput) => {
     setLoading(true);
     try {
-      const user = await login(data.email, data.password);
+      const user = await login(data.email, data.password, data.phone);
       toast.success(`Welcome back, ${user.name.split(" ")[0]}! 👋`);
       const redirect = searchParams?.get("redirect");
       router.replace(getPostLoginPath(user, redirect));
@@ -60,6 +60,11 @@ export function LoginForm() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
             {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number (optional)</Label>
+            <Input id="phone" type="tel" placeholder="+91 98765 43210" {...register("phone")} />
+            {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

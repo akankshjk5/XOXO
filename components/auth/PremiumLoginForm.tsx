@@ -65,7 +65,7 @@ export function PremiumLoginForm() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     mode: "onChange",
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", phone: "", password: "" },
   });
 
   const emailValue = watch("email");
@@ -94,7 +94,7 @@ export function PremiumLoginForm() {
   const onSubmit = async (data: LoginInput) => {
     setLoading(true);
     try {
-      const user = await login(data.email, data.password);
+      const user = await login(data.email, data.password, data.phone);
       if (remember && typeof window !== "undefined") {
         localStorage.setItem("xoxo_remember_email", data.email);
       } else if (typeof window !== "undefined") {
@@ -156,6 +156,25 @@ export function PremiumLoginForm() {
             {emailValue && !errors.email && (
               <p className="flex items-center gap-1 text-xs text-green-dark">
                 <CheckCircle2 className="h-3 w-3" aria-hidden /> Looks good
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number (optional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+91 98765 43210"
+              aria-invalid={!!errors.phone}
+              aria-describedby={errors.phone ? "phone-error" : undefined}
+              className="auth-input"
+              {...register("phone")}
+            />
+            {errors.phone && (
+              <p id="phone-error" className="text-xs text-red-500" role="alert">
+                {errors.phone.message}
               </p>
             )}
           </div>

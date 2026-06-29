@@ -19,12 +19,13 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { bookingsAPI, usersAPI, itinerariesAPI, walletAPI, uploadAPI } from "@/lib/api";
-import { useAuthStore } from "@/store/authStore";
+import { isValidPhoneNumber } from "@/lib/phone";
 import { formatPrice } from "@/lib/utils";
 import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 import { CountUp } from "@/components/motion/CountUp";
 import { EmptyState } from "@/components/motion/EmptyState";
 import { DataLoadError } from "@/components/ui/DataLoadError";
+import { useAuthStore } from "@/store/authStore";
 
 type Tab = "overview" | "bookings" | "wishlist" | "itineraries" | "wallet" | "profile";
 
@@ -77,7 +78,7 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 export function DashboardClient() {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, fetchMe } = useAuthStore();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("overview");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -97,6 +98,19 @@ export function DashboardClient() {
   const [redeemAmt, setRedeemAmt] = useState("");
   const [refCode, setRefCode] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfile((p) => ({
+      ...p,
+      name: user.name || p.name,
+      phone: user.phone || user.phoneNumber || p.phone,
+    }));
+  }, [user]);
 
   useEffect(() => {
     const requested = searchParams?.get("tab");
@@ -211,6 +225,10 @@ export function DashboardClient() {
   };
 
   const saveProfile = async () => {
+    if (profile.phone && !isValidPhoneNumber(profile.phone)) {
+      toast.error("Enter a valid phone number (at least 10 digits).");
+      return;
+    }
     setSavingProfile(true);
     try {
       const { data } = await usersAPI.updateProfile(profile);
@@ -496,7 +514,7 @@ export function DashboardClient() {
               {tab === "profile" && (
                 <div className="max-w-md space-y-4">
                   <Field label="Full name" value={profile.name} onChange={(v) => setProfile({ ...profile, name: v })} />
-                  <Field label="Phone" value={profile.phone} onChange={(v) => setProfile({ ...profile, phone: v })} />
+                  <Field label="Phone Number" value={profile.phone} onChange={(v) => setProfile({ ...profile, phone: v })} type="tel" placeholder="+91 98765 43210" />
                   <Field label="Nationality" value={profile.nationality} onChange={(v) => setProfile({ ...profile, nationality: v })} />
                   <div>
                     <label className="text-sm font-semibold text-text-dark mb-1.5 block">Bio</label>
@@ -538,12 +556,26 @@ function Empty({ text, cta, href }: { text: string; cta: string; href: string })
   return <EmptyState title={text} cta={cta} href={href} icon="📋" />;
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
   return (
     <div>
       <label className="text-sm font-semibold text-text-dark mb-1.5 block">{label}</label>
       <input
+        type={type}
         value={value}
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none"
       />

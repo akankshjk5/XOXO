@@ -2,6 +2,7 @@ const User = require("../models/User");
 const Review = require("../models/Review");
 const Coupon = require("../models/Coupon");
 const SiteSettings = require("../models/SiteSettings");
+const { phoneSearchPattern } = require("../utils/phone");
 
 /** GET /api/admin/users */
 exports.listUsers = async (req, res, next) => {
@@ -12,17 +13,23 @@ exports.listUsers = async (req, res, next) => {
     if (blocked === "true") filter.isBlocked = true;
     if (blocked === "false") filter.isBlocked = false;
     if (search) {
-      filter.$or = [
+      const phoneDigits = phoneSearchPattern(search);
+      const or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
+      if (phoneDigits) {
+        or.push({ phone: { $regex: phoneDigits } });
+      }
+      filter.$or = or;
     }
     const users = await User.find(filter)
-      .select("name email role isBlocked isVerified createdAt")
+      .select("name email phone role isBlocked isVerified createdAt")
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
-    res.json({ success: true, data: users });
+    const data = users.map((u) => ({ ...u, phoneNumber: u.phone || "" }));
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }

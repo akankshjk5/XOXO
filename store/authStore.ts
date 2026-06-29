@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { authAPI } from "@/lib/api";
+import { authAPI, usersAPI } from "@/lib/api";
 import { getUserRole } from "@/lib/auth-routing";
 
 export interface AuthUser {
   _id: string;
   name: string;
   email: string;
+  phone?: string | null;
+  phoneNumber?: string | null;
   avatar?: string;
   role?: string;
   rewardPoints?: number;
@@ -22,7 +24,7 @@ interface AuthState {
   loading: boolean;
   hydrated: boolean;
   setUser: (user: AuthUser | null) => void;
-  login: (email: string, password: string) => Promise<AuthUser>;
+  login: (email: string, password: string, phone?: string) => Promise<AuthUser>;
   register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
@@ -30,7 +32,8 @@ interface AuthState {
 }
 
 function normalizeUser(user: AuthUser): AuthUser {
-  return { ...user, role: getUserRole(user) };
+  const phone = user.phone || user.phoneNumber || null;
+  return { ...user, phone, phoneNumber: phone, role: getUserRole(user) };
 }
 
 function authSession(user: AuthUser | null, token: string | null) {
@@ -54,12 +57,23 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set(authSession(user, get().token)),
       setHydrated: () => set({ hydrated: true }),
 
-      login: async (email, password) => {
+      login: async (email, password, phone) => {
         set({ loading: true });
         try {
           const { data } = await authAPI.login({ email, password });
-          const { user, accessToken } = data.data;
-          const normalized = normalizeUser(user);
+          let { user, accessToken } = data.data;
+          let normalized = normalizeUser(user);
+
+          const trimmedPhone = phone?.trim();
+          if (trimmedPhone && !normalized.phone && !normalized.phoneNumber) {
+            try {
+              const { data: profileRes } = await usersAPI.updateProfile({ phone: trimmedPhone });
+              normalized = normalizeUser(profileRes.data);
+            } catch {
+              /* optional field — do not block login */
+            }
+          }
+
           if (typeof window !== "undefined") localStorage.setItem("xoxo_token", accessToken);
           set({ ...authSession(normalized, accessToken), loading: false, hydrated: true });
           return normalized;

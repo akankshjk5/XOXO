@@ -37,17 +37,51 @@ exports.toggleWishlist = async (req, res, next) => {
 // PUT /api/users/profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const allowed = ["name", "phone", "avatar", "nationality", "bio", "travelStyle", "languages"];
+    const allowed = ["name", "phone", "phoneNumber", "avatar", "nationality", "bio", "travelStyle", "languages"];
     const updates = {};
     for (const key of allowed) {
-      if (req.body[key] !== undefined) updates[key] = req.body[key];
+      if (req.body[key] !== undefined && key !== "phoneNumber") {
+        updates[key] = req.body[key];
+      }
+    }
+    if (req.body.phoneNumber !== undefined && req.body.phone === undefined) {
+      updates.phone = req.body.phoneNumber;
+    }
+    if (updates.phone !== undefined) {
+      if (updates.phone && !validatePhone(updates.phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid phone number (at least 10 digits required)",
+        });
+      }
+      updates.phone = updates.phone ? normalizePhone(updates.phone) : undefined;
+      if (updates.phone) {
+        const taken = await User.findOne({
+          phone: updates.phone,
+          _id: { $ne: req.user._id },
+        });
+        if (taken) {
+          return res.status(409).json({
+            success: false,
+            message: "Phone number already in use",
+          });
+        }
+      }
     }
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
       runValidators: true,
     });
-    res.json({ success: true, data: user });
+    const json = user.toJSON();
+    json.phoneNumber = json.phone || "";
+    res.json({ success: true, data: json });
   } catch (err) {
+    if (err.code === 11000 && err.keyPattern?.phone) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already in use",
+      });
+    }
     next(err);
   }
 };
