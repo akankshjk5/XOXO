@@ -142,7 +142,8 @@ export default function Navbar() {
         )}
       >
         <div className="container-x h-16 flex items-center gap-3 lg:gap-5">
-          <p className="hidden lg:block shrink-0 text-white text-[15px] font-medium whitespace-nowrap">
+          <Logo />
+          <p className="hidden xl:block shrink-0 text-white text-[15px] font-medium whitespace-nowrap">
             Create a <span className="script-text">Sooper Hit</span> holiday
           </p>
 

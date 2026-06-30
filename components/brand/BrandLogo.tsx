@@ -6,12 +6,12 @@ import { BRAND_LOGO_ALT, BRAND_LOGO_SRC } from "@/lib/brand";
 type BrandLogoVariant = "navbar" | "footer" | "auth" | "intro" | "admin";
 
 const VARIANT_CLASS: Record<BrandLogoVariant, string> = {
-  /** Mobile 40px, desktop 48px */
-  navbar: "h-10 w-auto md:h-12",
-  footer: "h-10 w-auto sm:h-11",
-  auth: "h-11 w-auto",
-  intro: "h-20 w-auto sm:h-24 md:h-28",
-  admin: "h-9 w-auto",
+  /** Mobile 36px, desktop 44px — capped width to avoid horizontal overflow */
+  navbar: "h-9 max-h-9 w-auto max-w-[112px] md:h-11 md:max-h-11 md:max-w-[140px]",
+  footer: "h-9 w-auto max-w-[128px] sm:h-10 sm:max-w-[140px]",
+  auth: "h-10 w-auto max-w-[140px]",
+  intro: "h-16 w-auto max-w-[200px] sm:h-20 sm:max-w-[240px] md:h-24 md:max-w-[280px]",
+  admin: "h-8 w-auto max-w-[100px]",
 };
 
 interface BrandLogoProps {
@@ -43,7 +43,7 @@ export function BrandLogo({
   if (!linked) return img;
 
   return (
-    <Link href={href} className="inline-flex shrink-0 items-center" aria-label={BRAND_LOGO_ALT}>
+    <Link href={href} className="inline-flex shrink-0 items-center p-0 leading-none" aria-label={BRAND_LOGO_ALT}>
       {img}
     </Link>
   );

@@ -151,6 +151,20 @@ export function AdminGroupsModule() {
     }
   };
 
+  const removeMember = async (groupId: string, userId: string, name: string) => {
+    if (!confirm(`Remove ${name} from this group?`)) return;
+    try {
+      const { data } = await adminAPI.removeGroupMember(groupId, userId);
+      toast.success("Member removed");
+      if (membersOpen?._id === groupId) {
+        setMembersOpen({ ...membersOpen, members: data.data?.members || [] });
+      }
+      load();
+    } catch {
+      toast.error("Could not remove member");
+    }
+  };
+
   const uploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -282,13 +296,24 @@ export function AdminGroupsModule() {
                 <p className="text-sm text-text-grey text-center py-4">No members</p>
               ) : (
                 membersOpen.members!.map((m, i) => (
-                  <li key={m.user?._id || i} className="flex justify-between border rounded-lg px-3 py-2 text-sm">
-                    <div>
+                  <li key={m.user?._id || i} className="flex items-center justify-between gap-2 border rounded-lg px-3 py-2 text-sm">
+                    <div className="min-w-0">
                       <p className="font-medium">{m.user?.name || "—"}</p>
                       <p className="text-xs text-text-grey">{m.user?.email}</p>
                       {m.user?.phone && <p className="text-xs text-text-grey">{m.user.phone}</p>}
                     </div>
-                    <span className="text-xs capitalize text-text-grey">{m.role}</span>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="text-xs capitalize text-text-grey">{m.role}</span>
+                      {m.role !== "creator" && m.user?._id && (
+                        <button
+                          type="button"
+                          onClick={() => removeMember(membersOpen._id, m.user!._id, m.user!.name)}
+                          className="text-xs font-medium text-red-500 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))
               )}

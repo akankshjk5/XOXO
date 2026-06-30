@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AppShell } from "@/components/layout/AppShell";
+import { AuthTopBar } from "@/components/layout/AuthTopBar";
 
 const AUTH_ROUTES = ["/login", "/signup"];
 const ADMIN_PREFIX = "/admin";
@@ -20,7 +21,12 @@ export function RouteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
 
   if (isAuthRoute(pathname)) {
-    return <>{children}</>;
+    return (
+      <>
+        <AuthTopBar />
+        <div className="pt-14">{children}</div>
+      </>
+    );
   }
 
   if (isAdminRoute(pathname)) {

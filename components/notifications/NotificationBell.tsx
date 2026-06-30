@@ -136,7 +136,11 @@ export function NotificationBell() {
                   }`}
                 >
                   <p className="text-sm font-semibold text-text-dark">{n.title}</p>
-                  {n.body && <p className="text-xs text-text-grey mt-0.5">{n.body}</p>}
+                  {n.body && (
+                    <p className="text-xs text-text-grey mt-0.5 break-words whitespace-pre-wrap line-clamp-4">
+                      {n.body}
+                    </p>
+                  )}
                   <p className="text-[10px] text-text-grey/70 mt-1">
                     {new Date(n.createdAt).toLocaleString()}
                   </p>

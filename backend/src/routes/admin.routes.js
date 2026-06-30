@@ -74,6 +74,7 @@ router.get("/groups/:id", groupsCtrl.getGroup);
 router.post("/groups", groupsCtrl.createGroup);
 router.put("/groups/:id", groupsCtrl.updateGroup);
 router.patch("/groups/:id/close", groupsCtrl.closeGroup);
+router.delete("/groups/:id/members/:userId", groupsCtrl.removeMember);
 router.delete("/groups/:id", groupsCtrl.deleteGroup);
 
 router.get("/reviews", manageCtrl.listReviews);

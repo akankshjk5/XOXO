@@ -22,7 +22,7 @@ const QUICK_PROMPTS = [
 const GREETING =
   "Hi! I'm your XOXO AI concierge. Ask about budgets, honeymoons, visa-free trips, or beaches — I'll suggest packages, flights & hotels.";
 
-const HIDE_ON = ["/login", "/signup", "/admin"];
+const HIDE_ON = ["/login", "/signup", "/admin", "/concierge"];
 
 export function FloatingConcierge() {
   const router = useRouter();

@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-neon focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-brand-green text-white shadow-sm hover:bg-brand-green-dark active:scale-[0.98]",
+        default: "bg-green-neon text-white shadow-sm hover:bg-green-dark active:scale-[0.98]",
         destructive: "bg-red-500 text-white shadow-sm hover:bg-red-600",
-        outline: "border border-border bg-white hover:bg-surface hover:border-primary/20",
-        secondary: "bg-surface text-text-primary hover:bg-border/40",
-        ghost: "hover:bg-surface hover:text-primary",
-        link: "text-brand-green underline-offset-4 hover:underline",
-        accent: "bg-brand-green text-white shadow-sm hover:bg-brand-green-dark active:scale-[0.98]",
-        dark: "bg-primary text-white hover:bg-primary-light",
+        outline: "border border-[#E8E8E8] bg-white hover:bg-off-white hover:border-green-dark/20",
+        secondary: "bg-off-white text-text-dark hover:bg-[#E8E8E8]/60",
+        ghost: "hover:bg-off-white hover:text-green-dark",
+        link: "text-green-dark underline-offset-4 hover:underline",
+        accent: "bg-green-neon text-white shadow-sm hover:bg-green-dark active:scale-[0.98]",
+        dark: "bg-green-dark text-white hover:bg-green-mid",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-pill px-8 text-base",
+        lg: "h-12 rounded-full px-8 text-base",
         icon: "h-10 w-10",
       },
     },

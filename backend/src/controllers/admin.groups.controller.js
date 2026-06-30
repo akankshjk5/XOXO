@@ -141,3 +141,23 @@ exports.deleteGroup = async (req, res, next) => {
     next(err);
   }
 };
+
+/** DELETE /api/admin/groups/:id/members/:userId */
+exports.removeMember = async (req, res, next) => {
+  try {
+    const group = await GroupTrip.findById(req.params.id);
+    if (!group) return res.status(404).json({ success: false, message: "Group not found" });
+    if (String(group.creator) === String(req.params.userId)) {
+      return res.status(400).json({ success: false, message: "Cannot remove group creator" });
+    }
+    group.members = group.members.filter((m) => String(m.user) !== String(req.params.userId));
+    if (group.status === "full") group.status = "open";
+    await group.save();
+    const populated = await GroupTrip.findById(group._id)
+      .populate("creator", "name email phone")
+      .populate("members.user", "name email phone avatar");
+    res.json({ success: true, data: populated });
+  } catch (err) {
+    next(err);
+  }
+};

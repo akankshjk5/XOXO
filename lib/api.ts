@@ -188,6 +188,8 @@ export const adminAPI = {
   createGroup: (data: AnyObj) => api.post("/admin/groups", data),
   updateGroup: (id: string, data: AnyObj) => api.put(`/admin/groups/${id}`, data),
   closeGroup: (id: string) => api.patch(`/admin/groups/${id}/close`),
+  removeGroupMember: (groupId: string, userId: string) =>
+    api.delete(`/admin/groups/${groupId}/members/${userId}`),
   deleteGroup: (id: string) => api.delete(`/admin/groups/${id}`),
   listReviews: (params?: AnyObj) => api.get("/admin/reviews", { params }),
   moderateReview: (id: string, status: string) => api.patch(`/admin/reviews/${id}`, { status }),
