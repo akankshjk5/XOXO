@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { HERO_BG } from "@/lib/images";
 import { DESTINATION_IMAGES } from "@/lib/images";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const POPULAR = [
   { name: "Bali", image: DESTINATION_IMAGES.bali },
@@ -38,10 +39,8 @@ export function LoginHeroPanel() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15 }}
         >
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-green-bright/90">
-            XOXO Travels
-          </p>
-          <h1 className="mt-4 max-w-md font-primary text-4xl font-semibold leading-tight text-white xl:text-5xl">
+          <BrandLogo variant="intro" href="/" className="brightness-110" priority />
+          <h1 className="mt-6 max-w-md font-primary text-4xl font-semibold leading-tight text-white xl:text-5xl">
             Explore the World with XOXO
           </h1>
           <blockquote className="mt-6 max-w-sm border-l-2 border-green-bright/60 pl-4 text-lg text-white/85">

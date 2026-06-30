@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Sparkles,
   Eye,
   EyeOff,
   Lock,
@@ -12,6 +11,7 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,8 +128,8 @@ export function PremiumLoginForm() {
         className="glass-login-card w-full max-w-md"
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-green-dark shadow-lg shadow-green-dark/30">
-            <Sparkles className="h-7 w-7 text-white" aria-hidden />
+          <div className="mx-auto mb-4 flex justify-center">
+            <BrandLogo variant="auth" href="/" />
           </div>
           <h2 className="font-primary text-2xl font-semibold text-text-dark">Welcome Back</h2>
           <p className="mt-2 text-sm text-text-grey">Sign in to continue your journey with XOXO</p>

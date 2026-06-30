@@ -21,6 +21,7 @@ import { AuroraOverlay } from "@/components/cinematic/AuroraOverlay";
 import { FloatingTravelElements } from "@/components/cinematic/FloatingTravelElements";
 import { IntroVideo } from "@/components/cinematic/IntroVideo";
 import { EASE_OUT } from "@/lib/motion";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 type Phase = "intro" | "transition" | "hero";
 
@@ -262,23 +263,13 @@ export function CinematicHero() {
             transition={{ duration: 0.5, ease: EASE_OUT }}
           >
             <motion.div
-              className="mb-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-green-bright text-green-dark font-black text-xl sm:text-2xl shadow-[0_0_60px_rgba(74,222,128,0.5)] transform-gpu"
+              className="mb-6 transform-gpu"
               initial={{ opacity: 0, scale: 0.6, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.75, ease: EASE_OUT, delay: T.logo }}
             >
-              X&gt;
+              <BrandLogo variant="intro" href="/" className="mx-auto brightness-110 drop-shadow-[0_8px_32px_rgba(0,0,0,0.35)]" priority />
             </motion.div>
-
-            <motion.h1
-              className="brand-name cinematic-logo text-4xl sm:text-6xl md:text-7xl tracking-tight text-white mb-3 transform-gpu"
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: EASE_OUT, delay: T.logo + 0.1 }}
-            >
-              XOXO
-              <span className="text-shimmer">.TRAVEL</span>
-            </motion.h1>
 
             <motion.p
               className="text-lg sm:text-xl text-white/85 font-semibold tracking-wide"

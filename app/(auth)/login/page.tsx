@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PremiumLoginForm } from "@/components/auth/PremiumLoginForm";
 import { LoginHeroPanel } from "@/components/auth/LoginHeroPanel";
 import { HERO_BG } from "@/lib/images";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export const metadata = {
   title: "Sign In | XOXO Travels",
@@ -17,8 +18,8 @@ export default function LoginPage() {
         <Image src={HERO_BG} alt="" fill className="object-cover" priority sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-green-dark/85" />
         <div className="relative z-10 flex h-full flex-col justify-end p-6">
-          <p className="text-xs font-medium uppercase tracking-widest text-green-bright">XOXO Travels</p>
-          <h1 className="mt-1 text-2xl font-semibold text-white">Explore the World with XOXO</h1>
+          <BrandLogo variant="auth" href="/" className="brightness-110" priority />
+          <h1 className="mt-4 text-2xl font-semibold text-white">Explore the World with XOXO</h1>
           <p className="mt-2 text-sm text-white/75">
             &ldquo;Every journey begins with one click.&rdquo;
           </p>

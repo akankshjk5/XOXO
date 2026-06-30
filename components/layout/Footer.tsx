@@ -6,6 +6,7 @@ import { RevealOnScroll } from "@/components/motion/RevealOnScroll";
 import { useIntro } from "@/context/IntroContext";
 import { clearIntroSeen, requestIntroReplay } from "@/lib/intro-storage";
 import { NewsletterSignup } from "@/components/layout/NewsletterSignup";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const LINKS = [
   { label: "Packages", href: "/packages" },
@@ -35,14 +36,7 @@ export function Footer() {
       <div className="container-x relative py-16 md:py-20">
         <RevealOnScroll className="flex flex-col md:flex-row md:items-start md:justify-between gap-12">
           <div className="text-center md:text-left">
-            <Link href="/" className="inline-flex items-center gap-3 mb-5 group">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-bright text-green-dark font-black text-sm shadow-[0_0_24px_rgba(74,222,128,0.35)] group-hover:shadow-[0_0_32px_rgba(74,222,128,0.5)] transition-shadow">
-                X&gt;
-              </div>
-              <span className="brand-name text-2xl tracking-tight">
-                xoxo<span className="font-normal opacity-80">travels</span>
-              </span>
-            </Link>
+            <BrandLogo variant="footer" className="mb-5" />
             <p className="text-sm text-white/60 max-w-sm leading-relaxed">
               Custom international holidays for Indian travellers — book, plan, and explore together.
             </p>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getNavForRole, ADMIN_FOOTER_NAV, type AdminRoleId } from "@/lib/admin/navigation";
-import { Sparkles, PanelLeftClose, PanelLeft } from "lucide-react";
+import { PanelLeftClose, PanelLeft } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useState } from "react";
 
 interface AdminSidebarProps {
@@ -24,12 +25,10 @@ export function AdminSidebar({ adminRole }: AdminSidebarProps) {
       )}
     >
       <div className="flex items-center justify-between gap-2 border-b border-white/10 p-4">
-        <Link href="/admin" className="flex items-center gap-2 overflow-hidden">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
-            <Sparkles className="h-5 w-5 text-green-bright" aria-hidden />
-          </span>
+        <Link href="/admin" className="flex items-center gap-2 overflow-hidden min-w-0">
+          <BrandLogo variant="admin" linked={false} className="shrink-0" />
           {!collapsed && (
-            <span className="truncate font-semibold tracking-tight">XOXO Admin</span>
+            <span className="truncate text-sm font-semibold tracking-tight text-white/90">Admin</span>
           )}
         </Link>
         <button

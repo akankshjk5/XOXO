@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description: "Custom international holiday packages. Trusted by 2 Lakh+ Indian travellers.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/logos/png/xoxo-logo.png",
+    apple: "/logos/png/xoxo-logo.png",
   },
 };
 

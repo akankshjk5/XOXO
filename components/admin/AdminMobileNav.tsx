@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { getNavForRole, type AdminRoleId } from "@/lib/admin/navigation";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface AdminMobileNavProps {
   adminRole: AdminRoleId;
@@ -19,8 +20,9 @@ export function AdminMobileNav({ adminRole }: AdminMobileNavProps) {
   return (
     <div className="border-b border-[var(--admin-border)] bg-green-dark px-4 py-3 lg:hidden">
       <div className="flex items-center justify-between">
-        <Link href="/admin" className="text-sm font-semibold text-white">
-          XOXO Admin
+        <Link href="/admin" className="flex items-center gap-2 min-w-0">
+          <BrandLogo variant="admin" linked={false} />
+          <span className="text-sm font-semibold text-white/90">Admin</span>
         </Link>
         <button
           type="button"

@@ -10,18 +10,10 @@ import toast from "react-hot-toast";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { MotionDrawer } from "@/components/motion/MotionDrawer";
 import { useIntro } from "@/context/IntroContext";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 function Logo() {
-  return (
-    <Link href="/" className="flex items-center gap-2 shrink-0">
-      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-bright text-green-dark font-black text-xs">
-        X&gt;
-      </div>
-      <span className="brand-name text-[17px] text-white tracking-tight">
-        xoxo<span className="font-normal text-white/90">travels</span>
-      </span>
-    </Link>
-  );
+  return <BrandLogo variant="navbar" priority />;
 }
 
 function SearchPill({
