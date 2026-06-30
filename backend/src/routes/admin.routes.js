@@ -4,6 +4,8 @@ const { seedDatabase } = require("../services/seedDatabase");
 const { protect, adminOnly } = require("../middleware/auth.middleware");
 const adminCtrl = require("../controllers/admin.controller");
 const manageCtrl = require("../controllers/admin.manage.controller");
+const guidesCtrl = require("../controllers/admin.guides.controller");
+const groupsCtrl = require("../controllers/admin.groups.controller");
 
 const router = express.Router();
 
@@ -58,7 +60,21 @@ router.use(protect, adminOnly);
 router.get("/dashboard", adminCtrl.getDashboard);
 
 router.get("/users", manageCtrl.listUsers);
+router.get("/users/:id", manageCtrl.getUserDetail);
 router.patch("/users/:id", manageCtrl.updateUser);
+
+router.get("/guides", guidesCtrl.listGuides);
+router.get("/guides/:id", guidesCtrl.getGuide);
+router.post("/guides", guidesCtrl.createGuide);
+router.put("/guides/:id", guidesCtrl.updateGuide);
+router.delete("/guides/:id", guidesCtrl.deleteGuide);
+
+router.get("/groups", groupsCtrl.listGroups);
+router.get("/groups/:id", groupsCtrl.getGroup);
+router.post("/groups", groupsCtrl.createGroup);
+router.put("/groups/:id", groupsCtrl.updateGroup);
+router.patch("/groups/:id/close", groupsCtrl.closeGroup);
+router.delete("/groups/:id", groupsCtrl.deleteGroup);
 
 router.get("/reviews", manageCtrl.listReviews);
 router.patch("/reviews/:id", manageCtrl.moderateReview);

@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Review = require("../models/Review");
 const Coupon = require("../models/Coupon");
+const Booking = require("../models/Booking");
 const SiteSettings = require("../models/SiteSettings");
 const { phoneSearchPattern } = require("../utils/phone");
 
@@ -35,19 +36,46 @@ exports.listUsers = async (req, res, next) => {
   }
 };
 
+/** GET /api/admin/users/:id */
+exports.getUserDetail = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select("name email phone role isBlocked isVerified createdAt avatar trustScore")
+      .lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const bookings = await Booking.find({ user: req.params.id })
+      .populate("package", "title")
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .lean();
+    res.json({
+      success: true,
+      data: {
+        user: { ...user, phoneNumber: user.phone || "" },
+        bookings,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /** PATCH /api/admin/users/:id */
 exports.updateUser = async (req, res, next) => {
   try {
-    const { role, isBlocked } = req.body;
+    const { role, isBlocked, isVerified } = req.body;
     const update = {};
     if (role !== undefined) update.role = role;
     if (isBlocked !== undefined) update.isBlocked = isBlocked;
+    if (isVerified !== undefined) update.isVerified = isVerified;
     const user = await User.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
-    }).select("name email role isBlocked");
+    }).select("name email phone role isBlocked isVerified createdAt");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, data: user });
+    const json = user.toJSON ? user.toJSON() : user;
+    json.phoneNumber = json.phone || "";
+    res.json({ success: true, data: json });
   } catch (err) {
     next(err);
   }
