@@ -15,7 +15,7 @@ interface NearbyUser {
   distanceKm: number;
 }
 
-export function NearbyClient() {
+export function NearbyClient({ embedded = false }: { embedded?: boolean }) {
   const [settings, setSettings] = useState<{ locationVisible?: boolean; lastLatitude?: number; lastLongitude?: number } | null>(null);
   const [nearby, setNearby] = useState<NearbyUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -86,11 +86,13 @@ export function NearbyClient() {
   };
 
   return (
-    <div className="pt-[88px] max-w-[900px] mx-auto px-4 sm:px-6 pb-16">
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-black text-text-dark">Travelers Nearby</h1>
-        <p className="text-text-grey mt-1">Discover fellow explorers around you — with full privacy control.</p>
-      </div>
+    <div className={embedded ? "pb-4" : "pt-[88px] max-w-[900px] mx-auto px-4 sm:px-6 pb-16"}>
+      {!embedded && (
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-black text-text-dark">Travelers Nearby</h1>
+          <p className="text-text-grey mt-1">Discover fellow explorers around you — with full privacy control.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 justify-center mb-6">
         <AnimatedButton onClick={shareLocation} disabled={loading}>

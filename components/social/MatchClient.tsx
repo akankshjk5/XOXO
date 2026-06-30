@@ -12,6 +12,7 @@ import { AnimatedTabs, AnimatedTabPanel } from "@/components/motion/AnimatedTabs
 import { AnimatedCard } from "@/components/motion/AnimatedCard";
 import { EmptyState, LoadingSkeleton } from "@/components/motion";
 import { AnimatedButton } from "@/components/motion/AnimatedButton";
+import { NearbyClient } from "@/components/social/NearbyClient";
 
 const INTERESTS = ["Adventure", "Culture", "Food", "Beaches", "Nightlife", "Photography", "Trekking", "Shopping"];
 
@@ -23,7 +24,7 @@ interface MatchCard {
 
 export function MatchClient() {
   const me = useAuthStore((s) => s.user);
-  const [tab, setTab] = useState<"discover" | "profile" | "requests">("discover");
+  const [tab, setTab] = useState<"discover" | "nearby" | "profile" | "requests">("discover");
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<MatchCard[]>([]);
   const [requests, setRequests] = useState<{
@@ -123,19 +124,24 @@ export function MatchClient() {
     <div className="pt-[88px] max-w-[1100px] mx-auto px-4 sm:px-6 pb-16">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-black text-text-dark">Solo Traveler Matchmaking</h1>
-        <p className="text-text-grey mt-1">Find your perfect travel buddy by destination, dates & interests.</p>
+        <p className="text-text-grey mt-1">Find travel buddies or discover nearby travellers by destination, dates & interests.</p>
       </div>
 
       <AnimatedTabs
         tabs={[
-          { id: "discover", label: "discover" },
-          { id: "profile", label: "profile" },
-          { id: "requests", label: "requests" },
+          { id: "discover", label: "Matchmaking" },
+          { id: "nearby", label: "Nearby Travellers" },
+          { id: "profile", label: "My profile" },
+          { id: "requests", label: "Requests" },
         ]}
         active={tab}
         onChange={(id) => setTab(id as typeof tab)}
         className="mb-6"
       />
+
+      <AnimatedTabPanel id="nearby" active={tab}>
+        <NearbyClient embedded />
+      </AnimatedTabPanel>
 
       <AnimatedTabPanel id="profile" active={tab}>
         <div className="max-w-lg mx-auto space-y-4 border border-[#EBEBEB] rounded-2xl p-6">
@@ -233,7 +239,7 @@ export function MatchClient() {
           </Section>
           <Section title={`Connected (${requests.accepted.length})`}>
             {requests.accepted.length === 0 ? (
-              <p className="text-sm text-text-grey">No connections yet.</p>
+              <EmptyState variant="compact" icon="🤝" title="No connections yet" description="Accept match requests to start planning trips together." />
             ) : (
               <div className="space-y-2">
                 {requests.accepted.map((r) => {
