@@ -86,7 +86,7 @@ export function ConciergeWorkspace() {
 
         <div className="lg:col-span-5 space-y-4">
           <MapPreview plan={session?.plan || null} />
-          <ItineraryTimeline plan={session?.plan || null} />
+          <ItineraryTimeline plan={session?.plan || null} intent={session?.intent} />
           {session?.plan?.highlights && session.plan.highlights.length > 0 && (
             <div className="rounded-2xl border border-green-bright/30 bg-green-bright/5 p-4">
               <p className="text-xs font-bold text-green-dark uppercase mb-2">Highlights</p>

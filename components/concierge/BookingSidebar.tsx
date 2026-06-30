@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Plane, Hotel, Compass, User, Users, Share2, Save, Loader2 } from "lucide-react";
+import { Plane, Hotel, Compass, User, Users, Share2, Save, Loader2, Printer, Download } from "lucide-react";
 import type { ConciergePlan, ConciergeSession } from "@/lib/concierge-types";
 import { formatPrice } from "@/lib/utils";
+import { downloadItineraryPdf, printItinerary } from "@/lib/itinerary-export";
 
 interface BookingSidebarProps {
   session: ConciergeSession | null;
@@ -88,6 +89,24 @@ export function BookingSidebar({ session, saving, onSave, onShare }: BookingSide
           >
             <Share2 className="h-4 w-4" />
             Share plan
+          </button>
+          <button
+            type="button"
+            onClick={() => printItinerary(session?.plan || null, session?.intent)}
+            disabled={!plan?.itinerary}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-[#E0E0E0] text-text-grey text-sm font-semibold disabled:opacity-50"
+          >
+            <Printer className="h-4 w-4" />
+            Print
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadItineraryPdf(session?.plan || null, session?.intent)}
+            disabled={!plan?.itinerary}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-[#E0E0E0] text-text-grey text-sm font-semibold disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            Download PDF
           </button>
         </div>
       </div>

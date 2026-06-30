@@ -110,7 +110,9 @@ export function AdminBookingsModule() {
                 ) : bookings.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-12 text-center text-text-grey">
-                      No bookings yet
+                      <p className="text-2xl mb-2" aria-hidden>📅</p>
+                      <p className="font-medium text-text-dark">No bookings yet</p>
+                      <p className="text-xs mt-1">Customer bookings will appear here in real time.</p>
                     </td>
                   </tr>
                 ) : (

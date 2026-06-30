@@ -19,7 +19,11 @@ export function AdminMiniChart({
     <div className="admin-card p-5">
       <h3 className="font-medium text-text-dark">{title}</h3>
       {data.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-text-grey">No data yet</p>
+        <div className="mt-8 py-10 text-center">
+          <p className="text-2xl mb-2" aria-hidden>📊</p>
+          <p className="text-sm font-medium text-text-dark">No chart data yet</p>
+          <p className="text-xs text-text-grey mt-1">Stats will populate as bookings come in.</p>
+        </div>
       ) : (
         <div className="mt-6 flex h-40 items-end gap-1.5">
           {data.map((point) => (

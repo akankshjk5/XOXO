@@ -316,7 +316,7 @@ export function DashboardClient() {
               {tab === "bookings" && (
                 <div className="space-y-4">
                   {bookings.length === 0 ? (
-                    <Empty text="No bookings yet." cta="Browse packages" href="/packages" />
+                    <Empty text="No bookings yet" description="When you book a package, your trips will appear here." cta="Browse packages" href="/packages" />
                   ) : (
                     bookings.map((b) => (
                       <div key={b._id} className="flex gap-4 border border-[#EBEBEB] rounded-2xl p-4">
@@ -364,7 +364,7 @@ export function DashboardClient() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {wishlist.length === 0 ? (
                     <div className="sm:col-span-2 lg:col-span-3">
-                      <Empty text="Your wishlist is empty." cta="Explore packages" href="/packages" />
+                      <Empty text="Your wishlist is empty" description="Save packages you love and book them when you're ready." cta="Explore packages" href="/packages" />
                     </div>
                   ) : (
                     wishlist.map((w) => (
@@ -396,7 +396,7 @@ export function DashboardClient() {
               {tab === "itineraries" && (
                 <div className="space-y-3">
                   {itineraries.length === 0 ? (
-                    <Empty text="No saved itineraries." cta="Plan with AI" href="/concierge" />
+                    <Empty text="No saved itineraries" description="Use the AI Concierge to build a trip plan and save it to your dashboard." cta="✨ FREE AI Planner" href="/concierge" />
                   ) : (
                     itineraries.map((it) => (
                       <div key={it._id} className="flex items-center justify-between border border-[#EBEBEB] rounded-2xl p-4">
@@ -488,7 +488,7 @@ export function DashboardClient() {
                       <div>
                         <h4 className="font-bold text-text-dark mb-2">Recent transactions</h4>
                         {wallet.transactions.length === 0 ? (
-                          <p className="text-sm text-text-grey">No transactions yet.</p>
+                          <EmptyState variant="compact" icon="💳" title="No transactions yet" description="Rewards and wallet activity will show up here." />
                         ) : (
                           <div className="space-y-2">
                             {wallet.transactions.map((t) => (
@@ -552,8 +552,8 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-function Empty({ text, cta, href }: { text: string; cta: string; href: string }) {
-  return <EmptyState title={text} cta={cta} href={href} icon="📋" />;
+function Empty({ text, description, cta, href }: { text: string; description?: string; cta: string; href: string }) {
+  return <EmptyState title={text} description={description} cta={cta} href={href} icon="📋" />;
 }
 
 function Field({

@@ -1,9 +1,16 @@
 "use client";
 
 import { Sun, Moon, MapPin } from "lucide-react";
-import type { ConciergePlan } from "@/lib/concierge-types";
+import type { ConciergePlan, ConciergeIntent } from "@/lib/concierge-types";
+import { formatItineraryLocation } from "@/lib/itinerary-export";
 
-export function ItineraryTimeline({ plan }: { plan: ConciergePlan | null }) {
+export function ItineraryTimeline({
+  plan,
+  intent,
+}: {
+  plan: ConciergePlan | null;
+  intent?: ConciergeIntent | null;
+}) {
   if (!plan?.itinerary) {
     return (
       <div className="rounded-2xl border border-dashed border-[#E0E0E0] bg-white/60 p-8 text-center text-sm text-text-grey">
@@ -13,14 +20,18 @@ export function ItineraryTimeline({ plan }: { plan: ConciergePlan | null }) {
   }
 
   const it = plan.itinerary;
+  const loc = formatItineraryLocation(plan, intent);
 
   return (
     <div className="rounded-2xl border border-[#E8E8E8] bg-white shadow-elevated overflow-hidden">
       <div className="px-5 py-4 border-b border-[#EBEBEB]">
         <h3 className="font-black text-lg text-text-dark flex items-center gap-2">
           <MapPin className="h-4 w-4 text-green-dark" />
-          {it.destination} · {it.totalDays} days
+          {loc.label}
         </h3>
+        <p className="text-xs text-text-grey mt-0.5">
+          {loc.city}{loc.country ? ` · ${loc.country}` : ""} · {it.totalDays} days
+        </p>
         {it.weatherSummary && (
           <p className="text-xs text-text-grey mt-1">{it.weatherSummary}</p>
         )}
