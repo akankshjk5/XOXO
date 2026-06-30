@@ -9,12 +9,40 @@ import { IntroProvider } from "@/context/IntroContext";
 import { SkipLink } from "@/components/layout/SkipLink";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://xoxo-puce.vercel.app"),
   title: "XOXO Travels — Create Your Sooper Hit Holiday",
   description: "Custom international holiday packages. Trusted by 2 Lakh+ Indian travellers.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logos/png/xoxo-logo.png",
-    apple: "/logos/png/xoxo-logo.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://xoxo-puce.vercel.app",
+    siteName: "XOXO Travels",
+    title: "XOXO Travels",
+    description: "Create Your Sooper Hit Holiday",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "XOXO Travels — Create Your Sooper Hit Holiday",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "XOXO Travels",
+    description: "Create Your Sooper Hit Holiday",
+    images: ["/og-image.png"],
   },
 };
 
