@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,8 +96,20 @@ export default function SignupPage() {
               </div>
               {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Sign up free"}
+            <Button
+              type="submit"
+              disabled={loading}
+              aria-busy={loading}
+              className="auth-submit-btn mt-6 h-[50px] w-full rounded-xl bg-gradient-to-r from-green-dark via-green-mid to-green-neon text-white shadow-md transition-all hover:brightness-105 hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Creating account…
+                </span>
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
 
