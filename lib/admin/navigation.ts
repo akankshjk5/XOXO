@@ -9,6 +9,8 @@ import {
   Ticket,
   Settings,
   LogOut,
+  Compass,
+  UsersRound,
 } from "lucide-react";
 
 export type AdminRoleId =
@@ -34,7 +36,9 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: "packages", label: "Packages", href: "/admin/packages", icon: Package },
   { id: "destinations", label: "Destinations", href: "/admin/destinations", icon: MapPin },
   { id: "bookings", label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
-  { id: "users", label: "Users", href: "/admin/users", icon: Users },
+  { id: "users", label: "Customers", href: "/admin/users", icon: Users },
+  { id: "groups", label: "Group Travellers", href: "/admin/groups", icon: UsersRound },
+  { id: "guides", label: "Guide Services", href: "/admin/guides", icon: Compass },
   { id: "reviews", label: "Reviews", href: "/admin/reviews", icon: Star },
   { id: "coupons", label: "Coupons", href: "/admin/coupons", icon: Ticket },
   { id: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
@@ -98,9 +102,14 @@ export const ADMIN_MODULE_META: Record<string, AdminModuleMeta> = {
     features: ["Guide Profiles", "Assignments", "Ratings"],
   },
   users: {
-    title: "Users",
-    description: "User search, roles, verification, and travel history.",
-    features: ["Search & Filters", "Roles", "Sessions", "Wishlist", "Support History"],
+    title: "Customer Management",
+    description: "Search customers, view booking history, verify and block accounts.",
+    features: ["Search & Filters", "Phone & Email", "Booking History", "Verify / Block"],
+  },
+  groups: {
+    title: "Group Travellers",
+    description: "Create, edit, close groups and view members.",
+    features: ["Create / Edit", "Close Group", "View Members", "Delete"],
   },
   reviews: {
     title: "Reviews",
