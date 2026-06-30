@@ -59,10 +59,6 @@ const TestimonialsSection = dynamic(
   () => import("@/components/home/TestimonialsSection").then((m) => m.TestimonialsSection),
   { loading: () => <SectionFallback /> }
 );
-const PlanWithXOXO = dynamic(
-  () => import("@/components/home/PlanWithXOXO").then((m) => m.PlanWithXOXO),
-  { ssr: false }
-);
 
 export default function HomePage() {
   return (
@@ -105,7 +101,6 @@ export default function HomePage() {
       <RevealOnScroll>
         <TestimonialsSection />
       </RevealOnScroll>
-      <PlanWithXOXO />
     </>
   );
 }

@@ -23,6 +23,7 @@ export function NotificationBell() {
   const user = useAuthStore((s) => s.user);
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -51,6 +52,14 @@ export function NotificationBell() {
       socket.off("notification", onNotif);
     };
   }, [user]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -99,7 +108,11 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? undefined : { opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-0 mt-2 w-80 max-h-[420px] overflow-y-auto bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#EBEBEB] z-[95]"
+            className={
+              mobile
+                ? "fixed left-3 right-3 top-[72px] max-h-[min(70vh,calc(100dvh-88px))] overflow-y-auto overscroll-contain bg-white rounded-2xl shadow-2xl border border-[#EBEBEB] z-[200]"
+                : "absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[min(420px,70vh)] overflow-y-auto bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#EBEBEB] z-[95]"
+            }
           >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#EBEBEB] sticky top-0 bg-white">
             <span className="font-bold text-text-dark">Notifications</span>

@@ -19,7 +19,7 @@ export function CompareBar() {
 
   return (
     <div
-      className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-green-dark/30 bg-white px-4 py-2 shadow-lg md:bottom-6"
+      className="fixed bottom-[calc(56px+env(safe-area-inset-bottom)+12px)] left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-green-dark/30 bg-white px-4 py-2 shadow-lg md:bottom-6"
       role="status"
     >
       <GitCompare className="h-4 w-4 text-green-dark" aria-hidden />

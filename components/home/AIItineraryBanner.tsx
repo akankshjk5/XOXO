@@ -72,7 +72,7 @@ export function AIItineraryBanner() {
             </p>
             <Link href="/concierge" className="btn-orange inline-flex animate-pulse-soft">
               <Sparkles className="h-4 w-4" />
-              Try AI Planner — It&apos;s Free
+              ✨ Generate Free AI Itinerary
               <ArrowRight className="h-4 w-4" />
             </Link>
           </FadeIn>

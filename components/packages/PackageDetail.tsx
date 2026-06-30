@@ -185,7 +185,7 @@ export function PackageDetail() {
   const total = pkg.pricePerPerson * travelers;
 
   return (
-    <div className="pt-[68px] pb-24 lg:pb-16">
+    <div className="pt-[68px] pb-[calc(8rem+env(safe-area-inset-bottom))] lg:pb-24">
       {/* Hero */}
       <div className="relative h-[42vh] min-h-[300px] w-full overflow-hidden">
         <Image src={heroImg} alt={pkg.title} fill priority sizes="100vw" className="object-cover" />
@@ -434,9 +434,9 @@ export function PackageDetail() {
         />
       )}
 
-      {/* Mobile sticky booking bar */}
+      {/* Sticky Book Now — mobile (above bottom nav) + desktop fallback */}
       <div
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#EBEBEB] px-4 py-3 flex items-center justify-between gap-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+        className="fixed inset-x-0 z-40 bg-white border-t border-[#EBEBEB] px-4 py-3 flex items-center justify-between gap-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         <div className="min-w-0">
@@ -447,7 +447,7 @@ export function PackageDetail() {
         <button
           type="button"
           onClick={book}
-          className="shrink-0 px-6 py-3 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors"
+          className="shrink-0 px-6 py-3 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors shadow-md"
           aria-label={`Book ${pkg.title}`}
         >
           Book Now

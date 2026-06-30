@@ -162,18 +162,17 @@ export default function Navbar() {
             className="mx-auto w-full"
           />
 
-          <span className="hidden md:block shrink-0 text-green-bright text-xl select-none" aria-hidden>
-            ↗
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            className="md:hidden text-white p-1 shrink-0"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {user && <NotificationBell />}
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="text-white p-1.5 shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 

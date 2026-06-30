@@ -157,10 +157,11 @@ export function FloatingConcierge() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-dark text-white shadow-lg hover:bg-green-mid transition-colors md:bottom-6"
-          aria-label="Open AI Concierge"
+          className="fixed bottom-[calc(56px+env(safe-area-inset-bottom)+12px)] right-4 z-50 flex items-center gap-2 rounded-full bg-green-dark text-white shadow-lg hover:bg-green-mid transition-colors md:bottom-6 md:px-4 md:py-3 md:h-auto h-14 w-14 md:w-auto justify-center"
+          aria-label="Open FREE AI Planner"
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-6 w-6 shrink-0" />
+          <span className="hidden md:inline text-sm font-semibold whitespace-nowrap">✨ FREE AI Planner</span>
         </button>
       )}
     </>
