@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Loader2, RotateCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import { useConcierge } from "@/hooks/useConcierge";
@@ -13,8 +14,9 @@ import { BookingSidebar } from "@/components/concierge/BookingSidebar";
 import { MapPreview } from "@/components/concierge/MapPreview";
 
 export function ConciergeWorkspace() {
+  const pathname = usePathname() || "/concierge";
   const user = useAuthStore((s) => s.user);
-  const { session, loading, sending, streaming, prompts, send, newSession } = useConcierge();
+  const { session, loading, sending, streaming, prompts, send, newSession } = useConcierge(pathname);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {

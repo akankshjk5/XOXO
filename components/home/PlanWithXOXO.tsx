@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Minus, Maximize2, Plane } from "lucide-react";
 import toast from "react-hot-toast";
 import { aiAPI } from "@/lib/api";
+import { getPageContextFromPath } from "@/lib/concierge-page-context";
+import type { ConciergeIntent } from "@/lib/concierge-types";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -23,18 +25,21 @@ const SUGGESTIONS = [
 const GREETING: ChatMessage = {
   role: "assistant",
   content:
-    "Hi, I'm Trippie ✈️ — your XOXO travel concierge. Ask me anything: destinations, budgets, visas or day-by-day plans. Where shall we go?",
+    "Welcome — I'm your **XOXO Luxury Travel Concierge**. Tell me your budget, dates, and travel style, and I'll build a premium itinerary with hotels, flights, and curated XOXO packages.",
   ts: Date.now(),
 };
 
 export function PlanWithXOXO() {
   const router = useRouter();
+  const pathname = usePathname() || "/";
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const intentMemory = useRef<Partial<ConciergeIntent>>({});
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,7 +72,12 @@ export function PlanWithXOXO() {
         .filter((m) => m.role === "user" || m.role === "assistant")
         .slice(-10)
         .map((m) => ({ role: m.role, content: m.content }));
-      const { data } = await aiAPI.chatExpert(payload);
+      const pageContext = getPageContextFromPath(pathname, searchParams);
+      const { data } = await aiAPI.chatExpert(payload, {
+        pageContext: pageContext || undefined,
+        intentMemory: intentMemory.current,
+      });
+      if (data.intent) intentMemory.current = { ...intentMemory.current, ...data.intent };
       const reply: string = data.message || "Sorry, I didn't catch that. Could you rephrase?";
 
       // word-by-word reveal

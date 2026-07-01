@@ -45,6 +45,9 @@ function suggestDestinations({ budgetINR, travelStyle = [], durationDays }) {
     { name: "Vietnam", key: "vietnam", minBudget: 40000, styles: ["backpacking", "culture", "budget"] },
     { name: "Japan", key: "japan", minBudget: 95000, styles: ["culture", "solo", "backpacking"] },
     { name: "Sri Lanka", key: "sri lanka", minBudget: 30000, styles: ["budget", "beaches", "relaxation"] },
+    { name: "Georgia", key: "georgia", minBudget: 55000, styles: ["honeymoon", "culture", "adventure"] },
+    { name: "Nepal", key: "nepal", minBudget: 30000, styles: ["adventure", "budget", "culture"] },
+    { name: "Mauritius", key: "mauritius", minBudget: 75000, styles: ["honeymoon", "beaches", "luxury"] },
   ];
 
   const perPerson = budgetINR ? Math.floor(budgetINR / 2) : 60000;

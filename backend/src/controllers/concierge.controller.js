@@ -2,6 +2,15 @@ const crypto = require("crypto");
 const ConciergeSession = require("../models/ConciergeSession");
 const Itinerary = require("../models/Itinerary");
 const { processMessage, streamText } = require("../services/concierge/orchestrator");
+const {
+  GREETING_DEFAULT,
+  greetingWithPackage,
+  SUGGESTED_PROMPTS,
+} = require("../constants/concierge-prompts");
+const {
+  resolvePageContext,
+  mergePageContextIntoIntent,
+} = require("../services/concierge/context");
 
 function sessionResponse(session) {
   return {
@@ -13,6 +22,7 @@ function sessionResponse(session) {
     missingFields: session.missingFields,
     searchResults: session.searchResults,
     plan: session.plan,
+    pageContext: session.pageContext,
     shareToken: session.shareToken,
     savedItineraryId: session.savedItineraryId,
     createdAt: session.createdAt,
@@ -44,16 +54,26 @@ async function loadSession(req, res) {
 exports.createSession = async (req, res, next) => {
   try {
     const guestId = req.headers["x-guest-id"] || crypto.randomUUID();
+    const pageContext = await resolvePageContext(req.body?.pageContext || {});
+
+    let intent = {};
+    if (pageContext) {
+      intent = mergePageContextIntoIntent({}, pageContext);
+    }
+
+    const greeting = pageContext?.package
+      ? greetingWithPackage(pageContext.package)
+      : GREETING_DEFAULT;
+
     const session = await ConciergeSession.create({
       user: req.user?._id,
       guestId: req.user ? undefined : guestId,
-      messages: [
-        {
-          role: "assistant",
-          content:
-            "Hi! I'm your XOXO Travel Concierge ✨ Tell me your budget, dates, and dream destination — I'll search live flights, hotels, activities, and build your complete trip plan.",
-        },
-      ],
+      pageContext,
+      intent,
+      title: pageContext?.package?.title
+        ? `${pageContext.package.title} · plan`
+        : "New trip",
+      messages: [{ role: "assistant", content: greeting }],
     });
     res.status(201).json({
       success: true,
@@ -164,14 +184,5 @@ exports.saveItinerary = async (req, res, next) => {
 
 // GET /api/concierge/prompts
 exports.suggestedPrompts = (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      "I have ₹80,000. I want a honeymoon in Bali for 6 days in December.",
-      "I want a solo backpacking trip to Japan under ₹1 lakh.",
-      "I have 4 days next month. Suggest a relaxing international trip.",
-      "I want to travel with other solo travelers.",
-      "Find me beaches with nightlife under ₹60,000.",
-    ],
-  });
+  res.json({ success: true, data: SUGGESTED_PROMPTS });
 };

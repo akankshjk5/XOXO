@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ConciergeWorkspace } from "@/components/concierge/ConciergeWorkspace";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function ConciergePage() {
-  return <ConciergeWorkspace />;
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-text-grey">Loading concierge…</div>}>
+      <ConciergeWorkspace />
+    </Suspense>
+  );
 }

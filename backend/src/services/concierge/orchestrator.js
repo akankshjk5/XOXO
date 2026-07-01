@@ -1,11 +1,26 @@
-const { getClaude, CLAUDE_MODEL, TRAVEL_EXPERT_SYSTEM } = require("../../utils/claude");
-const { extractIntent, getMissingFields, markOpenDestination } = require("./intent");
+const { getClaude, CLAUDE_MODEL, LUXURY_CONCIERGE_SYSTEM } = require("../../utils/claude");
+const {
+  PLAN_JSON_SYSTEM,
+  FOLLOW_UP_SYSTEM,
+  FOLLOW_UP_ENDING,
+} = require("../../constants/concierge-prompts");
+const {
+  extractIntent,
+  getMissingFields,
+  markOpenDestination,
+  buildFollowUpQuestions,
+  getBudgetAlternatives,
+} = require("./intent");
 const { runInventorySearch } = require("./tools");
-const { resolveDestination } = require("./destinations");
+const { suggestDestinations } = require("./destinations");
+const {
+  mergePageContextIntoIntent,
+  formatPackageContextForPrompt,
+} = require("./context");
 
 const hasKey = () => !!process.env.ANTHROPIC_API_KEY;
 
-function buildBudgetAnalysis(intent, searchResults, planDays = []) {
+function buildBudgetAnalysis(intent, searchResults) {
   const travelers = intent.travelers || 2;
   const totalBudget = intent.budgetINR || 0;
 
@@ -15,11 +30,11 @@ function buildBudgetAnalysis(intent, searchResults, planDays = []) {
   const nights = intent.durationDays || 5;
   const hotelCost = hotelOffer
     ? Math.round((hotelOffer.pricePerNight || hotelOffer.totalPrice / nights || 0) * nights)
-    : Math.round(nights * 4500 * (intent.hotelCategory === "luxury" ? 2 : 1));
+    : Math.round(nights * 4500 * (intent.hotelCategory === "luxury" ? 2.2 : 1));
 
-  const activitiesCost = Math.round((searchResults.activities?.offers?.length || 3) * 2500);
-  const localTransport = Math.round(nights * 1200);
-  const foodEstimate = Math.round(nights * travelers * 1800);
+  const activitiesCost = Math.round((searchResults.activities?.offers?.length || 3) * 2800);
+  const localTransport = Math.round(nights * 1400);
+  const foodEstimate = Math.round(nights * travelers * 2000);
   const shoppingEstimate = Math.round(totalBudget * 0.08);
   const emergencyReserve = Math.round(totalBudget * 0.1);
 
@@ -46,34 +61,60 @@ function buildBudgetAnalysis(intent, searchResults, planDays = []) {
   };
 }
 
-function buildDemoPlan(intent, searchResults) {
-  const dest = intent.destination || "your destination";
-  const days = intent.durationDays || 6;
-  const budget = intent.budgetLabel || (intent.budgetINR ? `₹${intent.budgetINR.toLocaleString("en-IN")}` : "flexible");
+function formatPackagesForPrompt(packages = []) {
+  return packages.map((p) => ({
+    id: String(p._id),
+    title: p.title,
+    pricePerPerson: p.pricePerPerson,
+    durationDays: p.durationDays,
+    durationNights: p.durationNights,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    highlights: (p.highlights || []).slice(0, 4),
+    destination: p.destination?.name || p.destinationName,
+    bookPath: `/packages/${p._id}`,
+  }));
+}
+
+function buildDemoPlan(intent, searchResults, pageContext) {
+  const dest = intent.destination || pageContext?.package?.destination?.name || "your destination";
+  const days = intent.durationDays || pageContext?.package?.durationDays || 6;
+  const budget =
+    intent.budgetLabel ||
+    (intent.budgetINR ? `₹${intent.budgetINR.toLocaleString("en-IN")}` : "flexible");
+
+  const packages = searchResults.packages || [];
+  const topPkg = packages[0];
+  const pkgPitch = topPkg
+    ? `### XOXO Package Match\n**${topPkg.title}** — **₹${(topPkg.pricePerPerson || 0).toLocaleString("en-IN")}**/person · ${topPkg.durationDays}D/${(topPkg.durationNights || topPkg.durationDays - 1) || 0}N\nIncludes curated hotels, transfers & sightseeing. Booking this package typically saves **₹12,000–₹22,000** vs planning independently.\n[View & Book](/packages/${topPkg._id})`
+    : "";
+
+  const reply = `## Trip Overview\nA **${days}-day ${intent.tripType || "premium"} escape** to **${dest}** tailored for Indian travellers${intent.originCity ? ` from **${intent.originCity}**` : ""}. Budget envelope: **${budget}**.\n\n## Budget Breakdown\n| Category | Estimate (INR) |\n|---|---|\n| Flights | ₹${(buildBudgetAnalysis(intent, searchResults).breakdown.flights || 0).toLocaleString("en-IN")} |\n| Hotels | ₹${(buildBudgetAnalysis(intent, searchResults).breakdown.hotels || 0).toLocaleString("en-IN")} |\n| Activities | ₹${(buildBudgetAnalysis(intent, searchResults).breakdown.activities || 0).toLocaleString("en-IN")} |\n| Food | ₹${(buildBudgetAnalysis(intent, searchResults).breakdown.food || 0).toLocaleString("en-IN")} |\n| Local transport | ₹${(buildBudgetAnalysis(intent, searchResults).breakdown.localTransport || 0).toLocaleString("en-IN")} |\n\n${pkgPitch}\n\nYour day-by-day plan and flight/hotel picks are ready in the itinerary panel.${FOLLOW_UP_ENDING}`;
 
   const itinerary = {
     destination: dest,
     totalDays: days,
     estimatedBudget: budget,
     bestTimeToVisit: intent.departureDate ? intent.departureDate.slice(0, 7) : "Oct–Mar",
-    weatherSummary: `${dest} is pleasant during your travel window. Pack light layers and sun protection.`,
+    weatherSummary: `Pleasant for sightseeing in ${dest}. Pack light layers and sun protection.`,
+    visaSummary: searchResults.visa?.visaType || "Check Indian passport requirements",
     days: Array.from({ length: Math.min(days, 7) }, (_, i) => ({
       day: i + 1,
       title: i === 0 ? `Arrival in ${dest}` : `${dest} — Day ${i + 1}`,
       morning: {
-        activity: searchResults.activities?.offers?.[i % 3]?.name || "Guided sightseeing",
+        activity: searchResults.activities?.offers?.[i % 3]?.name || "Guided heritage walk",
         duration: "3h",
         tip: "Book morning slots to avoid crowds",
       },
       afternoon: {
-        activity: "Local experiences & cafes",
+        activity: intent.hasChildren ? "Family-friendly attraction" : "Local experiences & curated café",
         duration: "3h",
         tip: "Try regional specialities",
       },
       evening: {
-        activity: intent.travelStyle?.includes("nightlife") ? "Night market & nightlife" : "Sunset viewpoint",
+        activity: intent.travelStyle?.includes("nightlife") ? "Night market & skyline views" : "Sunset viewpoint",
         duration: "2h",
-        tip: "Reserve dinner for ocean-view spots",
+        tip: "Reserve dinner at a recommended restaurant",
       },
       meals: {
         breakfast: "Hotel / local café",
@@ -81,22 +122,36 @@ function buildDemoPlan(intent, searchResults) {
         dinner: "Curated dining pick",
       },
       transport: i === 0 ? "Airport transfer" : "Private cab / ride-hailing",
-      estimatedCost: `₹${(8000 + i * 500).toLocaleString("en-IN")}`,
+      estimatedCost: `₹${(8000 + i * 600).toLocaleString("en-IN")}`,
     })),
-    transportTips: ["Use Grab/Gojek where available", "Pre-book airport transfers"],
+    transportTips: ["Pre-book airport transfers", "Use reputable ride apps"],
     packingTips: ["Universal adapter", "Comfortable walking shoes", "Light rain jacket"],
-    localTips: ["Carry digital + paper copies of documents", "Notify bank for international use"],
+    localTips: ["Digital + paper copies of documents", "Notify bank for international use"],
+    restaurantPicks: ["Ask your consultant for chef's-table reservations"],
+    hiddenGems: ["Local markets away from tourist strips"],
+    luxuryUpgrades: ["Suite upgrade", "Private guide", "Helicopter tour where available"],
+    moneySavingTips: ["Book flights 6–8 weeks ahead", "Consider XOXO package bundles"],
   };
 
   const budgetAnalysis = buildBudgetAnalysis(intent, searchResults, itinerary.days);
 
   return {
+    reply,
+    highlights: [
+      `${days}-day ${intent.tripType || "custom"} plan for ${dest}`,
+      `Budget envelope ${budget}`,
+      topPkg ? `XOXO package: ${topPkg.title}` : "Flights & hotels searched live",
+      intent.hasSeniors ? "Senior-friendly pacing included" : "Optimised daily rhythm",
+      "Visa & packing guidance included",
+    ],
     itinerary,
     budget: budgetAnalysis,
     rankedFlights: (searchResults.flights?.offers || []).slice(0, 3),
     rankedHotels: (searchResults.hotels?.offers || []).slice(0, 3),
     topActivities: (searchResults.activities?.offers || []).slice(0, 5),
-    packages: searchResults.packages || [],
+    packages,
+    packagePitch: pkgPitch,
+    budgetAlternatives: getBudgetAlternatives(intent),
     social: {
       travelers: searchResults.travelers || [],
       groups: searchResults.groups || [],
@@ -108,34 +163,35 @@ function buildDemoPlan(intent, searchResults) {
   };
 }
 
-async function generatePlan(intent, searchResults) {
-  if (!hasKey()) return buildDemoPlan(intent, searchResults);
+async function generatePlan(intent, searchResults, pageContext) {
+  if (!hasKey()) return buildDemoPlan(intent, searchResults, pageContext);
+
+  const pageCtxText = formatPackageContextForPrompt(pageContext);
+  const alts = getBudgetAlternatives(intent);
 
   try {
     const response = await getClaude().messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 3500,
-      system: `${TRAVEL_EXPERT_SYSTEM}
-You are building a complete trip plan. Return ONLY valid JSON:
-{
-  "reply": "conversational summary under 120 words",
-  "itinerary": { destination, totalDays, estimatedBudget, bestTimeToVisit, weatherSummary, days[{day,title,morning,afternoon,evening,meals,transport,estimatedCost}], transportTips[], packingTips[], localTips[] },
-  "highlights": ["3-5 bullet points"]
-}
-Use INR. Incorporate real flight/hotel/activity options from search results when available.`,
+      max_tokens: 8000,
+      system: `${LUXURY_CONCIERGE_SYSTEM}\n\n${PLAN_JSON_SYSTEM}`,
       messages: [
         {
           role: "user",
-          content: JSON.stringify({ intent, searchResults: summarizeSearch(searchResults) }),
+          content: `${pageCtxText}\n\nIntent:\n${JSON.stringify(intent)}\n\nSearch results:\n${JSON.stringify(
+            summarizeSearch(searchResults)
+          )}\n\nBudget alternatives to mention if relevant:\n${JSON.stringify(alts)}`,
         },
       ],
     });
-    const parsed = JSON.parse(response.content[0].text);
+    const text = response.content[0].text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(text);
     const budget = buildBudgetAnalysis(intent, searchResults, parsed.itinerary?.days);
     return {
-      reply: parsed.reply,
+      reply: parsed.reply + FOLLOW_UP_ENDING,
       highlights: parsed.highlights,
       itinerary: parsed.itinerary,
+      packagePitch: parsed.packagePitch,
+      budgetAlternatives: parsed.budgetAlternatives || alts,
       budget,
       rankedFlights: (searchResults.flights?.offers || []).slice(0, 3),
       rankedHotels: (searchResults.hotels?.offers || []).slice(0, 3),
@@ -151,7 +207,7 @@ Use INR. Incorporate real flight/hotel/activity options from search results when
       suggestions: searchResults.suggestions || [],
     };
   } catch {
-    return buildDemoPlan(intent, searchResults);
+    return buildDemoPlan(intent, searchResults, pageContext);
   }
 }
 
@@ -160,80 +216,80 @@ function summarizeSearch(sr) {
     flights: sr.flights?.offers?.slice(0, 3),
     hotels: sr.hotels?.offers?.slice(0, 3),
     activities: sr.activities?.offers?.slice(0, 5),
-    packages: sr.packages?.map((p) => ({ title: p.title, price: p.pricePerPerson })),
+    packages: formatPackagesForPrompt(sr.packages || []),
     visa: sr.visa,
     suggestions: sr.suggestions,
   };
 }
 
-function buildFollowUp(missing, intent) {
-  const questions = {
-    destination: "Which destination are you dreaming of — or should I suggest options based on your budget?",
-    budget: "What's your total budget in INR for this trip (all travellers included)?",
-    dates: "When are you planning to travel, and for how many days?",
-    travelers: "How many travellers will be joining this trip?",
-  };
-  const parts = missing.map((m) => questions[m]).filter(Boolean);
-  if (intent.openDestination && intent.budgetINR) {
-    return `I can suggest destinations within ₹${intent.budgetINR.toLocaleString("en-IN")}. ${parts.join(" ")}`;
-  }
-  return parts.join(" ") || "Tell me a bit more about your ideal trip — destination, budget, and dates.";
+function conversationContext(messages = [], limit = 8) {
+  return messages
+    .slice(-limit)
+    .map((m) => `${m.role}: ${m.content}`)
+    .join("\n\n");
 }
 
-async function demoReply(message, intent, missing) {
+async function generateAssistantReply(message, intent, missing, plan, searchResults, session, pageContext) {
   if (missing.length > 0) {
-    return buildFollowUp(missing, intent);
-  }
-  const dest = intent.destination || "your trip";
-  return `Perfect — I'm putting together a ${intent.durationDays || 6}-day ${intent.tripType || "leisure"} plan for ${dest} within ${intent.budgetLabel || "your budget"}. I've searched flights, hotels, and activities. Check the itinerary and budget panel on the right — ready to book when you are! ✈️`;
-}
-
-async function generateAssistantReply(message, intent, missing, plan, searchResults) {
-  if (missing.length > 0) {
+    const template = buildFollowUpQuestions(missing, intent, pageContext);
     if (hasKey()) {
       try {
         const response = await getClaude().messages.create({
           model: CLAUDE_MODEL,
-          max_tokens: 400,
-          system: TRAVEL_EXPERT_SYSTEM + " Ask ONE natural follow-up question to fill missing trip details. Under 80 words.",
-          messages: [{ role: "user", content: `User: ${message}\nIntent: ${JSON.stringify(intent)}\nMissing: ${missing.join(", ")}` }],
+          max_tokens: 600,
+          system: `${LUXURY_CONCIERGE_SYSTEM}\n\n${FOLLOW_UP_SYSTEM}`,
+          messages: [
+            {
+              role: "user",
+              content: `${formatPackageContextForPrompt(pageContext)}\n\nConversation:\n${conversationContext(session.messages || [])}\n\nUser: ${message}\nIntent: ${JSON.stringify(intent)}\nStill missing: ${missing.join(", ")}\n\nTemplate to refine:\n${template}`,
+            },
+          ],
         });
         return response.content[0].text;
       } catch {
-        return buildFollowUp(missing, intent);
+        return template;
       }
     }
-    return buildFollowUp(missing, intent);
+    return template;
   }
 
   if (plan?.reply) return plan.reply;
-  return demoReply(message, intent, missing);
+  return plan?.reply || `Your premium ${intent.destination || "trip"} plan is ready. Review the itinerary and budget panels — I'm here to refine every detail.${FOLLOW_UP_ENDING}`;
 }
 
 async function processMessage(session, userMessage) {
+  const pageContext = session.pageContext || null;
+
   let intent = markOpenDestination({
     ...(session.intent?.toObject?.() || session.intent || {}),
   });
-
+  intent = mergePageContextIntoIntent(intent, pageContext);
   intent = await extractIntent(userMessage, intent);
 
   if (!intent.destination && intent.openDestination) {
-    const suggestions = require("./tools").suggestDestinations(intent);
-    if (suggestions[0]) intent.destination = suggestions[0].name;
+    const suggestions = suggestDestinations(intent);
+    if (suggestions[0] && !getMissingFields(intent, pageContext).includes("destination")) {
+      intent.destination = suggestions[0].name;
+    }
   }
 
-  const missing = getMissingFields(intent);
-  const needsSearch = missing.length === 0 || (missing.length === 1 && missing[0] === "destination" && intent.budgetINR);
+  const missing = getMissingFields(intent, pageContext);
+  const needsSearch =
+    missing.length === 0 ||
+    (missing.length === 1 && missing[0] === "destination" && intent.budgetINR);
 
   let searchResults = session.searchResults || {};
   let plan = session.plan || null;
 
-  if (needsSearch && intent.destination) {
+  if (needsSearch && (intent.destination || pageContext?.package)) {
+    if (!intent.destination && pageContext?.package?.destination?.name) {
+      intent.destination = pageContext.package.destination.name;
+    }
     searchResults = await runInventorySearch(intent);
-    plan = await generatePlan(intent, searchResults);
+    plan = await generatePlan(intent, searchResults, pageContext);
     session.status = "plan_ready";
   } else if (intent.budgetINR && intent.openDestination && !intent.destination) {
-    searchResults = await runInventorySearch({ ...intent, destination: null });
+    searchResults = { ...searchResults, suggestions: suggestDestinations(intent) };
     session.status = "gathering";
   } else {
     session.status = "gathering";
@@ -244,15 +300,17 @@ async function processMessage(session, userMessage) {
     intent,
     missing.filter((m) => m !== "destination" || !intent.budgetINR),
     plan,
-    searchResults
+    searchResults,
+    session,
+    pageContext
   );
 
   session.intent = intent;
   session.searchResults = searchResults;
   session.plan = plan;
   session.missingFields = missing;
-  if (intent.destination) {
-    session.title = `${intent.destination} · ${intent.durationDays || "?"} days`;
+  if (intent.destination || pageContext?.package?.title) {
+    session.title = `${intent.destination || pageContext.package.title} · ${intent.durationDays || pageContext?.package?.durationDays || "?"} days`;
   }
 
   return {
@@ -265,12 +323,11 @@ async function processMessage(session, userMessage) {
   };
 }
 
-/** Stream tokens for SSE — chunks assistant text */
 async function* streamText(text) {
   const words = text.split(/(\s+)/);
   for (const w of words) {
     yield w;
-    await new Promise((r) => setTimeout(r, 12));
+    await new Promise((r) => setTimeout(r, 10));
   }
 }
 

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Minus, Maximize2, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { aiAPI } from "@/lib/api";
+import { getPageContextFromPath } from "@/lib/concierge-page-context";
+import type { ConciergeIntent } from "@/lib/concierge-types";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -20,18 +22,20 @@ const QUICK_PROMPTS = [
 ];
 
 const GREETING =
-  "Hi! I'm your XOXO AI concierge. Ask about budgets, honeymoons, visa-free trips, or beaches — I'll suggest packages, flights & hotels.";
+  "Welcome — I'm your **XOXO Luxury Travel Concierge**. Share your budget, dates, and who's travelling, and I'll craft a premium day-by-day plan with hotels, flights, and XOXO packages where they fit.";
 
 const HIDE_ON = ["/login", "/signup", "/admin", "/concierge", "/chat", "/match"];
 
 export function FloatingConcierge() {
   const router = useRouter();
   const pathname = usePathname() || "";
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const intentMemory = useRef<Partial<ConciergeIntent>>({});
 
   const hidden = HIDE_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
@@ -50,7 +54,12 @@ export function FloatingConcierge() {
     setTyping(true);
     try {
       const payload = history.slice(-8).map((m) => ({ role: m.role, content: m.content }));
-      const { data } = await aiAPI.chatExpert(payload);
+      const pageContext = getPageContextFromPath(pathname, searchParams);
+      const { data } = await aiAPI.chatExpert(payload, {
+        pageContext: pageContext || undefined,
+        intentMemory: intentMemory.current,
+      });
+      if (data.intent) intentMemory.current = { ...intentMemory.current, ...data.intent };
       const reply: string =
         data.message ||
         data.data?.message ||

@@ -7,6 +7,7 @@ export interface ConciergeMessage {
 
 export interface ConciergeIntent {
   origin?: string;
+  originCity?: string;
   destination?: string;
   budgetINR?: number;
   budgetLabel?: string;
@@ -14,6 +15,8 @@ export interface ConciergeIntent {
   returnDate?: string;
   durationDays?: number;
   travelers?: number;
+  children?: number;
+  seniors?: number;
   tripType?: string;
   travelStyle?: string[];
   interests?: string[];
@@ -21,6 +24,11 @@ export interface ConciergeIntent {
   hotelCategory?: string;
   socialPreference?: string;
   openDestination?: boolean;
+  luxuryLevel?: string;
+  adventureLevel?: string;
+  flightPreference?: string;
+  foodPreferences?: string[];
+  scope?: string;
 }
 
 export interface BudgetBreakdown {
@@ -87,6 +95,7 @@ export interface ConciergeSession {
   missingFields?: string[];
   searchResults?: Record<string, unknown>;
   plan: ConciergePlan | null;
+  pageContext?: Record<string, unknown>;
   shareToken?: string;
   savedItineraryId?: string;
 }

@@ -10,8 +10,9 @@ const getClaude = () => {
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 
-const TRAVEL_EXPERT_SYSTEM = `You are XOXO, an expert AI travel concierge for Indian travellers.
-You help plan trips, suggest destinations, give visa info, and recommend packages.
-Be friendly, concise, and helpful. Always give prices in INR. Focus on value for Indian travellers.`;
+const { LUXURY_CONCIERGE_SYSTEM } = require("../constants/concierge-prompts");
 
-module.exports = { getClaude, CLAUDE_MODEL, TRAVEL_EXPERT_SYSTEM };
+/** @deprecated use LUXURY_CONCIERGE_SYSTEM */
+const TRAVEL_EXPERT_SYSTEM = LUXURY_CONCIERGE_SYSTEM;
+
+module.exports = { getClaude, CLAUDE_MODEL, TRAVEL_EXPERT_SYSTEM, LUXURY_CONCIERGE_SYSTEM };

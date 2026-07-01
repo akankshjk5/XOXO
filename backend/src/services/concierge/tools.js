@@ -134,8 +134,15 @@ async function searchPackages(intent) {
     const perPerson = Math.floor(intent.budgetINR / (intent.travelers || 2));
     filter.pricePerPerson = { $lte: perPerson * 1.15 };
   }
-  const packages = await Package.find(filter).sort({ rating: -1 }).limit(5).lean();
-  return packages;
+  const packages = await Package.find(filter)
+    .populate("destination", "name country slug")
+    .sort({ rating: -1, bookingCount: -1 })
+    .limit(6)
+    .lean();
+  return packages.map((p) => ({
+    ...p,
+    destinationName: p.destination?.name,
+  }));
 }
 
 async function searchGuides(intent) {

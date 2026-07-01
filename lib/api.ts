@@ -75,7 +75,8 @@ export const destinationsAPI = {
 
 export const aiAPI = {
   generateItinerary: (data: AnyObj) => api.post("/ai/itinerary", data),
-  chatExpert: (messages: AnyObj[]) => api.post("/ai/chat", { messages }),
+  chatExpert: (messages: AnyObj[], options?: { pageContext?: AnyObj; intentMemory?: AnyObj }) =>
+    api.post("/ai/chat", { messages, ...options }),
   destinationTips: (destination: string) => api.post("/ai/destination-tips", { destination }),
 };
 
@@ -90,8 +91,8 @@ const conciergeHeaders = () => {
 
 export const conciergeAPI = {
   prompts: () => api.get("/concierge/prompts"),
-  createSession: () =>
-    api.post("/concierge/sessions", {}, { headers: conciergeHeaders() }),
+  createSession: (pageContext?: AnyObj) =>
+    api.post("/concierge/sessions", pageContext ? { pageContext } : {}, { headers: conciergeHeaders() }),
   getSession: (id: string) =>
     api.get(`/concierge/sessions/${id}`, { headers: conciergeHeaders() }),
   sendMessage: (id: string, message: string) =>
