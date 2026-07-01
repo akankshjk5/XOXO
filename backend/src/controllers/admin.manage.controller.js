@@ -219,6 +219,30 @@ exports.deleteCoupon = async (req, res, next) => {
   }
 };
 
+/** GET /api/settings — public site metadata (no auth) */
+exports.getPublicSettings = async (req, res, next) => {
+  try {
+    let settings = await SiteSettings.findOne().lean();
+    if (!settings) settings = {};
+    res.json({
+      success: true,
+      data: {
+        websiteName: settings.websiteName || "XOXO Travels",
+        logo: settings.logo || "",
+        contactEmail: settings.contactEmail || "",
+        contactPhone: settings.contactPhone || "",
+        address: settings.address || "",
+        socialFacebook: settings.socialFacebook || "",
+        socialInstagram: settings.socialInstagram || "",
+        socialTwitter: settings.socialTwitter || "",
+        socialLinkedin: settings.socialLinkedin || "",
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /** GET /api/admin/settings */
 exports.getSettings = async (req, res, next) => {
   try {
