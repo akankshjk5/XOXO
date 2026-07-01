@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { BUDGET_FILTERS, filterByBudget } from "@/lib/home-filters";
+import { filterByBudget } from "@/lib/home-filters";
+import { HOME_BUDGET_DEFAULTS, HOME_BUDGET_FILTER_SECTIONS } from "@/lib/filter-presets";
+import type { FilterValues } from "@/lib/premium-filter-types";
 import { packagesAPI } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { LazyImage } from "@/components/motion/LazyImage";
-import { AnimatedTabs } from "@/components/motion/AnimatedTabs";
+import { PremiumFilter } from "@/components/filters/PremiumFilter";
 import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 const AVATAR_COLORS = ["#E74C3C", "#3498DB", "#9B59B6", "#F39C12", "#1ABC9C", "#E67E22"];
@@ -51,7 +53,7 @@ function mapRecentBooking(
 
 export function RecentlyBookedSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [filter, setFilter] = useState("all");
+  const [filters, setFilters] = useState<FilterValues>(HOME_BUDGET_DEFAULTS);
   const [bookings, setBookings] = useState<RecentBookingCard[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,16 +78,16 @@ export function RecentlyBookedSection() {
     };
   }, []);
 
-  const filtered = bookings.filter((b) => filterByBudget(b.price, filter));
+  const filtered = bookings.filter((b) => filterByBudget(b.price, filters.budget));
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -300 : 300, behavior: "smooth" });
   };
 
   return (
-    <section className="bg-white section">
+    <section className="bg-white section-compact">
       <div className="container-x">
-        <div className="flex flex-col gap-5 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div>
             <h2 className="section-heading">Recently Booked</h2>
             <p className="text-sm text-text-grey mt-1">
@@ -94,10 +96,12 @@ export function RecentlyBookedSection() {
                 : "Live bookings from XOXO travellers"}
             </p>
           </div>
-          <AnimatedTabs
-            tabs={BUDGET_FILTERS.map((f) => ({ id: f.id, label: f.label }))}
-            active={filter}
-            onChange={setFilter}
+          <PremiumFilter
+            sections={HOME_BUDGET_FILTER_SECTIONS}
+            values={filters}
+            defaults={HOME_BUDGET_DEFAULTS}
+            onChange={setFilters}
+            title="Budget filter"
           />
         </div>
 

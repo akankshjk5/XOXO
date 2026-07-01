@@ -65,8 +65,9 @@
     --radius-card: 1rem;
     --radius-card-lg: 1.25rem;
     --radius-ui: 12px;
-    --space-section: 4rem;
-    --space-section-lg: 5.5rem;
+    --space-section: 3rem;
+    --space-section-lg: 4rem;
+    --space-section-compact: 2.5rem;
     --touch-min: 44px;
     --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
     --duration-fast: 200ms;
@@ -78,6 +79,7 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
 
   body {
@@ -86,6 +88,9 @@
     background: var(--white);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   h1,
@@ -175,7 +180,7 @@
   /* Glowing search pill — hero size */
   .pyt-search-glow {
     width: 100%;
-    max-width: 520px;
+    max-width: min(100%, 440px);
     background: var(--white);
     border-radius: var(--radius-pill);
     border: 2.5px solid var(--green-bright);
@@ -192,12 +197,32 @@
     border-radius: var(--radius-pill);
     border: 2px solid var(--green-bright);
     box-shadow: var(--shadow-search-sm);
-    padding: 10px 18px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex: 1;
-    max-width: 480px;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: min(42vw, 200px);
+  }
+
+  @media (min-width: 640px) {
+    .pyt-search-glow-sm {
+      padding: 10px 16px;
+      max-width: min(50vw, 280px);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pyt-search-glow-sm {
+      max-width: 360px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .pyt-search-glow-sm {
+      max-width: 400px;
+    }
   }
 
   .pyt-search-input {
@@ -285,8 +310,10 @@
   }
 
   .section { padding-top: var(--space-section); padding-bottom: var(--space-section); }
+  .section-compact { padding-top: var(--space-section-compact); padding-bottom: var(--space-section-compact); }
   @media (min-width: 768px) {
     .section { padding-top: var(--space-section-lg); padding-bottom: var(--space-section-lg); }
+    .section-compact { padding-top: var(--space-section); padding-bottom: var(--space-section); }
   }
 
   .pill-filter {

@@ -1,8 +1,13 @@
 "use client";
 
-import { Share2, Copy, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Share2, Copy, MessageCircle, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { trackEvent } from "@/lib/analytics";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { DURATION, EASE_OUT } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 interface Props {
   packageId: string;
@@ -11,15 +16,19 @@ interface Props {
 }
 
 export function ShareTrip({ packageId, title, url }: Props) {
+  const reduced = useReducedMotion();
+  const [copied, setCopied] = useState(false);
   const shareUrl = url || (typeof window !== "undefined" ? window.location.href : "");
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       trackEvent("share", { entityType: "package", entityId: packageId, meta: { channel: "copy" } });
+      setCopied(true);
       toast.success("Link copied!");
+      setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Couldn't copy link");
+      toast.error("Couldn't copy link. Please check permissions and try again.");
     }
   };
 
@@ -44,50 +53,60 @@ export function ShareTrip({ packageId, title, url }: Props) {
   const encoded = encodeURIComponent(shareUrl);
   const text = encodeURIComponent(`Check out ${title} on XOXO Travels!`);
 
+  const btnClass =
+    "flex items-center gap-2 rounded-full border border-[#E0E0E0] px-3 py-2 text-sm hover:border-green-dark transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2";
+
   return (
     <div className="flex flex-wrap gap-2">
-      <button
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.96 }}
+        transition={{ duration: DURATION.micro, ease: EASE_OUT }}
         onClick={shareNative}
-        className="flex items-center gap-2 rounded-full border border-[#E0E0E0] px-4 py-2 text-sm font-medium hover:border-green-dark transition-colors"
+        className={cn(btnClass, "px-4 font-medium")}
         aria-label="Share trip"
       >
         <Share2 className="h-4 w-4" aria-hidden /> Share
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.96 }}
         onClick={() => openSocial("whatsapp", `https://wa.me/?text=${text}%20${encoded}`)}
-        className="flex items-center gap-2 rounded-full border border-[#E0E0E0] px-3 py-2 text-sm hover:border-green-500"
+        className={btnClass}
         aria-label="Share on WhatsApp"
       >
         <MessageCircle className="h-4 w-4 text-green-600" aria-hidden /> WhatsApp
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.96 }}
         onClick={() => openSocial("twitter", `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`)}
-        className="rounded-full border border-[#E0E0E0] px-3 py-2 text-sm hover:border-green-dark"
+        className={btnClass}
         aria-label="Share on X"
       >
         X
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.96 }}
         onClick={() =>
           openSocial("facebook", `https://www.facebook.com/sharer/sharer.php?u=${encoded}`)
         }
-        className="rounded-full border border-[#E0E0E0] px-3 py-2 text-sm hover:border-green-dark"
+        className={btnClass}
         aria-label="Share on Facebook"
       >
         Facebook
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.96 }}
         onClick={copy}
-        className="flex items-center gap-2 rounded-full border border-[#E0E0E0] px-3 py-2 text-sm hover:border-green-dark"
-        aria-label="Copy link"
+        className={cn(btnClass, copied && "border-green-dark text-green-dark bg-green-dark/5")}
+        aria-label={copied ? "Link copied" : "Copy link"}
       >
-        <Copy className="h-4 w-4" aria-hidden /> Copy
-      </button>
+        {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+        {copied ? "Copied" : "Copy"}
+      </motion.button>
     </div>
   );
 }

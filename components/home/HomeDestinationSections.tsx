@@ -54,7 +54,7 @@ export function HomeDestinationSections() {
 
   if (!ready) {
     return (
-      <div className="bg-white section">
+      <div className="bg-white section-compact">
         <div className="container-x space-y-4">
           <div className="h-7 w-56 bg-gray-100 rounded-lg animate-pulse" />
           <div className="flex gap-4 overflow-hidden">

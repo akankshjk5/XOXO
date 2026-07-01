@@ -165,6 +165,8 @@ export const bookingsAPI = {
   getById: (id: string) => api.get(`/bookings/${id}`),
   cancel: (id: string) => api.put(`/bookings/${id}/cancel`),
   updateStatus: (id: string, status: string) => api.put(`/bookings/${id}/status`, { status }),
+  assignConsultant: (id: string, consultantName: string) =>
+    api.put(`/bookings/${id}/assign`, { consultantName }),
 };
 
 export const couponsAPI = {
@@ -275,10 +277,10 @@ export const reviewsAPI = {
 
 export const usersAPI = {
   getWishlist: () => api.get("/users/wishlist"),
-  toggleWishlist: (packageId: string) => api.post(`/users/wishlist/${packageId}`),
+  toggleWishlist: (packageId: string) => api.post(`/users/wishlist/${packageId}`, {}),
   getDestinationWishlist: () => api.get("/users/destination-wishlist"),
   toggleDestinationWishlist: (destinationId: string) =>
-    api.post(`/users/destination-wishlist/${destinationId}`),
+    api.post(`/users/destination-wishlist/${destinationId}`, {}),
   updateProfile: (data: AnyObj) => api.put("/users/profile", data),
 };
 

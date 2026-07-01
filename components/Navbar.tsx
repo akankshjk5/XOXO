@@ -33,12 +33,13 @@ function SearchPill({
     <div className={cn(compact ? "pyt-search-glow-sm" : "pyt-search-glow", className)}>
       <Search className={cn("text-text-grey shrink-0", compact ? "h-4 w-4" : "h-5 w-5")} />
       <input
-        type="text"
+        type="search"
         placeholder="Search countries, cities"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSubmit()}
-        className={cn("pyt-search-input", compact && "text-sm")}
+        aria-label="Search destinations and packages"
+        className={cn("pyt-search-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright/60 rounded-full", compact && "text-sm")}
       />
     </div>
   );
@@ -173,7 +174,7 @@ export default function Navbar() {
             value={search}
             onChange={setSearch}
             onSubmit={handleSearch}
-            className="mx-auto w-full"
+            className="mx-auto shrink min-w-0 flex-1 max-w-[min(100%,420px)]"
           />
 
           <div className="flex items-center gap-2 shrink-0">
@@ -216,6 +217,19 @@ export default function Navbar() {
           <button type="button" onClick={() => setDrawerOpen(false)} className="p-1.5 rounded-lg hover:bg-off-white" aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        <div className="px-5 py-3 border-b border-[#EBEBEB]">
+          <SearchPill
+            compact
+            value={search}
+            onChange={setSearch}
+            onSubmit={() => {
+              handleSearch();
+              setDrawerOpen(false);
+            }}
+            className="w-full"
+          />
         </div>
 
         <div className="px-5 py-3 border-b border-[#EBEBEB] flex flex-col gap-2">

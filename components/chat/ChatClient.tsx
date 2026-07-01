@@ -263,7 +263,7 @@ export function ChatClient() {
         {liveAnnouncement}
       </div>
 
-      <div className="grid md:grid-cols-[300px_1fr] gap-0 md:gap-4 border border-[#EBEBEB] rounded-2xl overflow-hidden h-[calc(100dvh-220px)] min-h-[420px] max-h-[720px] md:h-[70vh] shadow-premium">
+      <div className="grid md:grid-cols-[300px_1fr] gap-0 md:gap-4 border border-[#EBEBEB] rounded-2xl overflow-hidden h-[calc(100dvh-220px)] min-h-[420px] max-h-[min(720px,100dvh-12rem)] md:h-[70vh] shadow-premium supports-[height:100svh]:max-h-[min(720px,calc(100svh-12rem))]">
         <aside className={`border-r border-[#EBEBEB] overflow-y-auto bg-white min-h-0 ${activePeer ? "hidden md:block" : ""}`}>
           {listLoading ? (
             <div className="p-4 space-y-3">
@@ -391,7 +391,7 @@ export function ChatClient() {
                               <Reply className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          <div className={`px-3.5 py-2.5 rounded-2xl text-sm shadow-sm break-words ${mine ? "bg-green-neon text-white rounded-br-md" : "bg-white border border-[#EBEBEB] rounded-bl-md"}`}>
+                          <div className={`px-3.5 py-2.5 rounded-2xl text-sm shadow-sm break-words [overflow-wrap:anywhere] ${mine ? "bg-green-neon text-white rounded-br-md" : "bg-white border border-[#EBEBEB] rounded-bl-md"}`}>
                             <MessageBody content={m.content} mine={mine} />
                           </div>
                         </div>
@@ -429,7 +429,7 @@ export function ChatClient() {
                 </div>
               )}
 
-              <div className="p-3 border-t border-[#EBEBEB] flex items-center gap-1.5 sm:gap-2 shrink-0 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="px-3 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-[#EBEBEB] flex items-end gap-1.5 sm:gap-2 shrink-0 bg-white relative z-10">
                 <EmojiPicker onPick={(e) => setText((t) => t + e)} />
                 <input
                   ref={fileInputRef}
@@ -463,8 +463,8 @@ export function ChatClient() {
                   type="button"
                   onClick={send}
                   disabled={sending || !text.trim()}
-                  className="touch-target rounded-full bg-green-neon text-white flex items-center justify-center hover:bg-green-dark transition-colors shrink-0 disabled:opacity-50 min-h-[44px] min-w-[44px]"
-                  aria-label="Send message"
+                  className="touch-target rounded-full bg-green-neon text-white flex items-center justify-center hover:bg-green-dark transition-colors shrink-0 disabled:opacity-50 min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2"
+                  aria-label={sending ? "Sending message" : "Send message"}
                 >
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </button>

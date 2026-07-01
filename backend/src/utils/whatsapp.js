@@ -1,4 +1,5 @@
 const logger = require("../config/logger");
+const { buildCustomerEnquiryWhatsApp } = require("./bookingMessages");
 
 const SUPPORT_PHONE = process.env.SUPPORT_PHONE || "+919240204872";
 
@@ -53,23 +54,19 @@ async function sendWhatsApp({ to, body }) {
   }
 }
 
-function buildBookingWhatsAppMessage({ booking, packageTitle, destinationName }) {
+function buildBookingWhatsAppMessage({ booking, packageTitle, destinationName, customerName }) {
   const date = booking.travelDate
     ? new Date(booking.travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
     : "TBC";
 
-  return (
-    `✅ *XOXO Travels — Booking Confirmed*\n\n` +
-    `Booking ID: *${booking.bookingRef}*\n` +
-    `Package: ${packageTitle || "Holiday package"}\n` +
-    `Destination: ${destinationName || "—"}\n` +
-    `Travel date: ${date}\n` +
-    `Travellers: ${booking.numTravelers}\n` +
-    `Amount paid: ₹${(booking.paidAmount || booking.totalAmount || 0).toLocaleString("en-IN")}\n` +
-    `Status: ${booking.status || "confirmed"}\n\n` +
-    `Need help? Call ${SUPPORT_PHONE}\n` +
-    `View booking: ${process.env.CLIENT_URL || "https://xoxo-puce.vercel.app"}/dashboard?tab=bookings`
-  );
+  return buildCustomerEnquiryWhatsApp({
+    booking,
+    customerName: customerName || booking.contactName || "Traveller",
+    packageTitle,
+    destinationName,
+    travelDate: date,
+    estimatedAmount: `₹${(booking.totalAmount || 0).toLocaleString("en-IN")}`,
+  });
 }
 
 module.exports = { sendWhatsApp, buildBookingWhatsAppMessage, SUPPORT_PHONE };

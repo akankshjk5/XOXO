@@ -5,10 +5,11 @@ export const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 export const EASE_IN_OUT = [0.65, 0, 0.35, 1] as const;
 
 export const DURATION = {
-  fast: 0.18,
-  normal: 0.42,
-  slow: 0.65,
-  page: 0.32,
+  micro: 0.18,
+  fast: 0.22,
+  normal: 0.26,
+  slow: 0.42,
+  page: 0.28,
 } as const;
 
 /** Subtle reveal distance — intentional, not dramatic */

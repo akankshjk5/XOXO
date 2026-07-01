@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import { getPostLoginPath } from "@/lib/auth-routing";
+import { authAPI } from "@/lib/api";
 
 function passwordStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "bg-white/20" };
@@ -55,6 +56,7 @@ export function PremiumLoginForm() {
   const [showPw, setShowPw] = useState(false);
   const [remember, setRemember] = useState(false);
   const [pwValue, setPwValue] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const {
     register,
@@ -112,6 +114,23 @@ export function PremiumLoginForm() {
       triggerShake();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = emailValue?.trim();
+    if (!email) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+    setResetting(true);
+    try {
+      await authAPI.forgotPassword(email);
+      toast.success("If that email exists, we sent reset instructions.");
+    } catch {
+      toast.error("Couldn't send reset email. Try again or contact support.");
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -184,10 +203,11 @@ export function PremiumLoginForm() {
               <Label htmlFor="password">Password</Label>
               <button
                 type="button"
-                onClick={() => toast("Password reset coming soon", { icon: "🔐" })}
-                className="text-xs font-medium text-green-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright rounded"
+                onClick={handleForgotPassword}
+                disabled={resetting}
+                className="text-xs font-medium text-green-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright rounded disabled:opacity-50"
               >
-                Forgot password?
+                {resetting ? "Sending…" : "Forgot password?"}
               </button>
             </div>
             <div className="relative">

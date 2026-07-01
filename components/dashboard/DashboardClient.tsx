@@ -27,6 +27,7 @@ import { EmptyState, LoadingSkeleton } from "@/components/motion";
 import { DataLoadError } from "@/components/ui/DataLoadError";
 import { useAuthStore } from "@/store/authStore";
 import { useWishlist } from "@/context/WishlistContext";
+import { formatBookingStatus } from "@/lib/booking-status";
 
 type Tab = "overview" | "bookings" | "wishlist" | "itineraries" | "wallet" | "profile";
 
@@ -219,14 +220,28 @@ export function DashboardClient() {
     syncWishlist();
   }, [tab]);
 
-  const cancelBooking = async (id: string) => {
+  const cancelBooking = async (id: string, isPaid: boolean) => {
+    if (isPaid) {
+      toast.error("Paid bookings must be cancelled via support. Call or WhatsApp us.");
+      return;
+    }
+    if (!window.confirm("Cancel this booking request?")) return;
     try {
       await bookingsAPI.cancel(id);
       setBookings((prev) => prev.map((b) => (b._id === id ? { ...b, status: "cancelled" } : b)));
       toast.success("Booking cancelled");
-    } catch {
-      toast.error("Couldn't cancel booking.");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || "Couldn't cancel booking.");
     }
+  };
+
+  const statusColor = (s: string) => {
+    if (s === "payment_received" || s === "confirmed" || s === "ready_to_travel" || s === "completed") {
+      return "bg-green-100 text-green-700";
+    }
+    if (s === "cancelled") return "bg-red-100 text-red-600";
+    return "bg-amber-100 text-amber-700";
   };
 
   const removeWish = async (packageId: string) => {
@@ -266,15 +281,8 @@ export function DashboardClient() {
     }
   };
 
-  const statusColor = (s: string) =>
-    s === "confirmed"
-      ? "bg-green-100 text-green-700"
-      : s === "cancelled"
-      ? "bg-red-100 text-red-600"
-      : "bg-amber-100 text-amber-700";
-
   return (
-    <div className="pt-[88px] max-w-[1280px] mx-auto px-4 sm:px-6 pb-16">
+    <div className="pt-[88px] max-w-[1280px] mx-auto px-4 sm:px-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-4 mb-8">
         <label className="relative h-14 w-14 rounded-full bg-green-dark text-white flex items-center justify-center text-xl font-bold overflow-hidden cursor-pointer group shrink-0">
           {user?.avatar ? (
@@ -364,8 +372,8 @@ export function DashboardClient() {
                             <p className="font-semibold text-text-dark line-clamp-1">
                               {b.package?.title || "Package"}
                             </p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(b.status)}`}>
-                              {b.status}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${statusColor(b.status || "")}`}>
+                              {formatBookingStatus(b.status)}
                             </span>
                           </div>
                           <p className="text-xs text-text-grey mt-0.5">Ref: {b.bookingRef}</p>
@@ -376,8 +384,9 @@ export function DashboardClient() {
                             <span className="font-bold text-green-dark">{formatPrice(b.totalAmount)}</span>
                             {b.status !== "cancelled" && (
                               <button
-                                onClick={() => cancelBooking(b._id)}
-                                className="text-xs text-red-500 hover:underline"
+                                type="button"
+                                onClick={() => cancelBooking(b._id, b.paymentStatus === "paid")}
+                                className="text-xs text-red-500 hover:underline min-h-[44px] min-w-[44px] flex items-center justify-end"
                               >
                                 Cancel
                               </button>

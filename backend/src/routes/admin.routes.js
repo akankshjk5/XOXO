@@ -14,7 +14,7 @@ const router = express.Router();
  * One-time production seed when ALLOW_DB_SEED=true on Railway.
  * Optional query: ?force=true to wipe destinations/packages first.
  */
-router.post("/seed", async (req, res, next) => {
+router.post("/seed", protect, adminOnly, async (req, res, next) => {
   try {
     if (process.env.ALLOW_DB_SEED !== "true") {
       return res.status(403).json({
@@ -39,7 +39,7 @@ router.post("/seed", async (req, res, next) => {
 /**
  * GET /api/admin/seed/status — counts only (no auth; safe read)
  */
-router.get("/seed/status", async (req, res, next) => {
+router.get("/seed/status", protect, adminOnly, async (req, res, next) => {
   try {
     const [destinations, packages] = await Promise.all([
       Destination.countDocuments(),

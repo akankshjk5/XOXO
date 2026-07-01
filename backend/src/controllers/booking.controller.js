@@ -4,6 +4,10 @@ const User = require("../models/User");
 const Coupon = require("../models/Coupon");
 const { ADDON_PRICES } = require("../constants/addons");
 const { findValidCoupon } = require("./coupon.controller");
+const { normalizePhone, validatePhone } = require("../utils/phone");
+const { DEFAULT_BOOKING_STATUS } = require("../constants/bookingStatus");
+const { notifyBookingCreated } = require("../services/bookingNotificationService");
+const logger = require("../config/logger");
 
 const genRef = () =>
   "XOXO-" + Math.random().toString(36).slice(2, 7).toUpperCase() + Date.now().toString().slice(-4);
@@ -35,6 +39,14 @@ exports.create = async (req, res, next) => {
     const pkg = await Package.findById(packageId);
     if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
 
+    const resolvedPhone = contactPhone || req.user.phone;
+    if (!resolvedPhone || !validatePhone(resolvedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid contact phone number is required to complete your booking enquiry.",
+      });
+    }
+
     const validAddOns = addOns.filter((a) => ADDON_PRICES[a] != null);
     const addOnTotal = calcAddOnTotal(validAddOns, numTravelers);
     const subtotal = pkg.pricePerPerson * numTravelers + addOnTotal;
@@ -57,10 +69,13 @@ exports.create = async (req, res, next) => {
       perTraveler: a === "insurance" || a === "visa",
     }));
 
+    const contactName = travelers?.[0]?.name || req.user.name || "";
+
     const booking = await Booking.create({
       user: req.user._id,
       package: pkg._id,
       bookingType: "package",
+      status: DEFAULT_BOOKING_STATUS,
       travelDate,
       returnDate,
       numTravelers,
@@ -70,7 +85,8 @@ exports.create = async (req, res, next) => {
       discountAmount,
       couponCode: appliedCoupon?.code,
       contactEmail: contactEmail || req.user.email,
-      contactPhone: contactPhone || req.user.phone,
+      contactPhone: normalizePhone(resolvedPhone),
+      contactName,
       specialRequests,
       bookingRef: genRef(),
     });
@@ -78,6 +94,10 @@ exports.create = async (req, res, next) => {
     if (appliedCoupon) {
       await Coupon.findByIdAndUpdate(appliedCoupon._id, { $inc: { usageCount: 1 } });
     }
+
+    notifyBookingCreated(booking).catch((err) => {
+      logger.warn("Booking notifications async error", { error: err.message, ref: booking.bookingRef });
+    });
 
     res.status(201).json({ success: true, data: booking });
   } catch (err) {
@@ -163,6 +183,12 @@ exports.cancel = async (req, res, next) => {
     if (String(booking.user) !== String(req.user._id) && req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Not your booking" });
     }
+    if (booking.paymentStatus === "paid" && req.user.role !== "admin") {
+      return res.status(400).json({
+        success: false,
+        message: "Paid bookings cannot be cancelled online. Please contact XOXO Travels support.",
+      });
+    }
     booking.status = "cancelled";
     await booking.save();
     res.json({ success: true, data: booking });
@@ -183,7 +209,11 @@ exports.getAll = async (req, res, next) => {
       ];
     }
     let items = await Booking.find(filter)
-      .populate("package", "title slug")
+      .populate({
+        path: "package",
+        select: "title slug destination",
+        populate: { path: "destination", select: "name country" },
+      })
       .populate("user", "name email phone")
       .sort({ createdAt: -1 })
       .lean();
@@ -208,6 +238,28 @@ exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     const booking = await Booking.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+    res.json({ success: true, data: booking });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/bookings/:id/assign  (admin)
+exports.assignConsultant = async (req, res, next) => {
+  try {
+    const { consultantName } = req.body;
+    if (!consultantName?.trim()) {
+      return res.status(400).json({ success: false, message: "Consultant name is required" });
+    }
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      {
+        assignedConsultant: consultantName.trim(),
+        status: "consultant_assigned",
+      },
+      { new: true }
+    );
     if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
     res.json({ success: true, data: booking });
   } catch (err) {

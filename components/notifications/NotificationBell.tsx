@@ -77,12 +77,19 @@ export function NotificationBell({ variant = "light" }: NotificationBellProps) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const markAll = async () => {
+  const markAll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const prev = items;
+    const prevUnread = unread;
+    setItems((list) => list.map((n) => ({ ...n, isRead: true })));
+    setUnread(0);
     try {
       await notificationsAPI.markAllRead();
-      setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnread(0);
+      toast.success("All marked as read");
     } catch {
+      setItems(prev);
+      setUnread(prevUnread);
       toast.error("Could not mark all as read");
     }
   };
@@ -112,14 +119,20 @@ export function NotificationBell({ variant = "light" }: NotificationBellProps) {
     }
   };
 
-  const clearAll = async () => {
-    if (!confirm("Clear all notifications?")) return;
+  const clearAll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (items.length === 0) return;
+    const prev = items;
+    const prevUnread = unread;
+    setItems([]);
+    setUnread(0);
     try {
       await notificationsAPI.clearAll();
-      setItems([]);
-      setUnread(0);
       toast.success("All notifications cleared");
     } catch {
+      setItems(prev);
+      setUnread(prevUnread);
       toast.error("Could not clear notifications");
     }
   };
@@ -137,9 +150,9 @@ export function NotificationBell({ variant = "light" }: NotificationBellProps) {
     <div className="relative" ref={ref}>
       <motion.button
         onClick={() => setOpen((o) => !o)}
-        className={cn("relative p-1.5 hover:opacity-80", iconClass)}
-        aria-label="Notifications"
         whileTap={reduced ? undefined : { scale: 0.92 }}
+        className={cn("relative p-1.5 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center", iconClass)}
+        aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
         {unread > 0 && (

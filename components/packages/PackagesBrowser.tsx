@@ -1,25 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, Star, Clock, SlidersHorizontal } from "lucide-react";
+import { Star, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { packagesAPI } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
+import { resolvePackageCategoryFilter } from "@/lib/travel-categories";
+import type { FilterValues } from "@/lib/premium-filter-types";
 import {
-  PACKAGE_CATEGORIES,
-  CATEGORY_LABELS,
-  resolvePackageCategoryFilter,
-} from "@/lib/travel-categories";
-import {
-  AnimatedTabs,
-  EmptyState,
-  SkeletonCard,
-  StaggerReveal,
-  StaggerRevealItem,
-} from "@/components/motion";
+  PACKAGE_FILTER_DEFAULTS,
+  PACKAGE_FILTER_SECTIONS,
+} from "@/lib/filter-presets";
+import { EmptyState, SkeletonCard, StaggerReveal, StaggerRevealItem } from "@/components/motion";
+import { PremiumFilter } from "@/components/filters/PremiumFilter";
 import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 interface ApiPackage {
@@ -35,138 +31,117 @@ interface ApiPackage {
   rating?: number;
   reviewCount?: number;
   destination?: { name?: string; slug?: string };
+  isVisaFree?: boolean;
 }
 
-const BUDGET_FILTERS = [
-  { id: "all", label: "All Budgets" },
-  { id: "u50", label: "Under ₹50K", min: 0, max: 50000 },
-  { id: "50-150", label: "₹50K–1.5L", min: 50000, max: 150000 },
-  { id: "150-250", label: "₹1.5L–2.5L", min: 150000, max: 250000 },
-  { id: "lux", label: "Luxury", min: 250000, max: undefined },
-];
-const DURATION_TABS = [
-  { id: "all", label: "Any Duration" },
-  { id: "3-5", label: "3-5 Days" },
-  { id: "6-9", label: "6-9 Days" },
-  { id: "10+", label: "10+ Days" },
-];
-const CATEGORIES = ["all", ...PACKAGE_CATEGORIES];
-const SORTS = [
-  { id: "popular", label: "Most Popular" },
-  { id: "price_asc", label: "Price: Low → High" },
-  { id: "price_desc", label: "Price: High → Low" },
-  { id: "rating", label: "Top Rated" },
-];
+const BUDGET_MAP: Record<string, { min?: number; max?: number }> = {
+  u50: { min: 0, max: 50000 },
+  "50-150": { min: 50000, max: 150000 },
+  "150-250": { min: 150000, max: 250000 },
+  lux: { min: 250000 },
+};
 
 export function PackagesBrowser() {
   const searchParams = useSearchParams();
-  const initialType = searchParams ? (searchParams.get("type") || "all") : "all";
-  const initialSearch = searchParams ? (searchParams.get("search") || searchParams.get("q") || "") : "";
+  const initialType = searchParams ? searchParams.get("type") || "all" : "all";
+  const initialSearch = searchParams ? searchParams.get("search") || searchParams.get("q") || "" : "";
 
   const [items, setItems] = useState<ApiPackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [budget, setBudget] = useState("all");
-  const [duration, setDuration] = useState("all");
-  const [category, setCategory] = useState(initialType);
-  const [sort, setSort] = useState("popular");
-  const [search, setSearch] = useState(initialSearch);
-  const [debounced, setDebounced] = useState(initialSearch);
+  const [filters, setFilters] = useState<FilterValues>({
+    ...PACKAGE_FILTER_DEFAULTS,
+    category: initialType,
+    search: initialSearch,
+  });
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const PAGE_SIZE = 24;
 
-  // debounce search input (300ms)
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(search), 300);
+    const t = setTimeout(() => setDebouncedSearch(filters.search), 300);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [filters.search]);
 
-  const fetchPackages = useCallback(async () => {
-    setLoading(true);
-    const b = BUDGET_FILTERS.find((x) => x.id === budget);
-    const params: Record<string, string | number> = { sort, limit: 24 };
-    if (category !== "all") {
-      const mapped = resolvePackageCategoryFilter(category);
-      if (mapped.type) params.type = mapped.type;
-      if (mapped.category) params.category = mapped.category;
+  const fetchPackages = useCallback(async (pageNum = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+    const b = BUDGET_MAP[filters.budget];
+    const params: Record<string, string | number> = {
+      sort: filters.sort === "newest" ? "newest" : filters.sort,
+      limit: PAGE_SIZE,
+      page: pageNum,
+    };
+    if (filters.category !== "all") {
+      if (filters.category === "visa-free") {
+        params.visaFree = "true";
+      } else {
+        const mapped = resolvePackageCategoryFilter(filters.category);
+        if (mapped.type) params.type = mapped.type;
+        if (mapped.category) params.category = mapped.category;
+      }
     }
-    if (duration !== "all") params.duration = duration;
-    if (debounced) params.search = debounced;
-    if (b && b.id !== "all") {
+    if (filters.duration !== "all") params.duration = filters.duration;
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (b) {
       if (b.min !== undefined) params.minPrice = b.min;
       if (b.max !== undefined) params.maxPrice = b.max;
     }
     try {
       const { data } = await packagesAPI.getAll(params);
-      setItems(data.data || []);
-      setTotal(data.pagination?.total ?? data.data?.length ?? 0);
+      const next = data.data || [];
+      setItems((prev) => (append ? [...prev, ...next] : next));
+      setTotal(data.pagination?.total ?? next.length);
+      setPage(pageNum);
     } catch {
       toast.error("Couldn't load packages. Is the API running?");
-      setItems([]);
+      if (!append) setItems([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [budget, duration, category, sort, debounced]);
+  }, [filters.budget, filters.duration, filters.category, filters.sort, debouncedSearch]);
 
   useEffect(() => {
-    fetchPackages();
+    fetchPackages(1, false);
   }, [fetchPackages]);
 
-  const categoryTabs = CATEGORIES.map((c) => ({
-    id: c,
-    label: CATEGORY_LABELS[c] || c,
-  }));
+  const activeLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (filters.budget !== "all") parts.push("budget");
+    if (filters.duration !== "all") parts.push("duration");
+    if (filters.category !== "all") parts.push("category");
+    if (filters.sort !== "popular") parts.push("sort");
+    if (filters.search) parts.push("search");
+    return parts.length ? `${total} results` : `${total} packages`;
+  }, [filters, total]);
 
   return (
-    <div className="container-x section">
-      {/* Search + sort */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="flex items-center gap-2 flex-1 bg-white border border-[#E0E0E0] rounded-full px-4 py-2.5">
-          <Search className="h-4 w-4 text-text-grey shrink-0" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search packages…"
-            className="flex-1 outline-none text-sm bg-transparent"
-          />
-        </div>
-        <div className="flex items-center gap-2 bg-white border border-[#E0E0E0] rounded-full px-4 py-2.5">
-          <SlidersHorizontal className="h-4 w-4 text-text-grey" />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="text-sm outline-none bg-transparent cursor-pointer"
-          >
-            {SORTS.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
-            ))}
-          </select>
-        </div>
+    <div className="container-x section-compact">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <p className="text-sm text-text-grey">{activeLabel}</p>
+        <PremiumFilter
+          sections={PACKAGE_FILTER_SECTIONS}
+          values={filters}
+          defaults={PACKAGE_FILTER_DEFAULTS}
+          onChange={setFilters}
+          title="Package filters"
+        />
       </div>
 
-      {/* Filters */}
-      <div className="space-y-4 mb-6">
-        <AnimatedTabs tabs={BUDGET_FILTERS.map((b) => ({ id: b.id, label: b.label }))} active={budget} onChange={setBudget} />
-        <AnimatedTabs tabs={DURATION_TABS} active={duration} onChange={setDuration} />
-        <AnimatedTabs tabs={categoryTabs} active={category} onChange={setCategory} />
-      </div>
-
-      {/* Result count */}
-      {!loading && (
-        <p className="text-sm text-text-grey mb-4">
-          {total} package{total === 1 ? "" : "s"} found
-        </p>
-      )}
-
-      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : items.length === 0 ? (
         <EmptyState
           icon="🧳"
           title="No packages match"
           description="Try widening your budget, duration, or search filters."
-          cta="Clear filters"
+          cta="Reset filters"
           href="/packages"
         />
       ) : (
@@ -175,53 +150,66 @@ export function PackagesBrowser() {
             <StaggerRevealItem key={pkg._id}>
               <div className="relative">
                 <WishlistHeart packageId={pkg._id} />
-              <Link
-                href={`/packages/${pkg._id}`}
-                className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-premium"
-              >
-              <div className="relative h-44 overflow-hidden">
-                <Image
-                  src={pkg.images?.[0] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80"}
-                  alt={pkg.title}
-                  fill
-                  sizes="(max-width:768px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                {pkg.badge && (
-                  <span className="absolute top-3 left-3 rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold capitalize shadow-sm">
-                    {pkg.badge}
-                  </span>
-                )}
-              </div>
-              <div className="p-4">
-                {pkg.rating ? (
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-semibold">{pkg.rating}</span>
-                    <span className="text-xs text-text-grey">({pkg.reviewCount})</span>
+                <Link
+                  href={`/packages/${pkg._id}`}
+                  className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-premium"
+                >
+                  <div className="relative h-44 overflow-hidden">
+                    <Image
+                      src={pkg.images?.[0] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80"}
+                      alt={pkg.title}
+                      fill
+                      sizes="(max-width:768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {pkg.badge && (
+                      <span className="absolute top-3 left-3 rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold capitalize shadow-sm">
+                        {pkg.badge}
+                      </span>
+                    )}
                   </div>
-                ) : null}
-                <h3 className="font-semibold text-[15px] text-text-dark line-clamp-2 mb-2 group-hover:text-green-dark transition-colors">
-                  {pkg.title}
-                </h3>
-                <div className="flex items-center gap-2 text-xs text-text-grey mb-3">
-                  <Clock className="h-3.5 w-3.5" />
-                  {pkg.durationDays}D/{(pkg.durationNights ?? pkg.durationDays - 1)}N
-                  {pkg.category && <span className="capitalize">· {pkg.category}</span>}
-                </div>
-                <div className="flex items-end justify-between pt-2 border-t border-[#EBEBEB]">
-                  <div>
-                    <p className="text-[11px] text-text-grey uppercase">From</p>
-                    <p className="text-lg font-bold text-green-dark">{formatPrice(pkg.pricePerPerson)}</p>
+                  <div className="p-4">
+                    {pkg.rating ? (
+                      <div className="flex items-center gap-1 mb-1.5">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-sm font-semibold">{pkg.rating}</span>
+                        <span className="text-xs text-text-grey">({pkg.reviewCount})</span>
+                      </div>
+                    ) : null}
+                    <h3 className="font-semibold text-[15px] text-text-dark line-clamp-2 mb-2 group-hover:text-green-dark transition-colors">
+                      {pkg.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-text-grey mb-3">
+                      <Clock className="h-3.5 w-3.5" />
+                      {pkg.durationDays}D/{(pkg.durationNights ?? pkg.durationDays - 1)}N
+                      {pkg.category && <span className="capitalize">· {pkg.category}</span>}
+                    </div>
+                    <div className="flex items-end justify-between pt-2 border-t border-[#EBEBEB]">
+                      <div>
+                        <p className="text-[11px] text-text-grey uppercase">From</p>
+                        <p className="text-lg font-bold text-green-dark">{formatPrice(pkg.pricePerPerson)}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-green-neon">View Details →</span>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-green-neon">View Details →</span>
-                </div>
-              </div>
-            </Link>
+                </Link>
               </div>
             </StaggerRevealItem>
           ))}
         </StaggerReveal>
+      )}
+
+      {!loading && items.length > 0 && items.length < total && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={() => fetchPackages(page + 1, true)}
+            disabled={loadingMore}
+            className="rounded-full border border-green-dark text-green-dark font-semibold px-8 py-3 min-h-[44px] hover:bg-green-dark/5 transition-colors disabled:opacity-60"
+          >
+            {loadingMore ? "Loading…" : `Load more (${items.length} of ${total})`}
+          </button>
+        </div>
       )}
     </div>
   );

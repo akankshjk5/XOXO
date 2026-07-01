@@ -40,7 +40,7 @@ export function DestinationCarousel({ title, destinations, bg = "white", action 
   };
 
   return (
-    <section className={bg === "off-white" ? "bg-off-white py-12 md:py-14" : "bg-white py-12 md:py-14"}>
+    <section className={bg === "off-white" ? "bg-off-white py-8 md:py-10" : "bg-white py-8 md:py-10"}>
       <div className="container-x">
         <div className="flex items-center justify-between mb-6 gap-4">
           <h2 className="section-heading">{title}</h2>

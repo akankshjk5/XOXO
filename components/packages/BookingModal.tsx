@@ -10,11 +10,12 @@ import { bookingsAPI, paymentsAPI, couponsAPI } from "@/lib/api";
 import { loadRazorpay } from "@/lib/razorpay";
 import { getBookingConfirmationPath } from "@/lib/auth-routing";
 import { useAuthStore } from "@/store/authStore";
-import { isValidPhoneNumber } from "@/lib/phone";
+import { isValidPhoneNumber, getPhoneValidationError } from "@/lib/phone";
 import { usePaymentMode } from "@/hooks/usePaymentMode";
 import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
 import { formatPrice } from "@/lib/utils";
 import { BOOKING_ADDONS, calcAddOnTotal } from "@/lib/booking-addons";
+import { BookingAddOnsNotice } from "@/components/packages/BookingAddOnsNotice";
 import { cn } from "@/lib/utils";
 
 interface BookingModalProps {
@@ -45,6 +46,9 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+
+  const phoneError = phoneTouched ? getPhoneValidationError(lead.phone) : null;
 
   useEffect(() => {
     if (user) {
@@ -100,14 +104,32 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
       toast.error("Please pick a travel date.");
       return;
     }
-    if (step === 2 && (!lead.name || !lead.email || !isValidPhoneNumber(lead.phone))) {
-      toast.error("Please fill in valid contact details.");
-      return;
+    if (step === 2) {
+      setPhoneTouched(true);
+      if (!lead.name.trim()) {
+        toast.error("Please enter your full name.");
+        return;
+      }
+      if (!lead.email.trim()) {
+        toast.error("Please enter your email address.");
+        return;
+      }
+      const phoneErr = getPhoneValidationError(lead.phone);
+      if (phoneErr) {
+        toast.error(phoneErr);
+        return;
+      }
     }
     setStep((s) => s + 1);
   };
 
   const confirmAndPay = async () => {
+    const phoneErr = getPhoneValidationError(lead.phone);
+    if (phoneErr) {
+      setPhoneTouched(true);
+      toast.error(phoneErr);
+      return;
+    }
     setSubmitting(true);
     try {
       const { data: bookingRes } = await bookingsAPI.create({
@@ -127,15 +149,8 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
       const order = orderRes.data;
 
       if (orderRes.demo) {
-        const { data: verifyRes } = await paymentsAPI.verify({ bookingId: booking._id });
-        const conf = verifyRes.confirmation;
-        toast.success("Booking confirmed! (demo payment) 🎉");
-        if (conf?.emailSent === false) {
-          toast("Email not sent — mail provider not configured on server.", { icon: "ℹ️" });
-        }
-        if (conf?.whatsappSkipped) {
-          toast("WhatsApp confirmation skipped — not configured on server.", { icon: "ℹ️" });
-        }
+        await paymentsAPI.verify({ bookingId: booking._id });
+        toast.success("Booking request received! (demo payment) 🎉");
         onClose();
         router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
         return;
@@ -156,6 +171,14 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
         order_id: order.orderId,
         prefill: { name: lead.name, email: lead.email, contact: lead.phone },
         theme: { color: "#0B6E4F" },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+            toast("Payment cancelled. Your booking request is saved — complete payment from your dashboard or try again.", {
+              icon: "ℹ️",
+            });
+          },
+        },
         handler: async (resp: {
           razorpay_order_id: string;
           razorpay_payment_id: string;
@@ -176,7 +199,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Something went wrong. Please try again.";
+        "Couldn't complete your booking. Please check your connection and try again.";
       toast.error(msg);
       setSubmitting(false);
     }
@@ -284,6 +307,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
                         );
                       })}
                     </div>
+                    <BookingAddOnsNotice />
                   </div>
                 </>
               )}
@@ -299,8 +323,34 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
                     <input type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]" placeholder="you@example.com" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">Phone</label>
-                    <input type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]" placeholder="+91 98765 43210" />
+                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">
+                      Phone number <span className="text-red-500" aria-hidden>*</span>
+                      <span className="sr-only">(required)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={lead.phone}
+                      onChange={(e) => setLead({ ...lead, phone: e.target.value })}
+                      onBlur={() => setPhoneTouched(true)}
+                      aria-invalid={!!phoneError}
+                      aria-describedby={phoneError ? "booking-phone-error" : undefined}
+                      className={cn(
+                        "w-full border rounded-xl px-4 py-2.5 focus:outline-none min-h-[44px]",
+                        phoneError
+                          ? "border-red-300 focus:border-red-400"
+                          : "border-[#E0E0E0] focus:border-green-dark"
+                      )}
+                      placeholder="+91 98765 43210"
+                    />
+                    {phoneError && (
+                      <p id="booking-phone-error" className="mt-1.5 text-xs text-red-600" role="alert">
+                        {phoneError}
+                      </p>
+                    )}
+                    <p className="mt-1.5 text-[11px] text-text-grey">
+                      Required — our travel consultant will call you to confirm your itinerary and add-ons.
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-text-dark mb-1.5 block">Special requests (optional)</label>
@@ -351,6 +401,7 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
                     <Row label="Travel date" value={travelDate} />
                     <Row label="Travellers" value={String(travelers)} />
                     <Row label="Lead contact" value={lead.name} />
+                    <Row label="Mobile" value={lead.phone} />
                     {addOnLines.map((line) => (
                       <Row key={line.label} label={line.label} value={formatPrice(line.amount)} />
                     ))}
@@ -376,7 +427,12 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
           <div className="ml-auto flex items-center gap-3">
             <span className="font-bold text-text-dark">{formatPrice(total)}</span>
             {step < 3 ? (
-              <button type="button" onClick={next} className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors min-h-[44px]">
+              <button
+                type="button"
+                onClick={next}
+                disabled={step === 2 && (!lead.name.trim() || !lead.email.trim() || !isValidPhoneNumber(lead.phone))}
+                className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Continue
               </button>
             ) : (

@@ -12,5 +12,10 @@ export const BTN_PRIMARY =
 export const BTN_SECONDARY =
   "inline-flex items-center justify-center gap-2 rounded-full border border-[#E0E0E0] bg-white px-6 py-2.5 text-sm font-semibold text-text-dark transition-[border-color,background] duration-200 ease-standard hover:border-green-dark hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2 disabled:opacity-50";
 
+export const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2";
+
+export const TOUCH_MIN = "min-h-[44px] min-w-[44px]";
+
 export const ICON_BTN =
-  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E8E8] bg-white text-text-dark transition-colors duration-200 ease-standard hover:bg-off-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-bright focus-visible:ring-offset-2";
+  `inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#E8E8E8] bg-white text-text-dark transition-colors duration-200 ease-standard hover:bg-off-white ${FOCUS_RING}`;

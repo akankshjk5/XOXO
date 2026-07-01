@@ -11,7 +11,7 @@ const ROUTES = [
   "/match",
   "/nearby",
   "/login",
-  "/register",
+  "/signup",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -8,9 +8,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Star, Clock, Check, X, Minus, Plus, Heart, GitCompare, ChevronDown } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import toast from "react-hot-toast";
-import { packagesAPI, usersAPI } from "@/lib/api";
+import { packagesAPI } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
+import { useWishlist } from "@/context/WishlistContext";
 import { BookingModal } from "@/components/packages/BookingModal";
 import { PackageReviews } from "@/components/packages/PackageReviews";
 import { RecommendedFlights } from "@/components/packages/RecommendedFlights";
@@ -24,6 +25,8 @@ import { ShareTrip } from "@/components/packages/ShareTrip";
 import { RecentlyViewedSection } from "@/components/packages/RecentlyViewedSection";
 import { addRecentlyViewed, toggleCompare, isInCompare } from "@/lib/package-storage";
 import { trackEvent } from "@/lib/analytics";
+import { SkeletonPackageDetail } from "@/components/motion/LoadingSkeleton";
+import { EASE_OUT, DURATION } from "@/lib/motion";
 import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 
 interface ItineraryDay {
@@ -70,40 +73,22 @@ export function PackageDetail() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
+  const { isPackageSaved, togglePackage } = useWishlist();
   const [pkg, setPkg] = useState<PackageFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Itinerary");
   const [travelers, setTravelers] = useState(2);
   const [openDay, setOpenDay] = useState<number | null>(1);
   const [showBooking, setShowBooking] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
   const [comparing, setComparing] = useState(false);
   const reduced = useReducedMotion();
 
-  useEffect(() => {
-    if (!user || !id) return;
-    usersAPI
-      .getWishlist()
-      .then(({ data }) => {
-        setWishlisted((data.data || []).some((p: { _id: string }) => p._id === id));
-      })
-      .catch(() => {});
-  }, [user, id]);
+  const wishlisted = id ? isPackageSaved(id) : false;
 
   const toggleWishlist = async () => {
     if (!id) return;
-    if (!user) {
-      toast.error("Please log in to save to wishlist.");
-      return;
-    }
-    try {
-      const { data } = await usersAPI.toggleWishlist(id);
-      setWishlisted(data.added);
-      trackEvent("wishlist", { entityType: "package", entityId: id, meta: { added: data.added } });
-      toast.success(data.added ? "Added to wishlist ❤️" : "Removed from wishlist");
-    } catch {
-      toast.error("Couldn't update wishlist.");
-    }
+    await togglePackage(id);
+    trackEvent("wishlist", { entityType: "package", entityId: id, meta: { added: !wishlisted } });
   };
 
   useEffect(() => {
@@ -162,13 +147,7 @@ export function PackageDetail() {
   };
 
   if (loading) {
-    return (
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-24 pb-16">
-        <div className="h-72 bg-gray-200 animate-pulse rounded-2xl mb-6" />
-        <div className="h-8 w-1/2 bg-gray-200 animate-pulse rounded mb-4" />
-        <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded" />
-      </div>
-    );
+    return <SkeletonPackageDetail />;
   }
 
   if (!pkg) {
@@ -210,7 +189,7 @@ export function PackageDetail() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8 grid lg:grid-cols-3 gap-8">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-6 grid lg:grid-cols-3 gap-6">
         {/* Main */}
         <div className="lg:col-span-2">
           {pkg.description && <p className="text-text-grey leading-relaxed mb-6">{pkg.description}</p>}
@@ -270,13 +249,6 @@ export function PackageDetail() {
             </div>
           )}
 
-          {tab === "Itinerary" && id && (
-            <>
-              <RecommendedFlights packageId={id} />
-              <RecommendedHotels packageId={id} />
-            </>
-          )}
-
           {tab === "Inclusions" && (
             <div className="grid sm:grid-cols-2 gap-6">
               <div>
@@ -316,7 +288,12 @@ export function PackageDetail() {
         </div>
 
         {/* Sticky sidebar */}
-        <aside className="lg:sticky lg:top-24 h-fit border border-[#EBEBEB] rounded-2xl p-5 shadow-sm bg-white">
+        <motion.aside
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: DURATION.normal, ease: EASE_OUT }}
+          className="lg:sticky lg:top-24 h-fit border border-[#EBEBEB] rounded-2xl p-5 shadow-premium bg-white"
+        >
           <div className="flex items-end gap-2 mb-1">
             <span className="text-2xl font-black text-green-dark">{formatPrice(pkg.pricePerPerson)}</span>
             {pkg.originalPrice && (
@@ -381,27 +358,12 @@ export function PackageDetail() {
           <div className="mt-3">
             <ShareTrip packageId={pkg._id} title={pkg.title} />
           </div>
-        </aside>
+        </motion.aside>
       </div>
 
-      {id && (
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 space-y-2">
-          <BudgetCalculator packagePricePerPerson={pkg.pricePerPerson} durationDays={pkg.durationDays} />
-          <SmartTripPlanner
-            packageId={id}
-            destination={pkg.destination?.name}
-            defaultDays={pkg.durationDays}
-            defaultBudget={pkg.pricePerPerson * travelers}
-            category={pkg.category}
-          />
-          <TravelChecklist packageId={id} />
-        </div>
-      )}
-
-      {/* Similar packages */}
       {pkg.similar?.length ? (
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-16">
-          <h2 className="section-heading mb-5">Similar Packages</h2>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-6 pb-4">
+          <h2 className="section-heading mb-4">Similar Packages</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {pkg.similar.map((s) => (
               <Link key={s._id} href={`/packages/${s._id}`} className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group">
@@ -424,7 +386,36 @@ export function PackageDetail() {
         </div>
       ) : null}
 
-      <RecentlyViewedSection />
+      {id && (
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4 space-y-4 border-t border-[#F0F0F0]">
+          <RecommendedFlights packageId={id} />
+          <RecommendedHotels packageId={id} />
+        </div>
+      )}
+
+      {id && (
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4 border-t border-[#F0F0F0]">
+          <TravelChecklist packageId={id} />
+        </div>
+      )}
+
+      {id && (
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4 space-y-3 border-t border-[#F0F0F0]">
+          <h2 className="section-heading text-lg">Continue Planning</h2>
+          <BudgetCalculator packagePricePerPerson={pkg.pricePerPerson} durationDays={pkg.durationDays} />
+          <SmartTripPlanner
+            packageId={id}
+            destination={pkg.destination?.name}
+            defaultDays={pkg.durationDays}
+            defaultBudget={pkg.pricePerPerson * travelers}
+            category={pkg.category}
+          />
+        </div>
+      )}
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-8">
+        <RecentlyViewedSection />
+      </div>
 
       {showBooking && (
         <BookingModal

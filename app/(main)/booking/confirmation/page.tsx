@@ -10,12 +10,13 @@ import {
   CalendarDays,
   Users,
   Hash,
-  Download,
   Share2,
   CalendarPlus,
   FileText,
   Compass,
   ClipboardList,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
@@ -25,6 +26,10 @@ import { formatPrice } from "@/lib/utils";
 import { getBookingsHubPath } from "@/lib/auth-routing";
 import { buildBookingIcs, downloadIcs } from "@/lib/calendar";
 import { EASE_OUT } from "@/lib/motion";
+import { LoadingSkeleton } from "@/components/motion/LoadingSkeleton";
+import { ContextualError } from "@/components/ui/ContextualError";
+import { SUPPORT_PHONE, supportPhoneHref } from "@/lib/site";
+import { formatBookingStatus, whatsAppHref } from "@/lib/booking-status";
 
 interface BookingDetail {
   _id: string;
@@ -129,11 +134,85 @@ function BookingConfirmationContent() {
         >
           <CheckCircle2 className="h-11 w-11 text-green-dark" aria-hidden />
         </motion.div>
-        <h1 className="text-2xl sm:text-3xl font-black text-text-dark tracking-tight">You&apos;re all set!</h1>
+        <h1 className="text-2xl sm:text-3xl font-black text-text-dark tracking-tight">
+          Booking Request Submitted
+        </h1>
         <p className="text-text-grey mt-2 text-sm max-w-md mx-auto">
-          Confirmation email and WhatsApp are sent automatically when configured. Save your reference below.
+          Your dedicated travel consultant will contact you within 24 hours.
         </p>
       </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.12, ease: EASE_OUT }}
+        className="mb-6 rounded-2xl border border-green-dark/15 bg-gradient-to-br from-green-dark/[0.05] via-white/90 to-white/80 backdrop-blur-sm p-5 shadow-premium"
+      >
+        <p className="text-sm font-bold text-text-dark mb-3">
+          Your consultant will help you:
+        </p>
+        <ul className="text-xs sm:text-sm text-text-grey space-y-2 list-none">
+          {(booking?.paymentStatus === "paid"
+            ? [
+                "Receive final itinerary from your consultant",
+                "Complete visa documentation if required",
+                "Pack and prepare for departure",
+              ]
+            : [
+                "Confirm hotel availability",
+                "Confirm flights",
+                "Discuss visa requirements",
+                "Finalize itinerary",
+                "Complete payment",
+              ]
+          ).map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="text-green-dark font-bold shrink-0" aria-hidden>✓</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
+      {!loading && !error && ref && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, duration: 0.3 }}
+          className="mb-6 rounded-2xl border border-[#EBEBEB] bg-white px-5 py-4 shadow-premium text-center"
+        >
+          <p className="text-xs text-text-grey uppercase tracking-wide">Booking ID</p>
+          <p className="font-black text-xl text-text-dark tabular-nums mt-1">{ref}</p>
+          {SUPPORT_PHONE && (
+            <p className="text-sm text-text-grey mt-3">
+              Support:{" "}
+              <a href={supportPhoneHref()} className="font-bold text-green-dark hover:underline">
+                {SUPPORT_PHONE}
+              </a>
+            </p>
+          )}
+          <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
+            <a
+              href={supportPhoneHref()}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-green-neon text-white font-bold px-5 py-3 hover:bg-green-dark transition-colors min-h-[44px]"
+            >
+              <Phone className="h-4 w-4" aria-hidden />
+              Call Now
+            </a>
+            {whatsAppHref(SUPPORT_PHONE) && (
+              <a
+                href={whatsAppHref(SUPPORT_PHONE)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-green-dark text-green-dark font-bold px-5 py-3 hover:bg-green-dark/5 transition-colors min-h-[44px]"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden />
+                WhatsApp
+              </a>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -142,11 +221,26 @@ function BookingConfirmationContent() {
         className="rounded-2xl border border-[#EBEBEB] bg-white p-6 space-y-4 shadow-premium"
       >
         {loading ? (
-          <div className="flex items-center justify-center gap-2 text-text-grey py-12">
-            <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> Loading booking…
+          <div className="space-y-4 py-4" aria-busy="true" aria-label="Loading booking details">
+            <LoadingSkeleton className="h-14 w-full rounded-xl" />
+            <LoadingSkeleton className="h-8 w-3/4 rounded-lg" />
+            <div className="grid grid-cols-2 gap-4">
+              <LoadingSkeleton className="h-20 rounded-xl" />
+              <LoadingSkeleton className="h-20 rounded-xl" />
+            </div>
+            <LoadingSkeleton className="h-10 w-full rounded-xl" />
           </div>
         ) : error ? (
-          <p className="text-center text-red-600 text-sm py-8" role="alert">{error}</p>
+          <ContextualError
+            title="Couldn't load booking"
+            message={error === "Missing booking reference." ? "This confirmation link is incomplete. Open it from your bookings or email." : "Please check your connection and try again."}
+            retryLabel={bookingId ? "Try again" : undefined}
+            onRetry={bookingId ? () => {
+              setLoading(true);
+              setError(null);
+              bookingsAPI.getById(bookingId).then(({ data }) => setBooking(data.data)).catch(() => setError("Could not load booking details.")).finally(() => setLoading(false));
+            } : undefined}
+          />
         ) : booking ? (
           <>
             <div className="flex items-start gap-3 pb-2 border-b border-[#F0F0F0]">
@@ -185,19 +279,15 @@ function BookingConfirmationContent() {
               </div>
             </div>
             <div className="border-t border-[#EBEBEB] pt-4 flex justify-between items-center">
-              <span className="text-text-grey text-sm">Amount paid</span>
+              <span className="text-text-grey text-sm">
+                {booking.paymentStatus === "paid" ? "Amount paid" : "Estimated amount"}
+              </span>
               <span className="text-2xl font-black text-green-dark tabular-nums">
                 {formatPrice(booking.paidAmount || booking.totalAmount)}
               </span>
             </div>
-            <span
-              className={`inline-flex items-center text-xs px-3 py-1 rounded-full font-semibold ${
-                booking.status === "confirmed"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-amber-100 text-amber-700"
-              }`}
-            >
-              {booking.status}
+            <span className="inline-flex items-center text-xs px-3 py-1 rounded-full font-semibold bg-amber-100 text-amber-800">
+              {formatBookingStatus(booking.status)}
             </span>
           </>
         ) : null}
@@ -208,13 +298,14 @@ function BookingConfirmationContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.35 }}
-          className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2"
+          className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2"
         >
           {[
             { icon: Share2, label: "Share", onClick: shareBooking },
             { icon: CalendarPlus, label: "Calendar", onClick: addToCalendar },
-            { icon: FileText, label: "Invoice", onClick: downloadInvoice, loading: invoiceLoading },
-            { icon: Download, label: "PDF", onClick: downloadInvoice, loading: invoiceLoading },
+            ...(booking.paymentStatus === "paid"
+              ? [{ icon: FileText, label: "Invoice", onClick: downloadInvoice, loading: invoiceLoading }]
+              : []),
           ].map((action) => (
             <button
               key={action.label}

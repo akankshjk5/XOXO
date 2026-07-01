@@ -60,8 +60,12 @@ exports.getDashboard = async (req, res, next) => {
       Booking.find()
         .sort({ createdAt: -1 })
         .limit(8)
-        .populate("user", "name email")
-        .populate("package", "title slug")
+        .populate("user", "name email phone")
+        .populate({
+          path: "package",
+          select: "title slug destination",
+          populate: { path: "destination", select: "name country" },
+        })
         .lean(),
       User.find().sort({ createdAt: -1 }).limit(6).select("name email role createdAt").lean(),
       Booking.find({ paymentStatus: "paid" })

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { BOOKING_STATUSES, DEFAULT_BOOKING_STATUS } = require("../constants/bookingStatus");
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -12,8 +13,8 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed"],
-      default: "pending",
+      enum: BOOKING_STATUSES,
+      default: DEFAULT_BOOKING_STATUS,
     },
     travelDate: { type: Date },
     returnDate: { type: Date },
@@ -56,6 +57,8 @@ const bookingSchema = new mongoose.Schema(
     discountAmount: { type: Number, default: 0 },
     contactEmail: { type: String },
     contactPhone: { type: String },
+    contactName: { type: String },
+    assignedConsultant: { type: String },
   },
   { timestamps: true }
 );

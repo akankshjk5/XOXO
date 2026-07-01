@@ -5,18 +5,24 @@ import { bookingsAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { DataLoadError } from "@/components/ui/DataLoadError";
 import { formatDistanceToNow } from "date-fns";
+import {
+  ADMIN_BOOKING_STATUSES,
+  formatBookingStatus,
+} from "@/lib/booking-status";
 
 interface BookingRow {
   _id: string;
+  bookingRef?: string;
   status?: string;
   paymentStatus?: string;
   totalAmount?: number;
   createdAt?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactName?: string;
   user?: { name?: string; email?: string; phone?: string };
-  package?: { title?: string };
+  package?: { title?: string; destination?: { name?: string } };
 }
-
-const STATUS_OPTIONS = ["pending", "confirmed", "cancelled", "completed"] as const;
 
 export function AdminBookingsModule() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
@@ -77,9 +83,11 @@ export function AdminBookingsModule() {
             className="rounded-lg border px-3 py-2 text-sm"
           >
             <option value="all">All statuses</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
+            {ADMIN_BOOKING_STATUSES.map((s) => (
+              <option key={s} value={s}>{formatBookingStatus(s)}</option>
             ))}
+            <option value="pending">Pending (legacy)</option>
+            <option value="confirmed">Confirmed (legacy)</option>
           </select>
         </div>
         {error && (
@@ -119,18 +127,18 @@ export function AdminBookingsModule() {
                   bookings.map((booking) => (
                     <tr key={booking._id} className="border-b border-[var(--admin-border)] last:border-0">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-text-dark">{booking.user?.name || "—"}</p>
-                        <p className="text-xs text-text-grey">{booking.user?.email}</p>
-                        {booking.user?.phone && (
-                          <p className="text-xs text-text-grey">{booking.user.phone}</p>
+                        <p className="font-medium text-text-dark">{booking.contactName || booking.user?.name || "—"}</p>
+                        <p className="text-xs text-text-grey">{booking.contactEmail || booking.user?.email}</p>
+                        {(booking.contactPhone || booking.user?.phone) && (
+                          <p className="text-xs font-semibold text-green-dark">{booking.contactPhone || booking.user?.phone}</p>
                         )}
                       </td>
                       <td className="px-4 py-3 text-text-dark">{booking.package?.title || "—"}</td>
                       <td className="px-4 py-3">₹{(booking.totalAmount || 0).toLocaleString("en-IN")}</td>
                       <td className="px-4 py-3 capitalize text-text-grey">{booking.paymentStatus}</td>
                       <td className="px-4 py-3">
-                        <span className="rounded-full bg-green-dark/10 px-2 py-0.5 text-xs font-medium capitalize text-green-dark">
-                          {booking.status}
+                        <span className="rounded-full bg-green-dark/10 px-2 py-0.5 text-xs font-medium text-green-dark whitespace-nowrap">
+                          {formatBookingStatus(booking.status)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-text-grey">
@@ -140,15 +148,15 @@ export function AdminBookingsModule() {
                       </td>
                       <td className="px-4 py-3">
                         <select
-                          value={booking.status || "pending"}
+                          value={booking.status || "pending_office_confirmation"}
                           disabled={updating === booking._id}
                           onChange={(e) => updateStatus(booking._id, e.target.value)}
-                          className="rounded-lg border border-[var(--admin-border)] bg-white px-2 py-1 text-xs"
-                          aria-label={`Update status for booking ${booking._id}`}
+                          className="rounded-lg border border-[var(--admin-border)] bg-white px-2 py-1 text-xs max-w-[160px]"
+                          aria-label={`Update status for booking ${booking.bookingRef || booking._id}`}
                         >
-                          {STATUS_OPTIONS.map((s) => (
+                          {ADMIN_BOOKING_STATUSES.map((s) => (
                             <option key={s} value={s}>
-                              {s}
+                              {formatBookingStatus(s)}
                             </option>
                           ))}
                         </select>

@@ -38,7 +38,7 @@ export function TrendingPackagesSection() {
   };
 
   return (
-    <section className="bg-white section border-t border-[#EBEBEB]">
+    <section className="bg-white section-compact border-t border-[#EBEBEB]">
       <div className="container-x">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <h2 className="section-heading">Trending Packages</h2>

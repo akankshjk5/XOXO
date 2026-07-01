@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star, Loader2 } from "lucide-react";
+import { Star } from "lucide-react";
 import toast from "react-hot-toast";
 import { reviewsAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { EmptyState, LoadingSkeleton, AnimatedButton } from "@/components/motion";
 
 interface ReviewItem {
   _id: string;
@@ -84,21 +85,30 @@ export function PackageReviews({ packageId }: { packageId: string }) {
             placeholder="Share your experience…"
             className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none resize-none mb-3"
           />
-          <button
+          <AnimatedButton
             onClick={submit}
             disabled={submitting}
-            className="px-5 py-2 rounded-full bg-green-neon text-white font-semibold hover:bg-green-dark transition-colors flex items-center gap-2 disabled:opacity-60"
+            loading={submitting}
+            className="px-5 py-2 rounded-full bg-green-neon text-white font-semibold hover:bg-green-dark transition-colors flex items-center gap-2 disabled:opacity-60 min-h-[44px]"
           >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin" />} Submit review
-          </button>
+            Submit review
+          </AnimatedButton>
         </div>
       )}
 
       {/* List */}
       {loading ? (
-        <p className="text-text-grey">Loading reviews…</p>
+        <div className="space-y-4" aria-busy="true" aria-label="Loading reviews">
+          <LoadingSkeleton className="h-20 w-full rounded-xl" />
+          <LoadingSkeleton className="h-16 w-full rounded-xl" />
+        </div>
       ) : reviews.length === 0 ? (
-        <p className="text-text-grey">No reviews yet. Be the first to share your experience!</p>
+        <EmptyState
+          variant="compact"
+          icon="⭐"
+          title="No reviews yet"
+          description="Be the first to share your experience on this package."
+        />
       ) : (
         <div className="space-y-4">
           {reviews.map((r) => (

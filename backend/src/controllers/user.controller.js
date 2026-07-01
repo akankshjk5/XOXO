@@ -1,5 +1,10 @@
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const { normalizePhone, validatePhone } = require("../utils/phone");
+
+function isValidId(id) {
+  return mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === String(id);
+}
 
 // GET /api/users/wishlist
 exports.getWishlist = async (req, res, next) => {
@@ -18,6 +23,9 @@ exports.getWishlist = async (req, res, next) => {
 exports.toggleWishlist = async (req, res, next) => {
   try {
     const { packageId } = req.params;
+    if (!isValidId(packageId)) {
+      return res.status(400).json({ success: false, message: "Invalid package id" });
+    }
     const user = await User.findById(req.user._id);
     const idx = user.wishlist.findIndex((p) => String(p) === String(packageId));
     let added;
@@ -52,6 +60,9 @@ exports.getDestinationWishlist = async (req, res, next) => {
 exports.toggleDestinationWishlist = async (req, res, next) => {
   try {
     const { destinationId } = req.params;
+    if (!isValidId(destinationId)) {
+      return res.status(400).json({ success: false, message: "Invalid destination id" });
+    }
     const user = await User.findById(req.user._id);
     if (!user.destinationWishlist) user.destinationWishlist = [];
     const idx = user.destinationWishlist.findIndex((d) => String(d) === String(destinationId));

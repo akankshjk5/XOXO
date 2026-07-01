@@ -16,6 +16,8 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { AdminMiniChart } from "@/components/admin/AdminMiniChart";
 import { AdminActivityFeed } from "@/components/admin/AdminActivityFeed";
 import { AdminQuickActions } from "@/components/admin/AdminQuickActions";
+import { RecentBookingRequests, type RecentBookingRequest } from "@/components/admin/RecentBookingRequests";
+import { ContextualError } from "@/components/ui/ContextualError";
 import { adminAPI } from "@/lib/api";
 import type { AdminDashboardData } from "@/lib/admin/types";
 
@@ -49,20 +51,28 @@ export function AdminDashboard() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [navigating, setNavigating] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const go = (href: string) => {
     setNavigating(href);
     router.push(href);
   };
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
+    setError(null);
     adminAPI
       .getDashboard()
       .then((res) => setData(res.data.data))
-      .catch(() => setError("Could not load dashboard stats. Try refreshing."));
+      .catch(() => setError("Couldn't load dashboard stats. Please check your connection and try again."))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
-  if (!data && !error) return <DashboardSkeleton />;
+  if (loading && !data) return <DashboardSkeleton />;
 
   const stats = data?.stats;
   const bookingChart =
@@ -76,14 +86,23 @@ export function AdminDashboard() {
       value: p.revenue || 0,
     })) ?? [];
 
+  if (error && !data) {
+    return (
+      <>
+        <AdminHeader title="Dashboard" subtitle="Live overview of your travel platform" />
+        <div className="p-4 sm:p-6 lg:p-8">
+          <ContextualError title="Dashboard unavailable" message={error} onRetry={load} />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <AdminHeader title="Dashboard" subtitle="Live overview of your travel platform" />
       <div className="space-y-6 p-4 sm:p-6 lg:p-8">
         {error && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            {error}
-          </div>
+          <ContextualError title="Partial load issue" message={error} onRetry={load} compact />
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -101,6 +120,11 @@ export function AdminDashboard() {
         </div>
 
         <AdminQuickActions navigating={navigating} onNavigate={go} />
+
+        <RecentBookingRequests
+          bookings={(data?.activity.recentBookings ?? []) as unknown as RecentBookingRequest[]}
+          onUpdated={load}
+        />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <AdminMiniChart title="Bookings (this month)" data={bookingChart.slice(-14)} />
@@ -157,21 +181,35 @@ export function AdminDashboard() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <AdminActivityFeed
-            title="Recent Bookings"
+            title="Recent Customers"
+            viewAllHref="/admin/users"
+            items={(data?.activity.recentUsers ?? []).map((u) => {
+              const row = u as { _id: string; name?: string; email?: string; createdAt?: string };
+              return {
+                id: row._id,
+                title: row.name || "New user",
+                subtitle: row.email || "",
+                time: row.createdAt,
+                href: "/admin/users",
+              };
+            })}
+          />
+          <AdminActivityFeed
+            title="Recent Payments"
             viewAllHref="/admin/bookings"
-            items={(data?.activity.recentBookings ?? []).map((b) => {
-              const booking = b as {
+            items={(data?.activity.recentPayments ?? []).map((p) => {
+              const row = p as {
                 _id: string;
+                totalAmount?: number;
+                paidAmount?: number;
+                updatedAt?: string;
                 user?: { name?: string };
-                package?: { title?: string };
-                status?: string;
-                createdAt?: string;
               };
               return {
-                id: booking._id,
-                title: booking.package?.title || "Booking",
-                subtitle: `${booking.user?.name || "Guest"} · ${booking.status}`,
-                time: booking.createdAt,
+                id: row._id,
+                title: row.user?.name || "Payment",
+                subtitle: `₹${(row.paidAmount || row.totalAmount || 0).toLocaleString("en-IN")}`,
+                time: row.updatedAt,
                 href: "/admin/bookings",
               };
             })}

@@ -5,6 +5,15 @@ import toast from "react-hot-toast";
 import { usersAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
+const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+
+function syncToken() {
+  const token = useAuthStore.getState().token;
+  if (token && typeof window !== "undefined") {
+    localStorage.setItem("xoxo_token", token);
+  }
+}
+
 interface WishlistContextValue {
   packageIds: Set<string>;
   destinationIds: Set<string>;
@@ -32,17 +41,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       setReady(true);
       return;
     }
+    syncToken();
     try {
       const [pkgRes, destRes] = await Promise.all([
         usersAPI.getWishlist(),
         usersAPI.getDestinationWishlist(),
       ]);
-      setPackageIds(new Set((pkgRes.data.data || []).map((p: { _id: string }) => p._id)));
+      setPackageIds(new Set((pkgRes.data.data || []).map((p: { _id: string }) => String(p._id))));
       setDestinationIds(
         new Set((destRes.data.data || []).map((d: { _id: string }) => String(d._id)))
       );
     } catch {
-      /* ignore */
+      /* silent on load */
     } finally {
       setReady(true);
     }
@@ -60,21 +70,43 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         toast.error("Please log in to save to wishlist.");
         return;
       }
+      if (!OBJECT_ID_RE.test(packageId)) {
+        toast.error("This item cannot be saved.");
+        return;
+      }
+      syncToken();
+      const wasSaved = packageIds.has(packageId);
+      setPackageIds((prev) => {
+        const next = new Set(prev);
+        if (wasSaved) next.delete(packageId);
+        else next.add(packageId);
+        return next;
+      });
       try {
         const { data } = await usersAPI.toggleWishlist(packageId);
-        const added = data.added as boolean;
+        const added = Boolean(data.added);
         setPackageIds((prev) => {
           const next = new Set(prev);
           if (added) next.add(packageId);
           else next.delete(packageId);
           return next;
         });
-        toast.success(added ? "Added to Wishlist" : "Removed from Wishlist");
-      } catch {
-        toast.error("Couldn't update wishlist.");
+        toast.success(added ? "Saved successfully" : "Removed from wishlist");
+      } catch (err: unknown) {
+        setPackageIds((prev) => {
+          const next = new Set(prev);
+          if (wasSaved) next.add(packageId);
+          else next.delete(packageId);
+          return next;
+        });
+        const status = (err as { response?: { status?: number; data?: { message?: string } } })
+          ?.response?.status;
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        if (status === 401) toast.error("Please log in again.");
+        else toast.error(msg || "Couldn't update wishlist.");
       }
     },
-    [user]
+    [user, packageIds]
   );
 
   const toggleDestination = useCallback(
@@ -83,21 +115,42 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         toast.error("Please log in to save to wishlist.");
         return;
       }
+      if (!OBJECT_ID_RE.test(destinationId)) {
+        toast.error("This item cannot be saved.");
+        return;
+      }
+      syncToken();
+      const wasSaved = destinationIds.has(destinationId);
+      setDestinationIds((prev) => {
+        const next = new Set(prev);
+        if (wasSaved) next.delete(destinationId);
+        else next.add(destinationId);
+        return next;
+      });
       try {
         const { data } = await usersAPI.toggleDestinationWishlist(destinationId);
-        const added = data.added as boolean;
+        const added = Boolean(data.added);
         setDestinationIds((prev) => {
           const next = new Set(prev);
           if (added) next.add(destinationId);
           else next.delete(destinationId);
           return next;
         });
-        toast.success(added ? "Added to Wishlist" : "Removed from Wishlist");
-      } catch {
-        toast.error("Couldn't update wishlist.");
+        toast.success(added ? "Saved successfully" : "Removed from wishlist");
+      } catch (err: unknown) {
+        setDestinationIds((prev) => {
+          const next = new Set(prev);
+          if (wasSaved) next.add(destinationId);
+          else next.delete(destinationId);
+          return next;
+        });
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        if (status === 401) toast.error("Please log in again.");
+        else toast.error(msg || "Couldn't update wishlist.");
       }
     },
-    [user]
+    [user, destinationIds]
   );
 
   return (

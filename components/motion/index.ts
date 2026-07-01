@@ -4,7 +4,7 @@ export { AnimatedButton } from "./AnimatedButton";
 export { AnimatedCard, FloatingCard } from "./AnimatedCard";
 export { GlassCard } from "./GlassCard";
 export { CountUp } from "./CountUp";
-export { LoadingSkeleton, SkeletonCard, SkeletonDestination } from "./LoadingSkeleton";
+export { LoadingSkeleton, SkeletonCard, SkeletonDestination, SkeletonPackageDetail, InlineLoader } from "./LoadingSkeleton";
 export { EmptyState } from "./EmptyState";
 export { MotionModal } from "./MotionModal";
 export { MotionDrawer } from "./MotionDrawer";

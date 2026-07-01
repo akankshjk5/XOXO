@@ -14,12 +14,6 @@ const { record } = require("../controllers/wallet.controller");
 
 const { generateInvoice } = require("../utils/invoice");
 
-const { bookingConfirmationEmail } = require("../utils/emailTemplates");
-
-const { sendEmail } = require("../utils/email");
-
-const { sendWhatsApp, buildBookingWhatsAppMessage } = require("../utils/whatsapp");
-
 const logger = require("../config/logger");
 
 /** Shown in checkout UI when Razorpay env vars are not set on the API server. */
@@ -38,7 +32,7 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
   booking.paidAmount = booking.totalAmount;
 
-  booking.status = "confirmed";
+  booking.status = "payment_received";
 
   booking.razorpayPaymentId = paymentId || booking.razorpayPaymentId || `pay_demo_${Date.now()}`;
 
@@ -59,15 +53,13 @@ async function confirmBookingPayment(req, booking, paymentId) {
   );
 
   let packageTitle = "Holiday package";
-  let destinationName = "";
 
   if (booking.package) {
 
-    const pkg = await Package.findById(booking.package).select("title destination").populate("destination", "name country");
+    const pkg = await Package.findById(booking.package).select("title");
 
     if (pkg) {
       packageTitle = pkg.title;
-      destinationName = pkg.destination?.name || pkg.destination?.country || "";
     }
 
   }
@@ -108,26 +100,15 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
       type: "payment",
 
-      title: "Booking confirmed 🎉",
+      title: "Payment received",
 
-      body: `Your booking ${booking.bookingRef} is confirmed. You earned ${points} reward points!`,
+      body: `We received your payment for booking ${booking.bookingRef}. A travel consultant will contact you shortly.`,
 
       link: "/dashboard?tab=bookings",
 
       email: false,
 
     });
-
-    const emailTo = booking.contactEmail || user.email;
-    const mail = bookingConfirmationEmail({ user, booking, packageTitle, destinationName });
-    const emailResult = await sendEmail({ to: emailTo, ...mail });
-    confirmation.emailSent = !emailResult?.skipped;
-
-    const phone = booking.contactPhone || user.phone;
-    const waBody = buildBookingWhatsAppMessage({ booking, packageTitle, destinationName });
-    const waResult = await sendWhatsApp({ to: phone, body: waBody });
-    confirmation.whatsappSent = !!waResult.sent;
-    confirmation.whatsappSkipped = !!waResult.skipped;
 
   } catch (err) {
 

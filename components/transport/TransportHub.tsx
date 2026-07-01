@@ -95,7 +95,10 @@ export function TransportHub() {
     }
   }, [origin, destination, departureDate, passengers, selectedModes, filters]);
 
-  const displayGroups = useMemo(() => result?.grouped || [], [result]);
+  const displayGroups = useMemo(
+    () => (result?.grouped || []).filter((g) => g.status !== "coming_soon"),
+    [result]
+  );
 
   const handleBook = (offer: TransportOffer) => {
     if (!user) {

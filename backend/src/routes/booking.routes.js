@@ -12,5 +12,6 @@ router.get("/", adminOnly, ctrl.getAll);
 router.get("/:id", ctrl.getById);
 router.put("/:id/cancel", ctrl.cancel);
 router.put("/:id/status", adminOnly, ctrl.updateStatus);
+router.put("/:id/assign", adminOnly, ctrl.assignConsultant);
 
 module.exports = router;

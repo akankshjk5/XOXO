@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DURATION_TABS, filterByDuration } from "@/lib/home-filters";
+import { filterByDuration } from "@/lib/home-filters";
+import { HOME_DURATION_DEFAULTS, HOME_DURATION_FILTER_SECTIONS } from "@/lib/filter-presets";
+import type { FilterValues } from "@/lib/premium-filter-types";
 import { packagesAPI } from "@/lib/api";
 import { mapHomePackageCard, type HomePackageCard } from "@/lib/home-mappers";
 import { formatPrice } from "@/lib/utils";
 import { LazyImage } from "@/components/motion/LazyImage";
-import { AnimatedTabs } from "@/components/motion/AnimatedTabs";
+import { PremiumFilter } from "@/components/filters/PremiumFilter";
 import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 export function PackagesByDuration() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [duration, setDuration] = useState("all");
+  const [filters, setFilters] = useState<FilterValues>(HOME_DURATION_DEFAULTS);
   const [packages, setPackages] = useState<HomePackageCard[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,18 +41,24 @@ export function PackagesByDuration() {
     };
   }, []);
 
-  const filtered = packages.filter((p) => filterByDuration(p.days, duration));
+  const filtered = packages.filter((p) => filterByDuration(p.days, filters.duration));
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -380 : 380, behavior: "smooth" });
   };
 
   return (
-    <section className="bg-off-white section border-t border-[#EBEBEB]">
+    <section className="bg-off-white section-compact border-t border-[#EBEBEB]">
       <div className="container-x">
-        <div className="flex flex-col gap-5 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <h2 className="section-heading">Packages By Duration</h2>
-          <AnimatedTabs tabs={DURATION_TABS} active={duration} onChange={setDuration} />
+          <PremiumFilter
+            sections={HOME_DURATION_FILTER_SECTIONS}
+            values={filters}
+            defaults={HOME_DURATION_DEFAULTS}
+            onChange={setFilters}
+            title="Duration filter"
+          />
         </div>
 
         <div className="flex justify-end gap-2 mb-4">
