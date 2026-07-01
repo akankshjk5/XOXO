@@ -7,8 +7,9 @@ import { DURATION_TABS, filterByDuration } from "@/lib/home-filters";
 import { packagesAPI } from "@/lib/api";
 import { mapHomePackageCard, type HomePackageCard } from "@/lib/home-mappers";
 import { formatPrice } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 import { LazyImage } from "@/components/motion/LazyImage";
+import { AnimatedTabs } from "@/components/motion/AnimatedTabs";
+import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 export function PackagesByDuration() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -22,9 +23,12 @@ export function PackagesByDuration() {
       try {
         const { data } = await packagesAPI.getAll({ limit: 24, sort: "popular" });
         if (cancelled) return;
-        setPackages((data.data || []).map(mapHomePackageCard));
-      } catch (err) {
-        console.error("[PackagesByDuration] Failed to load packages:", err);
+        setPackages(
+          (data.data || [])
+            .map(mapHomePackageCard)
+            .filter((p: HomePackageCard) => !p.isVisaFree)
+        );
+      } catch {
         if (!cancelled) setPackages([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -44,19 +48,9 @@ export function PackagesByDuration() {
   return (
     <section className="bg-off-white section border-t border-[#EBEBEB]">
       <div className="container-x">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-5 mb-6">
           <h2 className="section-heading">Packages By Duration</h2>
-          <div className="flex gap-2 flex-wrap">
-            {DURATION_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setDuration(tab.id)}
-                className={cn("pill-filter", duration === tab.id && "pill-filter-active")}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <AnimatedTabs tabs={DURATION_TABS} active={duration} onChange={setDuration} />
         </div>
 
         <div className="flex justify-end gap-2 mb-4">
@@ -81,26 +75,28 @@ export function PackagesByDuration() {
         ) : (
           <div ref={scrollRef} className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
             {filtered.map((pkg) => (
-              <Link
-                key={pkg.id}
-                href={`/packages/${pkg.id}`}
-                className="shrink-0 w-[360px] snap-start rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] card-lift"
-              >
-                <div className="relative h-[200px] overflow-hidden">
-                  <LazyImage src={pkg.image} alt={pkg.destination} fill sizes="360px" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <p className="absolute bottom-4 left-4 text-xl font-bold text-white">
-                    {pkg.destination}
-                  </p>
-                </div>
-                <div className="p-4">
-                  <p className="font-bold text-text-dark text-[15px]">{pkg.title}</p>
-                  <p className="text-sm text-text-grey mt-1">{pkg.duration}</p>
-                  <p className="text-lg font-bold text-green-dark mt-2">
-                    From {formatPrice(pkg.price)}
-                  </p>
-                </div>
-              </Link>
+              <div key={pkg.id} className="relative shrink-0 w-[360px] snap-start">
+                <WishlistHeart packageId={pkg.id} />
+                <Link
+                  href={`/packages/${pkg.id}`}
+                  className="block rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-premium card-lift"
+                >
+                  <div className="relative h-[200px] overflow-hidden">
+                    <LazyImage src={pkg.image} alt={pkg.destination} fill sizes="360px" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    <p className="absolute bottom-4 left-4 text-xl font-bold text-white">
+                      {pkg.destination}
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <p className="font-bold text-text-dark text-[15px]">{pkg.title}</p>
+                    <p className="text-sm text-text-grey mt-1">{pkg.duration}</p>
+                    <p className="text-lg font-bold text-green-dark mt-2">
+                      From {formatPrice(pkg.price)}
+                    </p>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
         )}

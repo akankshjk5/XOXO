@@ -6,13 +6,26 @@ import { CompareBar } from "@/components/packages/CompareBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { IntroProvider } from "@/context/IntroContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://xoxo-puce.vercel.app"),
-  title: "XOXO Travels — Create Your Sooper Hit Holiday",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "XOXO Travels — Create Your Sooper Hit Holiday",
+    template: "%s | XOXO Travels",
+  },
   description: "Custom international holiday packages. Trusted by 2 Lakh+ Indian travellers.",
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -25,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://xoxo-puce.vercel.app",
+    url: SITE_URL,
     siteName: "XOXO Travels",
     title: "XOXO Travels",
     description: "Create Your Sooper Hit Holiday",
@@ -66,10 +79,12 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <IntroProvider>
+            <WishlistProvider>
             <SkipLink />
             <RouteChrome>{children}</RouteChrome>
             <FloatingConcierge />
             <CompareBar />
+            </WishlistProvider>
           </IntroProvider>
         </AuthProvider>
         <Toaster

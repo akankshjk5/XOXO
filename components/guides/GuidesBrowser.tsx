@@ -85,7 +85,7 @@ export function GuidesBrowser() {
             <StaggerRevealItem key={g._id}>
             <Link
               href={`/guides/${g._id}`}
-              className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+              className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-premium"
             >
               <div className="relative h-44 overflow-hidden bg-off-white">
                 {(g.photos?.[0] || g.user?.avatar) && (

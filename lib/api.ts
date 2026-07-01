@@ -167,6 +167,10 @@ export const bookingsAPI = {
   updateStatus: (id: string, status: string) => api.put(`/bookings/${id}/status`, { status }),
 };
 
+export const couponsAPI = {
+  validate: (data: { code: string; subtotal: number }) => api.post("/coupons/validate", data),
+};
+
 export const adminAPI = {
   getDashboard: () => api.get("/admin/dashboard"),
   seedStatus: () => api.get("/admin/seed/status"),
@@ -178,6 +182,7 @@ export const adminAPI = {
   listUsers: (params?: AnyObj) => api.get("/admin/users", { params }),
   getUserDetail: (id: string) => api.get(`/admin/users/${id}`),
   updateUser: (id: string, data: AnyObj) => api.patch(`/admin/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
   listGuides: (params?: AnyObj) => api.get("/admin/guides", { params }),
   getGuide: (id: string) => api.get(`/admin/guides/${id}`),
   createGuide: (data: AnyObj) => api.post("/admin/guides", data),
@@ -271,6 +276,9 @@ export const reviewsAPI = {
 export const usersAPI = {
   getWishlist: () => api.get("/users/wishlist"),
   toggleWishlist: (packageId: string) => api.post(`/users/wishlist/${packageId}`),
+  getDestinationWishlist: () => api.get("/users/destination-wishlist"),
+  toggleDestinationWishlist: (destinationId: string) =>
+    api.post(`/users/destination-wishlist/${destinationId}`),
   updateProfile: (data: AnyObj) => api.put("/users/profile", data),
 };
 
@@ -299,6 +307,8 @@ export const notificationsAPI = {
   getMy: () => api.get("/notifications"),
   markRead: (id: string) => api.put(`/notifications/${id}/read`),
   markAllRead: () => api.put("/notifications/read-all"),
+  deleteOne: (id: string) => api.delete(`/notifications/${id}`),
+  clearAll: () => api.delete("/notifications"),
 };
 
 export const walletAPI = {
@@ -319,6 +329,10 @@ export const chatAPI = {
   conversations: () => api.get("/chat/conversations"),
   thread: (peerId: string) => api.get(`/chat/${peerId}`),
   send: (peerId: string, content: string) => api.post(`/chat/${peerId}`, { content }),
+  listRoomGuides: (peerId: string) => api.get(`/chat/${peerId}/guides`),
+  inviteGuide: (peerId: string, guideId: string) => api.post(`/chat/${peerId}/guides`, { guideId }),
+  removeGuide: (peerId: string, guideUserId: string) =>
+    api.delete(`/chat/${peerId}/guides/${guideUserId}`),
 };
 
 export const matchAPI = {

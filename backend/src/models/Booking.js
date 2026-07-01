@@ -52,6 +52,10 @@ const bookingSchema = new mongoose.Schema(
     inventoryMeta: { type: mongoose.Schema.Types.Mixed },
     specialRequests: { type: String },
     bookingRef: { type: String, unique: true },
+    couponCode: { type: String },
+    discountAmount: { type: Number, default: 0 },
+    contactEmail: { type: String },
+    contactPhone: { type: String },
   },
   { timestamps: true }
 );

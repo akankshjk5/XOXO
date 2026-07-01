@@ -46,6 +46,7 @@ const userSchema = new mongoose.Schema(
     referralCode: { type: String, unique: true, sparse: true, index: true },
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Package" }],
+    destinationWishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Destination" }],
     emailNotifications: { type: Boolean, default: true },
     emergencyContacts: [
       {
@@ -57,6 +58,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, select: false },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpiry: { type: Date, select: false },
+    lastLoginAt: { type: Date },
   },
   { timestamps: true }
 );

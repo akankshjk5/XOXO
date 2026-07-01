@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Search, ChevronDown, Menu, X, Phone, User, LogOut, LayoutDashboard, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,7 @@ function SearchPill({
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname() || "";
   const { introActive } = useIntro();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -78,39 +79,53 @@ export default function Navbar() {
     router.push(`/packages?${params.toString()}`);
   };
 
+  const isHome = pathname === "/";
+  const onDarkHero = isHome && !scrolled && !introActive;
+  const onLightBar = !onDarkHero && !scrolled && !introActive;
+  const onDarkBar = scrolled && !introActive;
+  const menuIconClass = onDarkHero || onDarkBar ? "text-white" : "text-[#0E5C43]";
+  const navLinkClass = onDarkHero
+    ? "nav-link-white"
+    : "text-[#0E5C43] hover:text-green-dark";
+  const bellVariant = onDarkHero || onDarkBar ? "light" : "dark";
+
   return (
     <>
       {/* ── Transparent nav (over hero) ── */}
       <header
         className={cn(
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          introActive || scrolled ? "opacity-0 pointer-events-none -translate-y-2" : "opacity-100"
+          introActive || scrolled ? "opacity-0 pointer-events-none -translate-y-2" : "opacity-100",
+          onLightBar && "bg-white/95 backdrop-blur-md border-b border-[#EBEBEB] shadow-sm"
         )}
       >
-        <div className="container-x h-[68px] flex items-center justify-between">
+        <div className="container-x h-16 flex items-center justify-between">
           <Logo />
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
-            <Link href="/destinations" className="nav-link-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+            <Link href="/destinations" className={cn("flex items-center gap-1 px-3 py-2 rounded-lg transition-colors", navLinkClass, onDarkHero && "hover:bg-white/10")}>
               Destinations
             </Link>
-            <Link href="/packages" className="nav-link-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+            <Link href="/packages" className={cn("flex items-center gap-1 px-3 py-2 rounded-lg transition-colors", navLinkClass, onDarkHero && "hover:bg-white/10")}>
               Packages
             </Link>
-            <Link href="/transport" className="nav-link-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+            <Link href="/transport" className={cn("px-3 py-2 rounded-lg transition-colors", navLinkClass, onDarkHero && "hover:bg-white/10")}>
               Transport
             </Link>
-            <Link href="/concierge" className="nav-link-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+            <Link href="/concierge" className={cn("px-3 py-2 rounded-lg transition-colors", navLinkClass, onDarkHero && "hover:bg-white/10")}>
               Concierge
             </Link>
           </nav>
 
           <div className="flex items-center gap-3">
-            {user && <NotificationBell />}
+            {user && <NotificationBell variant={bellVariant} />}
             {user ? (
               <Link
                 href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-2 text-white text-sm font-medium hover:opacity-80"
+                className={cn(
+                  "hidden sm:inline-flex items-center gap-2 text-sm font-medium",
+                  onDarkHero ? "text-white hover:opacity-80" : "text-[#0E5C43] hover:text-green-dark"
+                )}
               >
                 <span className="h-8 w-8 rounded-full bg-green-bright text-green-dark flex items-center justify-center font-bold">
                   {user.name.charAt(0).toUpperCase()}
@@ -118,14 +133,20 @@ export default function Navbar() {
                 <span>Hi, {user.name.split(" ")[0]}</span>
               </Link>
             ) : (
-              <Link href="/login" className="btn-login-outline hidden sm:inline-flex">
+              <Link
+                href="/login"
+                className={cn(
+                  "hidden sm:inline-flex",
+                  onDarkHero ? "btn-login-outline" : "rounded-full border border-[#0E5C43] px-4 py-2 text-sm font-semibold text-[#0E5C43] hover:bg-[#0E5C43]/5"
+                )}
+              >
                 Login
               </Link>
             )}
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="text-white p-1.5"
+              className={cn("p-1.5", menuIconClass)}
               aria-label="Open menu"
             >
               <Menu className="h-6 w-6" />
@@ -156,11 +177,29 @@ export default function Navbar() {
           />
 
           <div className="flex items-center gap-2 shrink-0">
-            {user && <NotificationBell />}
+            {user && <NotificationBell variant="light" />}
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-white hover:opacity-90"
+              >
+                <span className="h-8 w-8 rounded-full bg-green-bright text-green-dark flex items-center justify-center font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden lg:inline">Hi, {user.name.split(" ")[0]}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+              >
+                Login
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="text-white p-1.5 shrink-0"
+              className={cn("p-1.5 shrink-0", menuIconClass)}
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />

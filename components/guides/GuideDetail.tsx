@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { guidesAPI } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
+import { EmptyState, LoadingSkeleton } from "@/components/motion";
 
 interface Guide {
   _id: string;
@@ -93,16 +94,25 @@ export function GuideDetail() {
 
   if (loading) {
     return (
-      <div className="pt-[88px] max-w-[1100px] mx-auto px-6">
-        <div className="h-64 bg-gray-200 animate-pulse rounded-2xl" />
+      <div className="pt-[88px] max-w-[1100px] mx-auto px-4 sm:px-6 pb-16">
+        <LoadingSkeleton className="h-64 rounded-2xl mb-6" />
+        <div className="grid lg:grid-cols-3 gap-6">
+          <LoadingSkeleton className="h-48 lg:col-span-2 rounded-2xl" />
+          <LoadingSkeleton className="h-64 rounded-2xl" />
+        </div>
       </div>
     );
   }
   if (!guide) {
     return (
-      <div className="pt-32 text-center">
-        <p className="text-text-grey mb-3">Guide not found.</p>
-        <Link href="/guides" className="text-green-dark font-semibold">← Back to guides</Link>
+      <div className="pt-[88px] max-w-lg mx-auto px-4 pb-16">
+        <EmptyState
+          icon="🧭"
+          title="Guide not found"
+          description="This guide may have been removed or the link is incorrect."
+          cta="Browse guides"
+          href="/guides"
+        />
       </div>
     );
   }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Loader2, ImagePlus } from "lucide-react";
+import { Heart, MessageCircle, Share2, Loader2, ImagePlus, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { postsAPI, uploadAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
@@ -270,14 +270,24 @@ export function SocialFeed() {
                             </div>
                           ))}
                           {user && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                               <input
                                 value={commentDraft[post._id] || ""}
                                 onChange={(e) => setCommentDraft((d) => ({ ...d, [post._id]: e.target.value }))}
                                 onKeyDown={(e) => e.key === "Enter" && addComment(post._id)}
                                 placeholder="Add a comment…"
-                                className="flex-1 text-sm border rounded-full px-3 py-1.5 outline-none focus:border-green-dark transition-colors"
+                                aria-label="Comment"
+                                className="flex-1 text-sm border rounded-full px-3 py-1.5 outline-none focus:border-green-dark transition-colors min-h-[40px]"
                               />
+                              <button
+                                type="button"
+                                onClick={() => addComment(post._id)}
+                                disabled={!commentDraft[post._id]?.trim()}
+                                className="touch-target rounded-full bg-green-neon text-white flex items-center justify-center min-h-[40px] min-w-[40px] disabled:opacity-40 hover:bg-green-dark transition-colors"
+                                aria-label="Post comment"
+                              >
+                                <Send className="h-4 w-4" />
+                              </button>
                             </div>
                           )}
                         </div>

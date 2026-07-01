@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Package,
   MapPin,
   CalendarCheck,
   Users,
   IndianRupee,
+  Loader2,
 } from "lucide-react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { AdminMiniChart } from "@/components/admin/AdminMiniChart";
 import { AdminActivityFeed } from "@/components/admin/AdminActivityFeed";
+import { AdminQuickActions } from "@/components/admin/AdminQuickActions";
 import { adminAPI } from "@/lib/api";
 import type { AdminDashboardData } from "@/lib/admin/types";
 
@@ -42,8 +45,15 @@ function DashboardSkeleton() {
 }
 
 export function AdminDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState<string | null>(null);
+
+  const go = (href: string) => {
+    setNavigating(href);
+    router.push(href);
+  };
 
   useEffect(() => {
     adminAPI
@@ -77,39 +87,20 @@ export function AdminDashboard() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminStatCard label="Total Packages" value={stats?.totalPackages ?? "—"} icon={Package} />
-          <AdminStatCard label="Total Destinations" value={stats?.totalDestinations ?? "—"} icon={MapPin} />
-          <AdminStatCard label="Total Bookings" value={stats?.totalBookings ?? "—"} icon={CalendarCheck} />
-          <AdminStatCard label="Total Users" value={stats?.totalUsers ?? "—"} icon={Users} />
+          <AdminStatCard label="Total Packages" value={stats?.totalPackages ?? 0} icon={Package} animate />
+          <AdminStatCard label="Total Destinations" value={stats?.totalDestinations ?? 0} icon={MapPin} animate />
+          <AdminStatCard label="Total Bookings" value={stats?.totalBookings ?? 0} icon={CalendarCheck} animate />
+          <AdminStatCard label="Total Users" value={stats?.totalUsers ?? 0} icon={Users} animate />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminStatCard label="Today's Bookings" value={stats?.todayBookings ?? "—"} icon={CalendarCheck} />
+          <AdminStatCard label="Today's Bookings" value={stats?.todayBookings ?? 0} icon={CalendarCheck} animate />
           <AdminStatCard label="Today's Revenue" value={stats ? formatINR(stats.todayRevenue) : "—"} icon={IndianRupee} />
-          <AdminStatCard label="Active Users (30d)" value={stats?.activeUsers ?? "—"} icon={Users} trend="Last 30 days" />
-          <AdminStatCard label="Pending Payments" value={stats?.pendingPayments ?? "—"} icon={CalendarCheck} />
+          <AdminStatCard label="Active Users (30d)" value={stats?.activeUsers ?? 0} icon={Users} trend="Last 30 days" animate />
+          <AdminStatCard label="Pending Payments" value={stats?.pendingPayments ?? 0} icon={CalendarCheck} animate />
         </div>
 
-        <div className="admin-card p-5">
-          <h3 className="font-medium text-text-dark mb-3">Quick actions</h3>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { href: "/admin/packages", label: "Manage packages" },
-              { href: "/admin/destinations", label: "Manage destinations" },
-              { href: "/admin/bookings", label: "View bookings" },
-              { href: "/admin/coupons", label: "Create coupon" },
-              { href: "/admin/settings", label: "Site settings" },
-            ].map((a) => (
-              <Link
-                key={a.href}
-                href={a.href}
-                className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--admin-bg)] transition-colors"
-              >
-                {a.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+        <AdminQuickActions navigating={navigating} onNavigate={go} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <AdminMiniChart title="Bookings (this month)" data={bookingChart.slice(-14)} />
@@ -129,12 +120,14 @@ export function AdminDashboard() {
                 <li className="py-4 text-center text-sm text-text-grey">No bookings yet</li>
               ) : (
                 data?.charts.topPackages.map((pkg) => (
-                  <li
-                    key={pkg.id}
-                    className="flex items-center justify-between rounded-xl bg-[var(--admin-bg)] px-3 py-2 text-sm"
-                  >
-                    <span className="truncate font-medium">{pkg.title}</span>
-                    <span className="text-text-grey">{pkg.count} bookings</span>
+                  <li key={pkg.id}>
+                    <Link
+                      href="/admin/packages"
+                      className="flex items-center justify-between rounded-xl bg-[var(--admin-bg)] px-3 py-2 text-sm hover:bg-white hover:border-green-bright/20 border border-transparent transition-colors"
+                    >
+                      <span className="truncate font-medium">{pkg.title}</span>
+                      <span className="text-text-grey">{pkg.count} bookings</span>
+                    </Link>
                   </li>
                 ))
               )}
@@ -147,12 +140,14 @@ export function AdminDashboard() {
                 <li className="py-4 text-center text-sm text-text-grey">No destination data yet</li>
               ) : (
                 data?.charts.topDestinations.map((dest) => (
-                <li
-                  key={dest.slug || dest.name}
-                  className="flex items-center justify-between rounded-xl bg-[var(--admin-bg)] px-3 py-2 text-sm"
-                >
-                  <span className="font-medium">{dest.name}</span>
-                  <span className="text-text-grey">{dest.country}</span>
+                <li key={dest.slug || dest.name}>
+                  <Link
+                    href={dest.slug ? `/destinations/${dest.slug}` : "/admin/destinations"}
+                    className="flex items-center justify-between rounded-xl bg-[var(--admin-bg)] px-3 py-2 text-sm hover:bg-white border border-transparent hover:border-green-bright/20 transition-colors"
+                  >
+                    <span className="font-medium">{dest.name}</span>
+                    <span className="text-text-grey">{dest.country}</span>
+                  </Link>
                 </li>
               ))
               )}
@@ -163,6 +158,7 @@ export function AdminDashboard() {
         <div className="grid gap-4 lg:grid-cols-2">
           <AdminActivityFeed
             title="Recent Bookings"
+            viewAllHref="/admin/bookings"
             items={(data?.activity.recentBookings ?? []).map((b) => {
               const booking = b as {
                 _id: string;
@@ -176,6 +172,7 @@ export function AdminDashboard() {
                 title: booking.package?.title || "Booking",
                 subtitle: `${booking.user?.name || "Guest"} · ${booking.status}`,
                 time: booking.createdAt,
+                href: "/admin/bookings",
               };
             })}
           />

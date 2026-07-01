@@ -19,8 +19,8 @@ export function TestimonialsSection() {
         const items = await fetchTrendingPackages();
         if (cancelled) return;
         setItems(items.map(mapHomePackageCard));
-      } catch (err) {
-        console.error("[TestimonialsSection] Failed to load package social proof:", err);
+      } catch {
+        /* optional social proof */
       } finally {
         if (!cancelled) setLoading(false);
       }

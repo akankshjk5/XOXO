@@ -22,7 +22,7 @@ const QUICK_PROMPTS = [
 const GREETING =
   "Hi! I'm your XOXO AI concierge. Ask about budgets, honeymoons, visa-free trips, or beaches — I'll suggest packages, flights & hotels.";
 
-const HIDE_ON = ["/login", "/signup", "/admin", "/concierge"];
+const HIDE_ON = ["/login", "/signup", "/admin", "/concierge", "/chat", "/match"];
 
 export function FloatingConcierge() {
   const router = useRouter();
@@ -157,11 +157,14 @@ export function FloatingConcierge() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-[calc(56px+env(safe-area-inset-bottom)+12px)] right-4 z-50 flex items-center gap-2 rounded-full bg-green-dark text-white shadow-lg hover:bg-green-mid transition-colors md:bottom-6 md:px-4 md:py-3 md:h-auto h-14 w-14 md:w-auto justify-center"
+          className="ai-fab fixed bottom-[calc(56px+env(safe-area-inset-bottom)+12px)] right-4 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-green-dark via-green-mid to-green-neon text-white shadow-lg hover:brightness-105 transition-all md:bottom-6 md:px-4 md:py-3 md:h-auto h-14 w-14 md:w-auto justify-center"
           aria-label="Open FREE AI Planner"
         >
           <Sparkles className="h-6 w-6 shrink-0" />
-          <span className="hidden md:inline text-sm font-semibold whitespace-nowrap">✨ FREE AI Planner</span>
+          <span className="hidden md:flex flex-col items-start leading-tight">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-green-bright">✨ FREE AI</span>
+            <span className="text-sm font-semibold whitespace-nowrap">AI Planner</span>
+          </span>
         </button>
       )}
     </>

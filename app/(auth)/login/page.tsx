@@ -4,6 +4,7 @@ import { PremiumLoginForm } from "@/components/auth/PremiumLoginForm";
 import { LoginHeroPanel } from "@/components/auth/LoginHeroPanel";
 import { HERO_BG } from "@/lib/images";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { LoadingSkeleton } from "@/components/motion";
 
 export const metadata = {
   title: "Sign In | XOXO Travels",
@@ -29,7 +30,11 @@ export default function LoginPage() {
       <LoginHeroPanel />
       <Suspense
         fallback={
-          <div className="flex flex-1 items-center justify-center text-text-grey">Loading…</div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+            <LoadingSkeleton className="h-10 w-full max-w-sm rounded-xl" />
+            <LoadingSkeleton className="h-10 w-full max-w-sm rounded-xl" />
+            <LoadingSkeleton className="h-11 w-full max-w-sm rounded-full" />
+          </div>
         }
       >
         <PremiumLoginForm />

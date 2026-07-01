@@ -25,8 +25,8 @@ export function AIItineraryBanner() {
         setPackageTitle(pkg.title);
         setDestinationName(pkg.destination?.name || "");
         setPreview(mapItineraryPreview(pkg, 3));
-      } catch (err) {
-        console.error("[AIItineraryBanner] Failed to load itinerary preview:", err);
+      } catch {
+        /* preview optional */
       }
     })();
     return () => {
@@ -60,9 +60,9 @@ export function AIItineraryBanner() {
       <div className="container-x relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <FadeIn direction="left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 mb-5">
-              <Sparkles className="h-4 w-4 text-orange" />
-              <span className="text-sm font-medium text-white/90">Powered by Claude AI</span>
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-green-neon/20 to-green-bright/20 border border-green-bright/40 px-3 py-1.5 mb-5 ai-badge-glow">
+              <Sparkles className="h-4 w-4 text-green-bright" />
+              <span className="text-sm font-bold text-white tracking-wide">✨ 100% FREE AI PLANNER</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
               Plan Your Dream Trip in 30 Seconds
@@ -70,9 +70,12 @@ export function AIItineraryBanner() {
             <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-8 max-w-md">
               Tell our AI where you want to go — get a complete day-by-day plan with hidden gems, local food spots, and practical tips instantly.
             </p>
-            <Link href="/concierge" className="btn-orange inline-flex animate-pulse-soft">
+            <Link
+              href="/concierge"
+              className="btn-ai-cta inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold text-white shadow-lg"
+            >
               <Sparkles className="h-4 w-4" />
-              ✨ Generate Free AI Itinerary
+              Generate FREE Plan
               <ArrowRight className="h-4 w-4" />
             </Link>
           </FadeIn>

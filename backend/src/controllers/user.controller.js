@@ -35,6 +35,41 @@ exports.toggleWishlist = async (req, res, next) => {
   }
 };
 
+// GET /api/users/destination-wishlist
+exports.getDestinationWishlist = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: "destinationWishlist",
+      select: "name country slug image images",
+    });
+    res.json({ success: true, data: user.destinationWishlist || [] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/users/destination-wishlist/:destinationId  (toggle)
+exports.toggleDestinationWishlist = async (req, res, next) => {
+  try {
+    const { destinationId } = req.params;
+    const user = await User.findById(req.user._id);
+    if (!user.destinationWishlist) user.destinationWishlist = [];
+    const idx = user.destinationWishlist.findIndex((d) => String(d) === String(destinationId));
+    let added;
+    if (idx >= 0) {
+      user.destinationWishlist.splice(idx, 1);
+      added = false;
+    } else {
+      user.destinationWishlist.push(destinationId);
+      added = true;
+    }
+    await user.save();
+    res.json({ success: true, added, data: user.destinationWishlist });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // PUT /api/users/profile
 exports.updateProfile = async (req, res, next) => {
   try {

@@ -13,6 +13,7 @@ export interface ApiPackage {
   badge?: string;
   rating?: number;
   reviewCount?: number;
+  isVisaFree?: boolean;
   destination?: { name?: string; slug?: string; country?: string };
   itinerary?: { day: number; title: string; description?: string; activities?: string[] }[];
 }
@@ -32,6 +33,7 @@ export interface HomePackageCard {
   rating?: number;
   reviewCount?: number;
   badge?: string;
+  isVisaFree?: boolean;
 }
 
 export function mapHomePackageCard(pkg: ApiPackage): HomePackageCard {
@@ -48,6 +50,7 @@ export function mapHomePackageCard(pkg: ApiPackage): HomePackageCard {
     rating: pkg.rating,
     reviewCount: pkg.reviewCount,
     badge: pkg.badge,
+    isVisaFree: pkg.isVisaFree,
   };
 }
 

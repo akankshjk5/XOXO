@@ -102,6 +102,9 @@ exports.login = async (req, res, next) => {
       return res.status(403).json({ success: false, message: "Account is blocked. Contact support." });
     }
 
+    user.lastLoginAt = new Date();
+    await user.save({ validateBeforeSave: false });
+
     const { accessToken } = await issueTokens(user, res);
     res.json({ success: true, data: { user: toAuthUser(user), accessToken } });
   } catch (err) {

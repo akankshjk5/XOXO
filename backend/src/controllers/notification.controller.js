@@ -35,3 +35,25 @@ exports.markAllRead = async (req, res, next) => {
     next(err);
   }
 };
+
+// DELETE /api/notifications/:id
+exports.deleteOne = async (req, res, next) => {
+  try {
+    const n = await Notification.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    if (!n) return res.status(404).json({ success: false, message: "Not found" });
+    const unread = await Notification.countDocuments({ user: req.user._id, isRead: false });
+    res.json({ success: true, unread });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/notifications
+exports.clearAll = async (req, res, next) => {
+  try {
+    await Notification.deleteMany({ user: req.user._id });
+    res.json({ success: true, unread: 0 });
+  } catch (err) {
+    next(err);
+  }
+};

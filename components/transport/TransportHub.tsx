@@ -257,12 +257,16 @@ export function TransportHub() {
             ].map(({ key, title, accent }) => {
               const rec = result.recommendations[key as keyof typeof result.recommendations];
               if (!rec) return null;
+              const fullOffer = result.offers.find((o) => o.id === rec.id);
               return (
-                <motion.div
+                <motion.button
                   key={key}
+                  type="button"
+                  onClick={() => fullOffer && handleBook(fullOffer)}
+                  disabled={!fullOffer}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-2xl border p-4 ${accent}`}
+                  className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 ${accent}`}
                 >
                   <p className="text-xs font-bold uppercase text-text-grey">{title}</p>
                   <p className="font-bold text-text-dark mt-1">{rec.label}</p>
@@ -271,7 +275,10 @@ export function TransportHub() {
                     {rec.price != null && ` · ${formatPrice(rec.price)}`}
                     {rec.durationMinutes != null && ` · ${formatDuration(rec.durationMinutes)}`}
                   </p>
-                </motion.div>
+                  {fullOffer && (
+                    <p className="text-xs font-semibold text-green-dark mt-2">Tap to book →</p>
+                  )}
+                </motion.button>
               );
             })}
           </div>

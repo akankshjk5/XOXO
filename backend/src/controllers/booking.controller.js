@@ -1,9 +1,20 @@
 const Booking = require("../models/Booking");
 const Package = require("../models/Package");
 const User = require("../models/User");
+const Coupon = require("../models/Coupon");
+const { ADDON_PRICES } = require("../constants/addons");
+const { findValidCoupon } = require("./coupon.controller");
 
 const genRef = () =>
   "XOXO-" + Math.random().toString(36).slice(2, 7).toUpperCase() + Date.now().toString().slice(-4);
+
+function calcAddOnTotal(addOns, numTravelers) {
+  return addOns.reduce((sum, a) => {
+    const price = ADDON_PRICES[a] || 0;
+    const perTraveler = a === "insurance" || a === "visa";
+    return sum + price * (perTraveler ? numTravelers : 1);
+  }, 0);
+}
 
 // POST /api/bookings
 exports.create = async (req, res, next) => {
@@ -16,18 +27,34 @@ exports.create = async (req, res, next) => {
       travelers = [],
       addOns = [],
       specialRequests,
+      couponCode,
+      contactEmail,
+      contactPhone,
     } = req.body;
 
     const pkg = await Package.findById(packageId);
     if (!pkg) return res.status(404).json({ success: false, message: "Package not found" });
 
-    const ADDON_PRICES = { insurance: 1500, visa: 2500 };
-    const addOnTotal = addOns.reduce((sum, a) => sum + (ADDON_PRICES[a] || 0), 0) * numTravelers;
-    const totalAmount = pkg.pricePerPerson * numTravelers + addOnTotal;
-    const persistedAddOns = addOns.map((a) => ({
+    const validAddOns = addOns.filter((a) => ADDON_PRICES[a] != null);
+    const addOnTotal = calcAddOnTotal(validAddOns, numTravelers);
+    const subtotal = pkg.pricePerPerson * numTravelers + addOnTotal;
+
+    let discountAmount = 0;
+    let appliedCoupon = null;
+    if (couponCode) {
+      const result = await findValidCoupon(couponCode, subtotal);
+      if (result.error) {
+        return res.status(400).json({ success: false, message: result.error });
+      }
+      appliedCoupon = result.coupon;
+      discountAmount = result.discount;
+    }
+
+    const totalAmount = Math.max(0, subtotal - discountAmount);
+    const persistedAddOns = validAddOns.map((a) => ({
       type: a,
       price: ADDON_PRICES[a] || 0,
-      perTraveler: true,
+      perTraveler: a === "insurance" || a === "visa",
     }));
 
     const booking = await Booking.create({
@@ -40,9 +67,17 @@ exports.create = async (req, res, next) => {
       travelers,
       addOns: persistedAddOns,
       totalAmount,
+      discountAmount,
+      couponCode: appliedCoupon?.code,
+      contactEmail: contactEmail || req.user.email,
+      contactPhone: contactPhone || req.user.phone,
       specialRequests,
       bookingRef: genRef(),
     });
+
+    if (appliedCoupon) {
+      await Coupon.findByIdAndUpdate(appliedCoupon._id, { $inc: { usageCount: 1 } });
+    }
 
     res.status(201).json({ success: true, data: booking });
   } catch (err) {

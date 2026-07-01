@@ -9,6 +9,7 @@ import { loadRazorpay } from "@/lib/razorpay";
 import { useAuthStore } from "@/store/authStore";
 import { usePaymentMode } from "@/hooks/usePaymentMode";
 import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
+import { getBookingConfirmationPath } from "@/lib/auth-routing";
 import { formatPrice } from "@/lib/utils";
 import type { TransportOffer } from "@/lib/transport-types";
 import { MODE_ICONS } from "@/lib/transport-types";
@@ -52,7 +53,7 @@ export function TransportBookingModal({ offer, passengers, onClose }: TransportB
         await paymentsAPI.verify({ bookingId: booking._id });
         toast.success("Transport booking confirmed! (demo payment)");
         onClose();
-        router.push("/dashboard");
+        router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
         return;
       }
 
@@ -81,7 +82,7 @@ export function TransportBookingModal({ offer, passengers, onClose }: TransportB
             await paymentsAPI.verify({ bookingId: booking._id, ...resp });
             toast.success("Payment successful! Booking confirmed.");
             onClose();
-            router.push("/dashboard");
+            router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
           } catch {
             toast.error("Payment verification failed.");
           }

@@ -1,3 +1,5 @@
+import { SITE_URL } from "./site";
+
 export interface PackageSeoInput {
   title: string;
   description?: string;
@@ -11,7 +13,7 @@ export interface PackageSeoInput {
   seoDescription?: string;
 }
 
-const SITE = "https://xoxotravels.com";
+const SITE = SITE_URL;
 
 export function buildPackageMetadata(pkg: PackageSeoInput) {
   const title = pkg.seoTitle || `${pkg.title} | XOXO Travels`;
@@ -19,7 +21,7 @@ export function buildPackageMetadata(pkg: PackageSeoInput) {
     pkg.seoDescription ||
     pkg.description?.slice(0, 160) ||
     `Book ${pkg.title} with XOXO Travels. Custom international holidays for Indian travellers.`;
-  const image = pkg.images?.[0] || `${SITE}/og-default.jpg`;
+  const image = pkg.images?.[0] || `${SITE}/og-image.png`;
   const canonical = `${SITE}/packages/${pkg.id}`;
 
   return {
@@ -78,5 +80,55 @@ export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
       name: item.name,
       item: item.url,
     })),
+  };
+}
+
+export interface DestinationSeoInput {
+  name: string;
+  slug: string;
+  country?: string;
+  description?: string;
+  coverImage?: string;
+  tagline?: string;
+}
+
+export function buildDestinationMetadata(dest: DestinationSeoInput) {
+  const title = `${dest.name}${dest.country ? `, ${dest.country}` : ""} Holidays`;
+  const description =
+    dest.tagline ||
+    dest.description?.slice(0, 160) ||
+    `Explore ${dest.name} holiday packages with XOXO Travels.`;
+  const image = dest.coverImage || `${SITE}/og-image.png`;
+  const canonical = `${SITE}/destinations/${dest.slug}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "XOXO Travels",
+      images: [{ url: image, width: 1200, height: 630, alt: dest.name }],
+      type: "website" as const,
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
+export function buildDestinationJsonLd(dest: DestinationSeoInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    name: dest.name,
+    description: dest.description || dest.tagline,
+    image: dest.coverImage,
+    containedInPlace: dest.country ? { "@type": "Country", name: dest.country } : undefined,
   };
 }

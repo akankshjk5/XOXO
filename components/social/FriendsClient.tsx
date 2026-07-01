@@ -20,14 +20,22 @@ export function FriendsClient() {
   const [loading, setLoading] = useState(true);
 
   const loadFriends = async () => {
-    const { data } = await friendsAPI.list();
-    setFriends(data.data);
+    try {
+      const { data } = await friendsAPI.list();
+      setFriends(data.data);
+    } catch {
+      toast.error("Couldn't load friends.");
+    }
   };
 
   const loadRequests = async () => {
-    const { data } = await friendsAPI.requests();
-    setIncoming(data.data.incoming);
-    setOutgoing(data.data.outgoing);
+    try {
+      const { data } = await friendsAPI.requests();
+      setIncoming(data.data.incoming);
+      setOutgoing(data.data.outgoing);
+    } catch {
+      toast.error("Couldn't load friend requests.");
+    }
   };
 
   useEffect(() => {
@@ -36,17 +44,25 @@ export function FriendsClient() {
   }, []);
 
   const respond = async (id: string, action: "accept" | "reject") => {
-    await friendsAPI.respond(id, action);
-    toast.success(action === "accept" ? "Friend added!" : "Declined");
-    loadFriends();
-    loadRequests();
+    try {
+      await friendsAPI.respond(id, action);
+      toast.success(action === "accept" ? "Friend added!" : "Declined");
+      loadFriends();
+      loadRequests();
+    } catch {
+      toast.error("Couldn't update request.");
+    }
   };
 
   const remove = async (id: string) => {
-    await friendsAPI.remove(id);
-    toast.success("Removed");
-    loadFriends();
-    loadRequests();
+    try {
+      await friendsAPI.remove(id);
+      toast.success("Removed");
+      loadFriends();
+      loadRequests();
+    } catch {
+      toast.error("Couldn't remove friend.");
+    }
   };
 
   return (

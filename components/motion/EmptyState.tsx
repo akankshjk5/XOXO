@@ -59,7 +59,7 @@ export function EmptyState({
             <p className="text-sm text-text-grey max-w-sm mx-auto mb-5 leading-relaxed">{description}</p>
           )}
           {cta && href && (
-            <AnimatedButton size="sm" variant="secondary" onClick={() => router.push(href)}>
+            <AnimatedButton size="sm" variant="primary" onClick={() => router.push(href)}>
               {cta}
             </AnimatedButton>
           )}

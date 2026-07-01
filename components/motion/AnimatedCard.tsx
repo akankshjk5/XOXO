@@ -34,7 +34,7 @@ export function AnimatedCard({
       onClick={onClick}
       className={cn(
         "rounded-2xl border border-[#EBEBEB] bg-white",
-        lift && "shadow-[0_2px_12px_rgba(0,0,0,0.06)]",
+        lift && "shadow-premium",
         className
       )}
     >

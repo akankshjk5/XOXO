@@ -14,6 +14,7 @@ import {
   StaggerReveal,
   StaggerRevealItem,
 } from "@/components/motion";
+import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 interface ApiDestination {
   _id: string;
@@ -101,9 +102,11 @@ export function DestinationsBrowser() {
         <StaggerReveal className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {visible.map((d) => (
             <StaggerRevealItem key={d._id}>
+              <div className="relative">
+                <WishlistHeart destinationId={d._id} />
               <Link
                 href={`/destinations/${d.slug}`}
-                className="relative aspect-[3/4] rounded-2xl overflow-hidden card-lift group block shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
+                className="relative aspect-[3/4] rounded-2xl overflow-hidden card-lift group block shadow-premium"
               >
                 <Image
                   src={d.coverImage || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80"}
@@ -128,6 +131,7 @@ export function DestinationsBrowser() {
                   )}
                 </div>
               </Link>
+              </div>
             </StaggerRevealItem>
           ))}
         </StaggerReveal>

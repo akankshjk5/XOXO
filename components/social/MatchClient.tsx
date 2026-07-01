@@ -13,6 +13,7 @@ import { AnimatedCard } from "@/components/motion/AnimatedCard";
 import { EmptyState, LoadingSkeleton } from "@/components/motion";
 import { AnimatedButton } from "@/components/motion/AnimatedButton";
 import { NearbyClient } from "@/components/social/NearbyClient";
+import { SafetyDisclaimer } from "@/components/social/SafetyDisclaimer";
 
 const INTERESTS = ["Adventure", "Culture", "Food", "Beaches", "Nightlife", "Photography", "Trekking", "Shopping"];
 
@@ -126,6 +127,8 @@ export function MatchClient() {
         <h1 className="text-3xl font-black text-text-dark">Solo Traveler Matchmaking</h1>
         <p className="text-text-grey mt-1">Find travel buddies or discover nearby travellers by destination, dates & interests.</p>
       </div>
+
+      <SafetyDisclaimer className="mb-6" />
 
       <AnimatedTabs
         tabs={[

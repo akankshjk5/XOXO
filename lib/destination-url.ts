@@ -34,12 +34,13 @@ export function toDestinationCard(
   dest: DestinationLinkInput,
   subLabel: string,
   id?: string
-): { id: string; subLabel: string; name: string; slug: string; image: string; href: string } | null {
+): { id: string; destinationId?: string; subLabel: string; name: string; slug: string; image: string; href: string } | null {
   if (!isValidDestinationSlug(dest.slug)) {
     return null;
   }
   return {
     id: id || dest._id || dest.slug,
+    destinationId: dest._id,
     subLabel,
     name: dest.name,
     slug: dest.slug,

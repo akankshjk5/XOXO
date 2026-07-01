@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { nearbyAPI } from "@/lib/api";
 import { VerifiedBadge, TrustScore } from "@/components/social/VerifiedBadge";
 import { FriendActionButton } from "@/components/social/FriendActionButton";
-import { AnimatedButton, EmptyState, StaggerReveal, StaggerRevealItem } from "@/components/motion";
+import { AnimatedButton, EmptyState, StaggerReveal, StaggerRevealItem, LoadingSkeleton } from "@/components/motion";
 import { AnimatedCard } from "@/components/motion/AnimatedCard";
 
 interface NearbyUser {
@@ -22,6 +22,7 @@ export function NearbyClient({ embedded = false }: { embedded?: boolean }) {
   const [radiusKm, setRadiusKm] = useState(50);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     nearbyAPI.getSettings().then(({ data }) => setSettings(data.data)).catch(() => {});
@@ -67,6 +68,7 @@ export function NearbyClient({ embedded = false }: { embedded?: boolean }) {
     try {
       const { data } = await nearbyAPI.discover({ lat: useLat, lng: useLng, radiusKm, verifiedOnly });
       setNearby(data.data);
+      setHasSearched(true);
     } catch {
       toast.error("Couldn't find nearby travelers");
     } finally {
@@ -117,11 +119,31 @@ export function NearbyClient({ embedded = false }: { embedded?: boolean }) {
         </AnimatedButton>
       </div>
 
-      {nearby.length === 0 ? (
+      {loading && nearby.length === 0 ? (
+        <div className="space-y-3 max-w-lg mx-auto">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LoadingSkeleton key={i} className="h-20 rounded-2xl" />
+          ))}
+        </div>
+      ) : !hasSearched ? (
+        <EmptyState
+          icon="🌍"
+          title="Discover travelers around you"
+          description="Share your location, then search to find fellow explorers nearby — with full privacy control."
+          action={
+            <AnimatedButton onClick={shareLocation} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+              Share my location
+            </AnimatedButton>
+          }
+        />
+      ) : nearby.length === 0 ? (
         <EmptyState
           icon="📍"
           title="No travelers nearby"
-          description="Share your location and try increasing the search radius."
+          description="Try increasing the search radius or check back later."
+          cta="Search again"
+          href="/nearby"
         />
       ) : (
         <StaggerReveal className="space-y-3">

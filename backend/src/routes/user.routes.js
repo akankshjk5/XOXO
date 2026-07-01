@@ -7,6 +7,8 @@ router.use(protect);
 
 router.get("/wishlist", ctrl.getWishlist);
 router.post("/wishlist/:packageId", ctrl.toggleWishlist);
+router.get("/destination-wishlist", ctrl.getDestinationWishlist);
+router.post("/destination-wishlist/:destinationId", ctrl.toggleDestinationWishlist);
 router.put("/profile", ctrl.updateProfile);
 
 module.exports = router;

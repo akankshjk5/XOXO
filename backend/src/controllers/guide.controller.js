@@ -8,11 +8,13 @@ const genRef = () =>
 // GET /api/guides
 exports.getAll = async (req, res, next) => {
   try {
-    const { city, expertise, q } = req.query;
-    const filter = { isAvailable: true };
+    const { city, expertise, q, verified } = req.query;
+    const filter = {};
+    if (verified === "true") filter.isVerified = true;
+    else filter.isAvailable = true;
     if (city) filter.city = new RegExp(city, "i");
     if (expertise) filter.expertise = expertise;
-    if (q) filter.$or = [{ city: new RegExp(q, "i") }, { description: new RegExp(q, "i") }];
+    if (q) filter.$or = [{ city: new RegExp(q, "i") }, { country: new RegExp(q, "i") }, { description: new RegExp(q, "i") }];
 
     const guides = await Guide.find(filter)
       .populate("user", "name avatar nationality")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { adminAPI } from "@/lib/api";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -28,6 +29,7 @@ const EMPTY_COUPON_FORM = {
 };
 
 export function AdminCouponsModule() {
+  const searchParams = useSearchParams();
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -52,6 +54,14 @@ export function AdminCouponsModule() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (searchParams?.get("create") === "1") {
+      setEditing(null);
+      setForm(EMPTY_COUPON_FORM);
+      setOpen(true);
+    }
+  }, [searchParams]);
 
   const openCreate = () => {
     setEditing(null);

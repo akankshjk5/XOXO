@@ -20,6 +20,7 @@ import {
   StaggerReveal,
   StaggerRevealItem,
 } from "@/components/motion";
+import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 interface ApiPackage {
   _id: string;
@@ -172,9 +173,11 @@ export function PackagesBrowser() {
         <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {items.map((pkg) => (
             <StaggerRevealItem key={pkg._id}>
+              <div className="relative">
+                <WishlistHeart packageId={pkg._id} />
               <Link
                 href={`/packages/${pkg._id}`}
-                className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-[0_2px_12px_rgba(0,0,0,0.05)]"
+                className="rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift block group shadow-premium"
               >
               <div className="relative h-44 overflow-hidden">
                 <Image
@@ -215,6 +218,7 @@ export function PackagesBrowser() {
                 </div>
               </div>
             </Link>
+              </div>
             </StaggerRevealItem>
           ))}
         </StaggerReveal>

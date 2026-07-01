@@ -28,7 +28,7 @@ export function PackageReviews({ packageId }: { packageId: string }) {
       const { data } = await reviewsAPI.getForPackage(packageId);
       setReviews(data.data);
     } catch {
-      /* ignore */
+      toast.error("Couldn't load reviews.");
     } finally {
       setLoading(false);
     }

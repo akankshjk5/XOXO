@@ -18,6 +18,8 @@ const { bookingConfirmationEmail } = require("../utils/emailTemplates");
 
 const { sendEmail } = require("../utils/email");
 
+const { sendWhatsApp, buildBookingWhatsAppMessage } = require("../utils/whatsapp");
+
 const logger = require("../config/logger");
 
 /** Shown in checkout UI when Razorpay env vars are not set on the API server. */
@@ -28,9 +30,9 @@ const DEMO_PAYMENT_MESSAGE =
 
 async function confirmBookingPayment(req, booking, paymentId) {
 
-  if (booking.paymentStatus === "paid") return booking;
-
-
+  if (booking.paymentStatus === "paid") {
+    return { booking, confirmation: { emailSent: false, whatsappSent: false, alreadyConfirmed: true } };
+  }
 
   booking.paymentStatus = "paid";
 
@@ -42,7 +44,7 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
   await booking.save();
 
-
+  const confirmation = { emailSent: false, whatsappSent: false, whatsappSkipped: false };
 
   const points = Math.round(booking.totalAmount * 0.01);
 
@@ -56,19 +58,19 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
   );
 
-
-
   let packageTitle = "Holiday package";
+  let destinationName = "";
 
   if (booking.package) {
 
-    const pkg = await Package.findById(booking.package).select("title");
+    const pkg = await Package.findById(booking.package).select("title destination").populate("destination", "name country");
 
-    if (pkg) packageTitle = pkg.title;
+    if (pkg) {
+      packageTitle = pkg.title;
+      destinationName = pkg.destination?.name || pkg.destination?.country || "";
+    }
 
   }
-
-
 
   try {
 
@@ -83,8 +85,6 @@ async function confirmBookingPayment(req, booking, paymentId) {
     logger.warn("Invoice generation failed", { error: err.message });
 
   }
-
-
 
   try {
 
@@ -112,15 +112,22 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
       body: `Your booking ${booking.bookingRef} is confirmed. You earned ${points} reward points!`,
 
-      link: "/dashboard",
+      link: "/dashboard?tab=bookings",
+
+      email: false,
 
     });
 
+    const emailTo = booking.contactEmail || user.email;
+    const mail = bookingConfirmationEmail({ user, booking, packageTitle, destinationName });
+    const emailResult = await sendEmail({ to: emailTo, ...mail });
+    confirmation.emailSent = !emailResult?.skipped;
 
-
-    const mail = bookingConfirmationEmail({ user, booking, packageTitle });
-
-    await sendEmail({ to: user.email, ...mail });
+    const phone = booking.contactPhone || user.phone;
+    const waBody = buildBookingWhatsAppMessage({ booking, packageTitle, destinationName });
+    const waResult = await sendWhatsApp({ to: phone, body: waBody });
+    confirmation.whatsappSent = !!waResult.sent;
+    confirmation.whatsappSkipped = !!waResult.skipped;
 
   } catch (err) {
 
@@ -128,9 +135,7 @@ async function confirmBookingPayment(req, booking, paymentId) {
 
   }
 
-
-
-  return booking;
+  return { booking, confirmation };
 
 }
 
@@ -278,9 +283,9 @@ exports.verify = async (req, res, next) => {
 
 
 
-    const confirmed = await confirmBookingPayment(req, booking, razorpay_payment_id);
+    const result = await confirmBookingPayment(req, booking, razorpay_payment_id);
 
-    res.json({ success: true, demo, data: confirmed });
+    res.json({ success: true, demo, data: result.booking, confirmation: result.confirmation });
 
   } catch (err) {
 

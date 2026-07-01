@@ -110,6 +110,7 @@ app.use("/api/ai", aiLimiter, require("./routes/ai.routes"));
 app.use("/api/concierge", aiLimiter, require("./routes/concierge.routes"));
 app.use("/api/search", require("./routes/search.routes"));
 app.use("/api/bookings", require("./routes/booking.routes"));
+app.use("/api/coupons", require("./routes/coupon.routes"));
 app.use("/api/payments", require("./routes/payment.routes"));
 app.use("/api/reviews", require("./routes/review.routes"));
 app.use("/api/users", require("./routes/user.routes"));

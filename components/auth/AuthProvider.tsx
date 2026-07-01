@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
+import { AppBootLoader } from "@/components/layout/AppBootLoader";
 
 /**
  * Bootstraps the auth session on first load: if a token is present,
@@ -23,11 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (!hydrated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-text-grey text-sm">
-        Loading…
-      </div>
-    );
+    return <AppBootLoader />;
   }
 
   return <>{children}</>;

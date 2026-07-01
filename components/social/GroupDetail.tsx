@@ -9,6 +9,7 @@ import { groupsAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { getSocket, joinGroupRoom } from "@/lib/socket";
 import { VerifiedBadge } from "@/components/social/VerifiedBadge";
+import { LoadingSkeleton } from "@/components/motion";
 
 interface Member { user: { _id: string; name: string; avatar?: string; isVerified?: boolean }; role: string }
 interface Group { _id: string; title: string; destination: string; departureDate: string; description?: string; creator: { _id: string; name: string }; members: Member[]; maxMembers: number; status: string }
@@ -96,7 +97,15 @@ export function GroupDetail() {
     toast.success("Member removed");
   };
 
-  if (loading) return <div className="pt-32 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (loading) {
+    return (
+      <div className="pt-[88px] max-w-3xl mx-auto px-4 pb-16 space-y-4">
+        <LoadingSkeleton className="h-10 w-64 rounded-xl" />
+        <LoadingSkeleton className="h-48 rounded-2xl" />
+        <LoadingSkeleton className="h-64 rounded-2xl" />
+      </div>
+    );
+  }
   if (!group) return <div className="pt-32 text-center"><Link href="/groups" className="text-green-dark font-semibold">← Back</Link></div>;
 
   return (

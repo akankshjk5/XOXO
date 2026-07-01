@@ -18,22 +18,35 @@ function layout(title, body) {
 </body></html>`;
 }
 
-function bookingConfirmationEmail({ user, booking, packageTitle }) {
+function bookingConfirmationEmail({ user, booking, packageTitle, destinationName }) {
   const subject = `Booking confirmed — ${booking.bookingRef}`;
+  const supportPhone = process.env.SUPPORT_PHONE || "+91 9240204872";
+  const travelDate = booking.travelDate
+    ? new Date(booking.travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "TBC";
+
   const html = layout(
     subject,
     `<h2 style="margin-top:0;color:${BRAND_COLOR}">Your trip is confirmed! 🎉</h2>
     <p>Hi ${user.name},</p>
     <p>We've received your payment for <strong>${packageTitle || "your holiday package"}</strong>.</p>
     <table style="width:100%;border-collapse:collapse;margin:16px 0">
-      <tr><td style="padding:8px 0;color:#666">Booking reference</td><td style="padding:8px 0;font-weight:600">${booking.bookingRef}</td></tr>
-      <tr><td style="padding:8px 0;color:#666">Amount paid</td><td style="padding:8px 0;font-weight:600">₹${booking.paidAmount?.toLocaleString("en-IN")}</td></tr>
-      <tr><td style="padding:8px 0;color:#666">Travel date</td><td style="padding:8px 0">${booking.travelDate ? new Date(booking.travelDate).toLocaleDateString("en-IN") : "TBC"}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Booking ID</td><td style="padding:8px 0;font-weight:600">${booking.bookingRef}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Destination</td><td style="padding:8px 0">${destinationName || "—"}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Package</td><td style="padding:8px 0">${packageTitle || "Holiday package"}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Travel date</td><td style="padding:8px 0">${travelDate}</td></tr>
       <tr><td style="padding:8px 0;color:#666">Travellers</td><td style="padding:8px 0">${booking.numTravelers}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Amount paid</td><td style="padding:8px 0;font-weight:600">₹${(booking.paidAmount || booking.totalAmount || 0).toLocaleString("en-IN")}</td></tr>
+      <tr><td style="padding:8px 0;color:#666">Status</td><td style="padding:8px 0;text-transform:capitalize">${booking.status || "confirmed"}</td></tr>
     </table>
-    <p>View your booking anytime in your <a href="${process.env.CLIENT_URL}/dashboard" style="color:${BRAND_COLOR}">dashboard</a>.</p>`
+    <p>Questions? Call <strong>${supportPhone}</strong> or reply to this email.</p>
+    <p>View your booking anytime in your <a href="${process.env.CLIENT_URL}/dashboard?tab=bookings" style="color:${BRAND_COLOR}">dashboard</a>.</p>`
   );
-  return { subject, html, text: `Booking ${booking.bookingRef} confirmed. Amount: ₹${booking.paidAmount}` };
+  return {
+    subject,
+    html,
+    text: `Booking ${booking.bookingRef} confirmed. ${packageTitle}. ${travelDate}. ₹${booking.paidAmount || booking.totalAmount}`,
+  };
 }
 
 function paymentConfirmationEmail({ user, booking }) {

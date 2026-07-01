@@ -23,9 +23,10 @@ import { isValidPhoneNumber } from "@/lib/phone";
 import { formatPrice } from "@/lib/utils";
 import { DEFAULT_PACKAGE_IMAGE } from "@/lib/images";
 import { CountUp } from "@/components/motion/CountUp";
-import { EmptyState } from "@/components/motion/EmptyState";
+import { EmptyState, LoadingSkeleton } from "@/components/motion";
 import { DataLoadError } from "@/components/ui/DataLoadError";
 import { useAuthStore } from "@/store/authStore";
+import { useWishlist } from "@/context/WishlistContext";
 
 type Tab = "overview" | "bookings" | "wishlist" | "itineraries" | "wallet" | "profile";
 
@@ -53,6 +54,13 @@ interface Booking {
   totalAmount: number;
   package?: { _id: string; title: string; images?: string[] };
 }
+interface DestWishItem {
+  _id: string;
+  name: string;
+  slug: string;
+  coverImage?: string;
+  country?: string;
+}
 interface WishItem {
   _id: string;
   title: string;
@@ -79,10 +87,12 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
 
 export function DashboardClient() {
   const { user, setUser, fetchMe } = useAuthStore();
+  const { togglePackage, toggleDestination } = useWishlist();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("overview");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [wishlist, setWishlist] = useState<WishItem[]>([]);
+  const [destWishlist, setDestWishlist] = useState<DestWishItem[]>([]);
   const [itineraries, setItineraries] = useState<Itin[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -175,13 +185,15 @@ export function DashboardClient() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [b, w, i] = await Promise.all([
+      const [b, w, dw, i] = await Promise.all([
         bookingsAPI.getMy(),
         usersAPI.getWishlist(),
+        usersAPI.getDestinationWishlist(),
         itinerariesAPI.getMy(),
       ]);
       setBookings(b.data.data);
       setWishlist(w.data.data);
+      setDestWishlist(dw.data.data);
       setItineraries(i.data.data);
     } catch {
       setLoadError("Couldn't load your dashboard.");
@@ -194,6 +206,19 @@ export function DashboardClient() {
     loadDashboard();
   }, []);
 
+  useEffect(() => {
+    const syncWishlist = async () => {
+      try {
+        const [w, dw] = await Promise.all([usersAPI.getWishlist(), usersAPI.getDestinationWishlist()]);
+        setWishlist(w.data.data);
+        setDestWishlist(dw.data.data);
+      } catch {
+        /* ignore */
+      }
+    };
+    syncWishlist();
+  }, [tab]);
+
   const cancelBooking = async (id: string) => {
     try {
       await bookingsAPI.cancel(id);
@@ -205,13 +230,13 @@ export function DashboardClient() {
   };
 
   const removeWish = async (packageId: string) => {
-    try {
-      await usersAPI.toggleWishlist(packageId);
-      setWishlist((prev) => prev.filter((w) => w._id !== packageId));
-      toast.success("Removed from wishlist");
-    } catch {
-      toast.error("Couldn't update wishlist.");
-    }
+    await togglePackage(packageId);
+    setWishlist((prev) => prev.filter((w) => w._id !== packageId));
+  };
+
+  const removeDestWish = async (destinationId: string) => {
+    await toggleDestination(destinationId);
+    setDestWishlist((prev) => prev.filter((w) => w._id !== destinationId));
   };
 
   const removeItin = async (id: string) => {
@@ -294,15 +319,20 @@ export function DashboardClient() {
             <DataLoadError message={loadError} onRetry={loadDashboard} className="mb-6" />
           ) : null}
           {loading ? (
-            <div className="flex items-center gap-2 text-text-grey py-12">
-              <Loader2 className="h-5 w-5 animate-spin" /> Loading…
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <LoadingSkeleton key={i} className="h-28 rounded-2xl" />
+                ))}
+              </div>
+              <LoadingSkeleton className="h-40 rounded-2xl" />
             </div>
           ) : (
             <>
               {tab === "overview" && (
                 <div className="grid sm:grid-cols-3 gap-4">
                   <StatCard label="Bookings" value={String(bookings.length)} icon={Briefcase} />
-                  <StatCard label="Wishlist" value={String(wishlist.length)} icon={Heart} />
+                  <StatCard label="Wishlist" value={String(wishlist.length + destWishlist.length)} icon={Heart} />
                   <div className="rounded-2xl p-5 bg-gradient-to-br from-green-dark to-green-neon text-white">
                     <Gift className="h-6 w-6 mb-3" />
                     <p className="text-3xl font-black">
@@ -316,7 +346,7 @@ export function DashboardClient() {
               {tab === "bookings" && (
                 <div className="space-y-4">
                   {bookings.length === 0 ? (
-                    <Empty text="No bookings yet" description="When you book a package, your trips will appear here." cta="Browse packages" href="/packages" />
+                    <Empty icon="✈️" text="No bookings yet" description="When you book a package, your trips will appear here." cta="Browse packages" href="/packages" />
                   ) : (
                     bookings.map((b) => (
                       <div key={b._id} className="flex gap-4 border border-[#EBEBEB] rounded-2xl p-4">
@@ -361,10 +391,11 @@ export function DashboardClient() {
               )}
 
               {tab === "wishlist" && (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {wishlist.length === 0 ? (
+                <div className="space-y-8">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {wishlist.length === 0 && destWishlist.length === 0 ? (
                     <div className="sm:col-span-2 lg:col-span-3">
-                      <Empty text="Your wishlist is empty" description="Save packages you love and book them when you're ready." cta="Explore packages" href="/packages" />
+                      <Empty icon="❤️" text="Your wishlist is empty" description="Save packages and destinations you love." cta="Explore packages" href="/packages" />
                     </div>
                   ) : (
                     wishlist.map((w) => (
@@ -379,10 +410,11 @@ export function DashboardClient() {
                           />
                         </Link>
                         <div className="p-3">
+                          <p className="text-xs text-text-grey uppercase">Package</p>
                           <p className="text-sm font-semibold line-clamp-1">{w.title}</p>
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-sm font-bold text-green-dark">{formatPrice(w.pricePerPerson)}</span>
-                            <button onClick={() => removeWish(w._id)} className="text-red-400 hover:text-red-600">
+                            <button onClick={() => removeWish(w._id)} className="text-red-400 hover:text-red-600" aria-label="Remove">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -390,13 +422,44 @@ export function DashboardClient() {
                       </div>
                     ))
                   )}
+                  </div>
+                  {destWishlist.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-text-dark mb-3">Saved Destinations</h3>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {destWishlist.map((d) => (
+                          <div key={d._id} className="rounded-2xl overflow-hidden border border-[#EBEBEB] group">
+                            <Link href={`/destinations/${d.slug}`} className="block relative h-32">
+                              <Image
+                                src={d.coverImage || DEFAULT_PACKAGE_IMAGE}
+                                alt={d.name}
+                                fill
+                                sizes="33vw"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            </Link>
+                            <div className="p-3">
+                              <p className="text-xs text-text-grey uppercase">Destination</p>
+                              <p className="text-sm font-semibold line-clamp-1">{d.name}</p>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs text-text-grey">{d.country}</span>
+                                <button onClick={() => removeDestWish(d._id)} className="text-red-400 hover:text-red-600" aria-label="Remove">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {tab === "itineraries" && (
                 <div className="space-y-3">
                   {itineraries.length === 0 ? (
-                    <Empty text="No saved itineraries" description="Use the AI Concierge to build a trip plan and save it to your dashboard." cta="✨ FREE AI Planner" href="/concierge" />
+                    <Empty icon="🗺️" text="No saved itineraries" description="Use the AI Concierge to build a trip plan and save it to your dashboard." cta="✨ FREE AI Planner" href="/concierge" />
                   ) : (
                     itineraries.map((it) => (
                       <div key={it._id} className="flex items-center justify-between border border-[#EBEBEB] rounded-2xl p-4">
@@ -552,8 +615,8 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-function Empty({ text, description, cta, href }: { text: string; description?: string; cta: string; href: string }) {
-  return <EmptyState title={text} description={description} cta={cta} href={href} icon="📋" />;
+function Empty({ icon, text, description, cta, href }: { icon: string; text: string; description?: string; cta: string; href: string }) {
+  return <EmptyState title={text} description={description} cta={cta} href={href} icon={icon} />;
 }
 
 function Field({

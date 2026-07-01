@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Loader2, ShieldCheck, FileText, CalendarDays } from "lucide-react";
+import { X, Check, Loader2, CalendarDays, Tag, CheckCircle2 } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import toast from "react-hot-toast";
-import { bookingsAPI, paymentsAPI } from "@/lib/api";
+import { bookingsAPI, paymentsAPI, couponsAPI } from "@/lib/api";
 import { loadRazorpay } from "@/lib/razorpay";
 import { getBookingConfirmationPath } from "@/lib/auth-routing";
 import { useAuthStore } from "@/store/authStore";
@@ -14,6 +14,8 @@ import { isValidPhoneNumber } from "@/lib/phone";
 import { usePaymentMode } from "@/hooks/usePaymentMode";
 import { PaymentModeNotice } from "@/components/payments/PaymentModeNotice";
 import { formatPrice } from "@/lib/utils";
+import { BOOKING_ADDONS, calcAddOnTotal } from "@/lib/booking-addons";
+import { cn } from "@/lib/utils";
 
 interface BookingModalProps {
   pkg: { _id: string; title: string; pricePerPerson: number };
@@ -21,10 +23,10 @@ interface BookingModalProps {
   onClose: () => void;
 }
 
-const ADDONS_COMING_SOON = [
-  { id: "insurance", label: "Travel Insurance", icon: ShieldCheck },
-  { id: "visa", label: "Visa Assistance", icon: FileText },
-];
+interface AppliedCoupon {
+  code: string;
+  discount: number;
+}
 
 export function BookingModal({ pkg, travelers: initialTravelers, onClose }: BookingModalProps) {
   const router = useRouter();
@@ -36,12 +38,13 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
 
   const [travelers, setTravelers] = useState(initialTravelers);
   const [travelDate, setTravelDate] = useState("");
-  const [lead, setLead] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
+  const [lead, setLead] = useState({ name: "", email: "", phone: "" });
   const [specialRequests, setSpecialRequests] = useState("");
+
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -54,7 +57,43 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
     }
   }, [user]);
 
-  const total = pkg.pricePerPerson * travelers;
+  const packageSubtotal = pkg.pricePerPerson * travelers;
+  const addOnTotal = calcAddOnTotal(selectedAddOns, travelers);
+  const subtotal = packageSubtotal + addOnTotal;
+  const discount = appliedCoupon?.discount ?? 0;
+  const total = Math.max(0, subtotal - discount);
+
+  const toggleAddOn = (id: string) => {
+    setSelectedAddOns((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setAppliedCoupon(null);
+    setCouponInput("");
+  };
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      toast.error("Enter a coupon code");
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const { data } = await couponsAPI.validate({ code, subtotal });
+      setAppliedCoupon({ code: data.data.code, discount: data.data.discount });
+      toast.success(`Coupon applied — you save ${formatPrice(data.data.discount)}`);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || "Invalid coupon");
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    toast.success("Coupon removed");
+  };
 
   const next = () => {
     if (step === 1 && !travelDate) {
@@ -71,31 +110,37 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
   const confirmAndPay = async () => {
     setSubmitting(true);
     try {
-      // 1. Create booking
       const { data: bookingRes } = await bookingsAPI.create({
         packageId: pkg._id,
         travelDate,
         numTravelers: travelers,
         travelers: [{ name: lead.name }],
-        addOns: [],
+        addOns: selectedAddOns,
         specialRequests,
+        couponCode: appliedCoupon?.code,
+        contactEmail: lead.email,
+        contactPhone: lead.phone,
       });
       const booking = bookingRes.data;
 
-      // 2. Create payment order
       const { data: orderRes } = await paymentsAPI.createOrder(booking._id);
       const order = orderRes.data;
 
-      // 3a. Demo mode — Razorpay keys not configured on API (see PAYMENT_SETUP.md)
       if (orderRes.demo) {
-        await paymentsAPI.verify({ bookingId: booking._id });
+        const { data: verifyRes } = await paymentsAPI.verify({ bookingId: booking._id });
+        const conf = verifyRes.confirmation;
         toast.success("Booking confirmed! (demo payment) 🎉");
+        if (conf?.emailSent === false) {
+          toast("Email not sent — mail provider not configured on server.", { icon: "ℹ️" });
+        }
+        if (conf?.whatsappSkipped) {
+          toast("WhatsApp confirmation skipped — not configured on server.", { icon: "ℹ️" });
+        }
         onClose();
         router.replace(getBookingConfirmationPath(booking._id, booking.bookingRef));
         return;
       }
 
-      // 3b. Live/test Razorpay checkout — keyId comes from the API, never hardcoded here
       const ok = await loadRazorpay();
       if (!ok) {
         toast.error("Couldn't load payment gateway.");
@@ -137,199 +182,209 @@ export function BookingModal({ pkg, travelers: initialTravelers, onClose }: Book
     }
   };
 
+  const addOnLines = useMemo(
+    () =>
+      selectedAddOns.map((id) => {
+        const a = BOOKING_ADDONS.find((x) => x.id === id);
+        if (!a) return null;
+        const lineTotal = a.price * (a.perTraveler ? travelers : 1);
+        return { label: a.label, amount: lineTotal };
+      }).filter(Boolean) as { label: string; amount: number }[],
+    [selectedAddOns, travelers]
+  );
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
       <motion.div
         initial={reduced ? false : { opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={reduced ? undefined : { opacity: 0, y: 24 }}
-        transition={{ duration: reduced ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto shadow-2xl"
+        transition={{ duration: reduced ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92dvh] flex flex-col shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#EBEBEB] sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#EBEBEB] shrink-0">
           <div>
             <p className="text-xs text-text-grey">Step {step} of 3</p>
             <h3 className="font-bold text-text-dark line-clamp-1">{pkg.title}</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-off-white" aria-label="Close">
+          <button type="button" onClick={onClose} disabled={submitting} className="p-2 rounded-lg hover:bg-off-white min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Progress */}
-        <div className="flex gap-1 px-5 pt-4">
+        <div className="flex gap-1 px-5 pt-4 shrink-0">
           {[1, 2, 3].map((s) => (
-            <div
-              key={s}
-              className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-green-neon" : "bg-[#EBEBEB]"}`}
-            />
+            <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-green-neon" : "bg-[#EBEBEB]"}`} />
           ))}
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 min-h-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
               initial={reduced ? false : { opacity: 0, x: 16 }}
               animate={{ opacity: 1, x: 0 }}
               exit={reduced ? undefined : { opacity: 0, x: -16 }}
-              transition={{ duration: reduced ? 0 : 0.3 }}
+              transition={{ duration: reduced ? 0 : 0.2 }}
             >
-          {step === 1 && (
-            <>
-              <div>
-                <label className="text-sm font-semibold text-text-dark flex items-center gap-2 mb-2">
-                  <CalendarDays className="h-4 w-4" /> Travel date
-                </label>
-                <input
-                  type="date"
-                  value={travelDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none"
-                />
-              </div>
+              {step === 1 && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark flex items-center gap-2 mb-2">
+                      <CalendarDays className="h-4 w-4" /> Travel date
+                    </label>
+                    <input
+                      type="date"
+                      value={travelDate}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setTravelDate(e.target.value)}
+                      className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-2 block">Travellers</label>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setTravelers((t) => Math.max(1, t - 1))}
-                    className="h-9 w-9 rounded-full border border-[#E0E0E0] hover:border-green-dark"
-                  >
-                    −
-                  </button>
-                  <span className="font-semibold w-6 text-center">{travelers}</span>
-                  <button
-                    onClick={() => setTravelers((t) => Math.min(12, t + 1))}
-                    className="h-9 w-9 rounded-full border border-[#E0E0E0] hover:border-green-dark"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-2 block">Travellers</label>
+                    <div className="flex items-center gap-4">
+                      <button type="button" onClick={() => setTravelers((t) => Math.max(1, t - 1))} className="h-10 w-10 rounded-full border border-[#E0E0E0] hover:border-green-dark min-h-[44px] min-w-[44px]">−</button>
+                      <span className="font-semibold w-6 text-center">{travelers}</span>
+                      <button type="button" onClick={() => setTravelers((t) => Math.min(12, t + 1))} className="h-10 w-10 rounded-full border border-[#E0E0E0] hover:border-green-dark min-h-[44px] min-w-[44px]">+</button>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-2 block">Add-ons</label>
-                <div className="space-y-2">
-                  {ADDONS_COMING_SOON.map((a) => {
-                    const Icon = a.icon;
-                    return (
-                      <div
-                        key={a.id}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#E0E0E0] bg-off-white opacity-70"
-                        aria-disabled="true"
-                      >
-                        <span className="flex items-center gap-2 text-sm font-medium text-text-grey">
-                          <Icon className="h-4 w-4" /> {a.label}
-                        </span>
-                        <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                          Coming soon
-                        </span>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-2 block">Optional add-ons</label>
+                    <div className="space-y-2">
+                      {BOOKING_ADDONS.map((a) => {
+                        const Icon = a.icon;
+                        const selected = selectedAddOns.includes(a.id);
+                        const linePrice = a.price * (a.perTraveler ? travelers : 1);
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => toggleAddOn(a.id)}
+                            className={cn(
+                              "w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left transition-colors min-h-[44px]",
+                              selected ? "border-green-dark bg-green-dark/5 ring-1 ring-green-dark/20" : "border-[#E0E0E0] hover:border-green-dark/40"
+                            )}
+                          >
+                            <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border", selected ? "bg-green-neon border-green-neon text-white" : "border-[#CCC]")}>
+                              {selected && <Check className="h-3.5 w-3.5" />}
+                            </span>
+                            <span className="flex-1 min-w-0">
+                              <span className="flex items-center gap-2 text-sm font-semibold text-text-dark">
+                                <Icon className="h-4 w-4 text-green-dark shrink-0" /> {a.label}
+                              </span>
+                              <span className="text-xs text-text-grey block mt-0.5">{a.description}</span>
+                            </span>
+                            <span className="text-sm font-bold text-green-dark shrink-0">+{formatPrice(linePrice)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {step === 2 && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">Full name</label>
+                    <input value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]" placeholder="Lead traveller name" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">Email</label>
+                    <input type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]" placeholder="you@example.com" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">Phone</label>
+                    <input type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px]" placeholder="+91 98765 43210" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark mb-1.5 block">Special requests (optional)</label>
+                    <textarea value={specialRequests} onChange={(e) => setSpecialRequests(e.target.value)} rows={3} className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none resize-none" placeholder="Dietary needs, anniversary, accessibility…" />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-text-dark flex items-center gap-2 mb-2">
+                      <Tag className="h-4 w-4" /> Coupon code
+                    </label>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between rounded-xl border border-green-dark/30 bg-green-dark/5 px-4 py-3">
+                        <div>
+                          <p className="text-sm font-bold text-green-dark flex items-center gap-1">
+                            <CheckCircle2 className="h-4 w-4" /> {appliedCoupon.code}
+                          </p>
+                          <p className="text-xs text-text-grey">Saving {formatPrice(appliedCoupon.discount)}</p>
+                        </div>
+                        <button type="button" onClick={removeCoupon} className="text-xs font-semibold text-red-600 px-3 py-1.5 rounded-full border border-red-200 min-h-[36px]">Remove</button>
                       </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-text-grey mt-2">
-                  Insurance and visa add-ons are not available yet — you won&apos;t be charged for them.
-                </p>
-              </div>
-            </>
-          )}
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          placeholder="Enter code"
+                          className="flex-1 border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none min-h-[44px] uppercase"
+                        />
+                        <button
+                          type="button"
+                          onClick={applyCoupon}
+                          disabled={couponLoading}
+                          className="px-4 rounded-xl bg-green-dark text-white font-semibold text-sm min-h-[44px] disabled:opacity-50 inline-flex items-center gap-1"
+                        >
+                          {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
-          {step === 2 && (
-            <>
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-1.5 block">Full name</label>
-                <input
-                  value={lead.name}
-                  onChange={(e) => setLead({ ...lead, name: e.target.value })}
-                  className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none"
-                  placeholder="Lead traveller name"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-1.5 block">Email</label>
-                <input
-                  type="email"
-                  value={lead.email}
-                  onChange={(e) => setLead({ ...lead, email: e.target.value })}
-                  className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-1.5 block">Phone</label>
-                <input
-                  type="tel"
-                  value={lead.phone}
-                  onChange={(e) => setLead({ ...lead, phone: e.target.value })}
-                  className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-text-dark mb-1.5 block">
-                  Special requests (optional)
-                </label>
-                <textarea
-                  value={specialRequests}
-                  onChange={(e) => setSpecialRequests(e.target.value)}
-                  rows={3}
-                  className="w-full border border-[#E0E0E0] rounded-xl px-4 py-2.5 focus:border-green-dark outline-none resize-none"
-                  placeholder="Dietary needs, anniversary, accessibility…"
-                />
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-3">
-              <h4 className="font-bold text-text-dark">Review your trip</h4>
-              <div className="rounded-xl bg-off-white p-4 space-y-2 text-sm">
-                <Row label="Package" value={pkg.title} />
-                <Row label="Travel date" value={travelDate} />
-                <Row label="Travellers" value={String(travelers)} />
-                <Row label="Lead contact" value={lead.name} />
-                <div className="border-t border-[#E0E0E0] pt-2 mt-2 flex justify-between font-bold text-text-dark">
-                  <span>Total payable</span>
-                  <span>{formatPrice(total)}</span>
+              {step === 3 && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-text-dark">Review your trip</h4>
+                  <div className="rounded-xl bg-off-white p-4 space-y-2 text-sm">
+                    <Row label="Package" value={pkg.title} />
+                    <Row label="Travel date" value={travelDate} />
+                    <Row label="Travellers" value={String(travelers)} />
+                    <Row label="Lead contact" value={lead.name} />
+                    {addOnLines.map((line) => (
+                      <Row key={line.label} label={line.label} value={formatPrice(line.amount)} />
+                    ))}
+                    {appliedCoupon && <Row label={`Coupon (${appliedCoupon.code})`} value={`−${formatPrice(appliedCoupon.discount)}`} />}
+                    <div className="border-t border-[#E0E0E0] pt-2 mt-2 flex justify-between font-bold text-text-dark">
+                      <span>Total payable</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                  </div>
+                  <PaymentModeNotice mode={paymentMode} loading={paymentModeLoading} />
                 </div>
-              </div>
-              <PaymentModeNotice mode={paymentMode} loading={paymentModeLoading} />
-            </div>
-          )}
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-[#EBEBEB] sticky bottom-0 bg-white flex items-center gap-3">
+        <div className="px-5 py-4 border-t border-[#EBEBEB] bg-white flex items-center gap-3 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {step > 1 && (
-            <button
-              onClick={() => setStep((s) => s - 1)}
-              className="px-5 py-2.5 rounded-full border border-[#E0E0E0] font-medium hover:border-green-dark"
-            >
+            <button type="button" onClick={() => setStep((s) => s - 1)} disabled={submitting} className="px-5 py-2.5 rounded-full border border-[#E0E0E0] font-medium hover:border-green-dark min-h-[44px] disabled:opacity-50">
               Back
             </button>
           )}
           <div className="ml-auto flex items-center gap-3">
             <span className="font-bold text-text-dark">{formatPrice(total)}</span>
             {step < 3 ? (
-              <button
-                onClick={next}
-                className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors"
-              >
+              <button type="button" onClick={next} className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors min-h-[44px]">
                 Continue
               </button>
             ) : (
               <button
+                type="button"
                 onClick={confirmAndPay}
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors flex items-center gap-2 disabled:opacity-60"
+                className="px-6 py-2.5 rounded-full bg-green-neon text-white font-bold hover:bg-green-dark transition-colors flex items-center gap-2 disabled:opacity-60 min-h-[44px]"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {isDemo ? "Confirm demo booking" : "Pay & Confirm"}

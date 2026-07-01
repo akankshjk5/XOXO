@@ -50,8 +50,8 @@ export function WhyChooseUs() {
           packages: pkgRes.data.pagination?.total ?? pkgRes.data.data?.length ?? 0,
           destinations: destRes.data.data?.length ?? 0,
         });
-      } catch (err) {
-        console.error("[WhyChooseUs] Failed to load inventory counts:", err);
+      } catch {
+        /* counts optional */
       }
     })();
     return () => {

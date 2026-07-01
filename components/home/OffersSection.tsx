@@ -20,8 +20,7 @@ export function OffersSection() {
         const { data } = await packagesAPI.getVisaFree();
         if (cancelled) return;
         setOffers((data.data || []).map(mapHomePackageCard));
-      } catch (err) {
-        console.error("[OffersSection] Failed to load visa-free offers:", err);
+      } catch {
         if (!cancelled) setOffers([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -68,7 +67,7 @@ export function OffersSection() {
               <Link
                 key={pkg.id}
                 href={`/packages/${pkg.id}`}
-                className="shrink-0 w-[360px] snap-start rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] card-lift"
+                className="shrink-0 w-[360px] snap-start rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-premium card-lift"
               >
                 <div className="relative h-[200px] overflow-hidden">
                   <LazyImage src={pkg.image} alt={pkg.title} fill sizes="360px" />

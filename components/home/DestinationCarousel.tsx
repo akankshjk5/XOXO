@@ -5,8 +5,10 @@ import Image from "next/image";
 import { useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 export interface ValidatedDestinationCard {
   id: string;
+  destinationId?: string;
   subLabel: string;
   name: string;
   slug: string;
@@ -27,9 +29,10 @@ interface DestinationCarouselProps {
   title: string;
   destinations: ValidatedDestinationCard[];
   bg?: "white" | "off-white";
+  action?: React.ReactNode;
 }
 
-export function DestinationCarousel({ title, destinations, bg = "white" }: DestinationCarouselProps) {
+export function DestinationCarousel({ title, destinations, bg = "white", action }: DestinationCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: "left" | "right") => {
@@ -39,15 +42,18 @@ export function DestinationCarousel({ title, destinations, bg = "white" }: Desti
   return (
     <section className={bg === "off-white" ? "bg-off-white py-12 md:py-14" : "bg-white py-12 md:py-14"}>
       <div className="container-x">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-4">
           <h2 className="section-heading">{title}</h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            {action}
+            <div className="flex gap-2">
             <button onClick={() => scroll("left")} className="carousel-btn" aria-label="Previous">
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button onClick={() => scroll("right")} className="carousel-btn" aria-label="Next">
               <ChevronRight className="h-4 w-4" />
             </button>
+            </div>
           </div>
         </div>
 
@@ -65,7 +71,9 @@ export function DestinationCarousel({ title, destinations, bg = "white" }: Desti
               variants={cardVariants}
               className="shrink-0 w-[220px] snap-start"
             >
-              <Link href={dest.href} className="block group cursor-pointer">
+              <div className="relative">
+                {dest.destinationId && <WishlistHeart destinationId={dest.destinationId} />}
+                <Link href={dest.href} className="block group cursor-pointer">
                 <div className="relative aspect-[3/4] rounded-2xl overflow-hidden card-lift shadow-[0_4px_24px_rgba(0,0,0,0.1)] ring-1 ring-black/5 group-hover:ring-green-bright/30 transition-all duration-500">
                   <Image
                     src={dest.image}
@@ -86,6 +94,7 @@ export function DestinationCarousel({ title, destinations, bg = "white" }: Desti
                   </div>
                 </div>
               </Link>
+              </div>
             </motion.div>
           ))}
         </motion.div>

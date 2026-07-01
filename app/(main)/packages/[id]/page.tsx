@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PackageDetail } from "@/components/packages/PackageDetail";
 import { buildPackageMetadata, buildPackageJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 import { resolveApiUrl } from "@/lib/api-config";
 
 interface PageProps {
@@ -34,9 +35,9 @@ export default async function PackageDetailPage({ params }: PageProps) {
   const jsonLd = pkg ? buildPackageJsonLd(pkg) : null;
   const breadcrumb = pkg
     ? buildBreadcrumbJsonLd([
-        { name: "Home", url: "https://xoxotravels.com" },
-        { name: "Packages", url: "https://xoxotravels.com/packages" },
-        { name: pkg.title, url: `https://xoxotravels.com/packages/${params.id}` },
+        { name: "Home", url: SITE_URL },
+        { name: "Packages", url: `${SITE_URL}/packages` },
+        { name: pkg.title, url: `${SITE_URL}/packages/${params.id}` },
       ])
     : null;
 

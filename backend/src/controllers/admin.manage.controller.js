@@ -2,17 +2,21 @@ const User = require("../models/User");
 const Review = require("../models/Review");
 const Coupon = require("../models/Coupon");
 const Booking = require("../models/Booking");
+const Package = require("../models/Package");
+const Destination = require("../models/Destination");
 const SiteSettings = require("../models/SiteSettings");
 const { phoneSearchPattern } = require("../utils/phone");
 
 /** GET /api/admin/users */
 exports.listUsers = async (req, res, next) => {
   try {
-    const { search, role, blocked } = req.query;
+    const { search, role, blocked, verified } = req.query;
     const filter = {};
     if (role) filter.role = role;
     if (blocked === "true") filter.isBlocked = true;
     if (blocked === "false") filter.isBlocked = false;
+    if (verified === "true") filter.isVerified = true;
+    if (verified === "false") filter.isVerified = false;
     if (search) {
       const phoneDigits = phoneSearchPattern(search);
       const or = [
@@ -25,7 +29,7 @@ exports.listUsers = async (req, res, next) => {
       filter.$or = or;
     }
     const users = await User.find(filter)
-      .select("name email phone role isBlocked isVerified createdAt")
+      .select("name email phone role isBlocked isVerified createdAt lastLoginAt")
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
@@ -40,19 +44,35 @@ exports.listUsers = async (req, res, next) => {
 exports.getUserDetail = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id)
-      .select("name email phone role isBlocked isVerified createdAt avatar trustScore")
+      .select(
+        "name email phone role isBlocked isVerified createdAt lastLoginAt avatar trustScore wishlist destinationWishlist"
+      )
+      .populate("wishlist", "title pricePerPerson images")
+      .populate("destinationWishlist", "name slug country coverImage")
       .lean();
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
     const bookings = await Booking.find({ user: req.params.id })
-      .populate("package", "title")
+      .populate("package", "title destination")
       .sort({ createdAt: -1 })
-      .limit(25)
+      .limit(50)
       .lean();
+
+    const paidBookings = bookings.filter((b) => b.paymentStatus === "paid");
+    const totalSpending = paidBookings.reduce(
+      (sum, b) => sum + (b.paidAmount || b.totalAmount || 0),
+      0
+    );
+
     res.json({
       success: true,
       data: {
         user: { ...user, phoneNumber: user.phone || "" },
         bookings,
+        wishlist: user.wishlist || [],
+        destinationWishlist: user.destinationWishlist || [],
+        totalSpending,
+        bookingCount: bookings.length,
       },
     });
   } catch (err) {
@@ -71,11 +91,29 @@ exports.updateUser = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
-    }).select("name email phone role isBlocked isVerified createdAt");
+    }).select("name email phone role isBlocked isVerified createdAt lastLoginAt");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
     const json = user.toJSON ? user.toJSON() : user;
     json.phoneNumber = json.phone || "";
     res.json({ success: true, data: json });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** DELETE /api/admin/users/:id */
+exports.deleteUser = async (req, res, next) => {
+  try {
+    if (String(req.params.id) === String(req.user._id)) {
+      return res.status(400).json({ success: false, message: "You cannot delete your own account" });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.role === "admin") {
+      return res.status(400).json({ success: false, message: "Cannot delete admin accounts" });
+    }
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Customer deleted" });
   } catch (err) {
     next(err);
   }
@@ -162,10 +200,7 @@ exports.createCoupon = async (req, res, next) => {
 /** PUT /api/admin/coupons/:id */
 exports.updateCoupon = async (req, res, next) => {
   try {
-    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!coupon) return res.status(404).json({ success: false, message: "Coupon not found" });
     res.json({ success: true, data: coupon });
   } catch (err) {
@@ -187,10 +222,8 @@ exports.deleteCoupon = async (req, res, next) => {
 /** GET /api/admin/settings */
 exports.getSettings = async (req, res, next) => {
   try {
-    let settings = await SiteSettings.findOne({ key: "main" });
-    if (!settings) {
-      settings = await SiteSettings.create({ key: "main" });
-    }
+    let settings = await SiteSettings.findOne();
+    if (!settings) settings = await SiteSettings.create({});
     res.json({ success: true, data: settings });
   } catch (err) {
     next(err);
@@ -200,25 +233,11 @@ exports.getSettings = async (req, res, next) => {
 /** PUT /api/admin/settings */
 exports.updateSettings = async (req, res, next) => {
   try {
-    const settings = await SiteSettings.findOneAndUpdate(
-      { key: "main" },
-      { $set: req.body },
-      { new: true, upsert: true, runValidators: true }
-    );
+    let settings = await SiteSettings.findOne();
+    if (!settings) settings = await SiteSettings.create(req.body);
+    else Object.assign(settings, req.body);
+    await settings.save();
     res.json({ success: true, data: settings });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/** GET /api/settings — public read for footer/contact */
-exports.getPublicSettings = async (req, res, next) => {
-  try {
-    const settings = await SiteSettings.findOne({ key: "main" }).lean();
-    res.json({
-      success: true,
-      data: settings || { websiteName: "XOXO Travels" },
-    });
   } catch (err) {
     next(err);
   }

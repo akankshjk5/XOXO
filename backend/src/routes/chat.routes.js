@@ -6,6 +6,9 @@ const { protect } = require("../middleware/auth.middleware");
 router.use(protect);
 
 router.get("/conversations", ctrl.conversations);
+router.get("/:peerId/guides", ctrl.listRoomGuides);
+router.post("/:peerId/guides", ctrl.inviteGuide);
+router.delete("/:peerId/guides/:guideUserId", ctrl.removeGuide);
 router.get("/:peerId", ctrl.thread);
 router.post("/:peerId", ctrl.send);
 

@@ -18,7 +18,7 @@ export function PackageCard({ pkg, className }: PackageCardProps) {
     <Link href={`/packages/${pkg.id}`} prefetch>
       <article
         className={cn(
-          "rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift group cursor-pointer shadow-[0_2px_16px_rgba(0,0,0,0.06)]",
+          "rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white card-lift group cursor-pointer shadow-premium",
           className
         )}
       >

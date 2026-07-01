@@ -7,6 +7,7 @@ import { fetchTrendingPackages } from "@/lib/home-inventory";
 import { mapHomePackageCard, type HomePackageCard } from "@/lib/home-mappers";
 import { formatPrice } from "@/lib/utils";
 import { LazyImage } from "@/components/motion/LazyImage";
+import { WishlistHeart } from "@/components/wishlist/WishlistHeart";
 
 export function TrendingPackagesSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -20,9 +21,8 @@ export function TrendingPackagesSection() {
       try {
         const items = await fetchTrendingPackages();
         if (cancelled) return;
-        setPackages(items.map(mapHomePackageCard));
-      } catch (err) {
-        console.error("[TrendingPackagesSection] Failed to load trending packages:", err);
+        setPackages(items.map(mapHomePackageCard).filter((p: HomePackageCard) => !p.isVisaFree));
+      } catch {
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -65,16 +65,17 @@ export function TrendingPackagesSection() {
         ) : (
           <div ref={scrollRef} className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
             {packages.map((pkg) => (
+              <div key={pkg.id} className="relative shrink-0 w-[360px] snap-start">
+                <WishlistHeart packageId={pkg.id} />
               <Link
-                key={pkg.id}
                 href={`/packages/${pkg.id}`}
-                className="shrink-0 w-[360px] snap-start rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] card-lift"
+                className="block rounded-2xl overflow-hidden border border-[#EBEBEB] bg-white shadow-premium card-lift"
               >
                 <div className="relative h-[200px] overflow-hidden">
                   <LazyImage src={pkg.image} alt={pkg.title} fill sizes="360px" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                   {pkg.rating ? (
-                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-white text-xs font-semibold">
+                    <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-white text-xs font-semibold">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                       {pkg.rating.toFixed(1)}
                     </div>
@@ -87,6 +88,7 @@ export function TrendingPackagesSection() {
                   <p className="text-lg font-bold text-green-dark mt-2">From {formatPrice(pkg.price)}</p>
                 </div>
               </Link>
+              </div>
             ))}
           </div>
         )}

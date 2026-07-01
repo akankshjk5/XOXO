@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AdminBookingsModule } from "@/components/admin/AdminBookingsModule";
 import { AdminPackagesModule } from "@/components/admin/AdminPackagesModule";
 import { AdminDestinationsModule } from "@/components/admin/AdminDestinationsModule";
@@ -37,5 +38,9 @@ export default function AdminModulePage({ params }: PageProps) {
   const { module } = params;
   const Component = MODULES[module];
   if (!Component) notFound();
-  return <Component />;
+  return (
+    <Suspense fallback={<div className="p-8 text-text-grey text-sm">Loading module…</div>}>
+      <Component />
+    </Suspense>
+  );
 }

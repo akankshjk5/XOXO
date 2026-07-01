@@ -62,6 +62,7 @@ router.get("/dashboard", adminCtrl.getDashboard);
 router.get("/users", manageCtrl.listUsers);
 router.get("/users/:id", manageCtrl.getUserDetail);
 router.patch("/users/:id", manageCtrl.updateUser);
+router.delete("/users/:id", manageCtrl.deleteUser);
 
 router.get("/guides", guidesCtrl.listGuides);
 router.get("/guides/:id", guidesCtrl.getGuide);
